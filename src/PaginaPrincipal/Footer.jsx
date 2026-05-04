@@ -69,7 +69,7 @@ const Footer = () => {
 
         <div className="row align-items-center">
           <div className="col-md-6 text-center text-md-start">
-            <small className="text-white-50">© {currentYear}Oasis. Todos los derechos reservados.</small>
+            <small className="text-white-50">© {currentYear} Oasis. Todos los derechos reservados.</small>
           </div>
           <div className="col-md-6 text-center text-md-end mt-3 mt-md-0">
             <a href="#" className="text-white-50 text-decoration-none small mx-3 hover-cyan">Privacidad</a>

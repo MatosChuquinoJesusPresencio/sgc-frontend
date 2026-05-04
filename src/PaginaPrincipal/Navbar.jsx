@@ -1,9 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; // Importamos el hook para navegación
 
 const Navbar = () => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate(); // Inicializamos la función navigate
+
+  // Detectar el scroll para cambiar el estilo del navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 50) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const navLinkStyle = {
     transition: 'all 0.3s ease',
@@ -13,6 +27,7 @@ const Navbar = () => {
   const navItems = [
     { name: 'Inicio', link: '#' },
     { name: 'Servicios', link: '#servicios' },
+    { name: 'Cómo Funciona', link: '#como-funciona' },
     { name: 'Planes', link: '#planes' },
     { name: 'Contacto', link: '#contacto' }
   ];
@@ -23,7 +38,8 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-transparent position-absolute w-100 mt-3" style={{ zIndex: 1000 }}>
+    <nav className={`navbar navbar-expand-lg navbar-dark position-fixed w-100 ${isScrolled ? 'scrolled-nav' : 'bg-transparent mt-3'}`} 
+         style={{ zIndex: 1000, transition: 'all 0.4s ease' }}>
       <div className="container">
         
         {/* Logo animado */}
