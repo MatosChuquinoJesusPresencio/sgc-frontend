@@ -11,6 +11,8 @@ import Services from './Services';
 import Pricing from './Pricing';
 import Contact from './Contact';
 import Footer from './Footer';
+import Testimonials from './Testimonials';
+import FAQ from './FAQ';
 
 const LandingPage = () => {
   useEffect(() => {
@@ -28,6 +30,8 @@ const LandingPage = () => {
         <Hero />
         <Services />
         <Pricing />
+        <Testimonials />
+        <FAQ />
         <Contact />
       </main>
       <Footer />
