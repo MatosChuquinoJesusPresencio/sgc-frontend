@@ -20,16 +20,16 @@ const Contact = () => {
       <div className="container py-5">
         <div className="row g-5 align-items-center">
           
-          <div className="col-lg-5 text-start" data-aos="fade-right">
+          <div className="col-lg-5 text-center text-lg-start mb-4 mb-lg-0" data-aos="fade-right">
             <h6 className="text-info fw-bold tracking-widest mb-3" style={{ letterSpacing: '3px' }}>CONTACTO VIP</h6>
             <h2 className="display-4 fw-bold text-white mb-4">Hablemos de tu próximo <span className="text-info">gran proyecto.</span></h2>
-            <p className="text-white-50 mb-5">
+            <p className="text-white-50 mb-4 mb-lg-5 px-3 px-lg-0">
               Nuestro equipo de expertos está listo para diseñar una solución a la medida de tu condominio.
             </p>
           </div>
 
           <div className="col-lg-7" data-aos="fade-left">
-            <div className="p-4 p-md-5 rounded-5" style={{
+            <div className="p-4 p-sm-5 rounded-5 mx-3 mx-md-0" style={{
               background: 'rgba(15, 23, 42, 0.4)',
               backdropFilter: 'blur(20px)',
               border: '1px solid rgba(255, 255, 255, 0.05)',
@@ -71,8 +71,8 @@ const Contact = () => {
                 </div>
                 
                 {/* BOTÓN SOFISTICADO ACTUALIZADO */}
-                <div className="col-12 text-end mt-4">
-                  <button type="submit" className="btn-elite-minimal border-0 shadow-none">
+                <div className="col-12 text-center text-sm-end mt-4">
+                  <button type="submit" className="btn-elite-minimal border-0 shadow-none w-100 d-sm-inline-flex justify-content-center">
                     ENVIAR MENSAJE 
                     <i className="bi bi-send ms-2"></i>
                   </button>

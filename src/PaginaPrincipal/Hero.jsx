@@ -64,12 +64,12 @@ const Hero = () => {
     }}>
       <div className="container text-center text-white">
         {/* Título Principal */}
-        <h1 className="display-2 fw-bold mb-3" data-aos="fade-down">
+        <h1 className="display-2 fw-bold mb-3 px-2" data-aos="fade-down">
           Eleva el diseño y control <br/> de tu condominio.
         </h1>
         
         {/* Subtítulo */}
-        <p className="lead fs-4 mb-5 opacity-75 mx-auto" style={{ maxWidth: '800px' }} data-aos="fade-up" data-aos-delay="200">
+        <p className="lead fs-5 fs-md-4 mb-5 opacity-75 mx-auto px-3" style={{ maxWidth: '800px' }} data-aos="fade-up" data-aos-delay="200">
           Un sistema de gestión moderno y eficiente para administradores y residentes.
         </p>
 
@@ -87,7 +87,7 @@ const Hero = () => {
         {/* Footer del Hero */}
         <div className="mt-4 pb-4 opacity-50" data-aos="fade-up">
             <h3 className="fw-light fs-5">¿Por qué Oasis?</h3>
-            <div className="d-flex justify-content-center gap-4 mt-3 flex-wrap small">
+            <div className="d-flex justify-content-center gap-3 gap-md-4 mt-3 flex-wrap small px-2">
               <span>• Monitoreo real</span>
               <span>• Acceso Seguro</span>
               <span>• Reportes Inteligentes</span>

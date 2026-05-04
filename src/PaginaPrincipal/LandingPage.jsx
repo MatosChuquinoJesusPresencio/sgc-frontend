@@ -37,13 +37,12 @@ const LandingPage = () => {
       <Footer />
       
       {/* Botón WhatsApp */}
-      <div className="position-fixed bottom-0 end-0 p-4" style={{ zIndex: 2000 }}>
+      <div className="position-fixed bottom-0 end-0 p-3 p-md-4" style={{ zIndex: 2000 }}>
         <a 
           href="https://wa.me/tu-numero" 
           target="_blank" 
           rel="noreferrer" 
-          className="btn btn-success rounded-circle d-flex align-items-center justify-content-center shadow-lg border-2 border-white" 
-          style={{ width: '65px', height: '65px' }}
+          className="btn btn-success rounded-circle d-flex align-items-center justify-content-center shadow-lg border-2 border-white btn-whatsapp-custom" 
         >
           <i className="bi bi-whatsapp fs-2"></i>
         </a>

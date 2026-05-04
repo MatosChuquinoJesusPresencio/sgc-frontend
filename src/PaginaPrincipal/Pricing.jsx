@@ -32,13 +32,13 @@ const Pricing = () => {
     }}>
       <div className="container py-5">
         <div className="text-center mb-5" data-aos="fade-up">
-          <h2 className="display-4 fw-bold">Nuestros Planes</h2>
+          <h2 className="display-4 fw-bold px-2">Nuestros Planes</h2>
           <p className="opacity-75 fs-5 text-info">Soluciones seguras y profesionales para tu comunidad</p>
         </div>
 
         <div className="row g-4 justify-content-center">
           {plans.map((plan, index) => (
-            <div className="col-md-4" key={index} data-aos="fade-up" data-aos-delay={index * 150}>
+            <div className="col-12 col-md-6 col-lg-4" key={index} data-aos="fade-up" data-aos-delay={index * 150}>
               <div 
                 className="card h-100 border-0 p-4 shadow-lg"
                 onMouseEnter={() => setHoveredCard(index)}
