@@ -391,6 +391,34 @@ textarea:focus::placeholder {
 }
 
 /* ==========================================================================
+   MARQUEE (TRUSTED BY / LOGOS)
+   ========================================================================== */
+.marquee-wrapper {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  /* Degradado en los bordes para un efecto de difuminado al entrar/salir */
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+.marquee-content {
+  display: flex;
+  width: max-content;
+  animation: marquee 30s linear infinite;
+}
+
+.marquee-content:hover {
+  animation-play-state: paused; /* Se detiene si el usuario pone el mouse encima */
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  /* Se desplaza exactamente a la mitad (ya que los elementos están duplicados) */
+  100% { transform: translateX(-50%); } 
+}
+
+/* ==========================================================================
    RESPONSIVO
    ========================================================================== */
 @media (max-width: 768px) {
@@ -461,6 +489,11 @@ textarea:focus::placeholder {
     text-align: center;
     padding: 10px 0;
   }
+}
+
+.hover-opacity-100:hover {
+  opacity: 1 !important;
+  transform: scale(1.05);
 }
 
 /* Evitar scroll horizontal por animaciones de AOS */

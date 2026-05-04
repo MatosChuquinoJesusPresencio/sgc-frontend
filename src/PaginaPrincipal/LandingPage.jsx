@@ -15,6 +15,7 @@ import Testimonials from './Testimonials';
 import FAQ from './FAQ';
 import Stats from './Stats';
 import Steps from './Steps';
+import TrustedBy from './TrustedBy';
 
 const LandingPage = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -48,6 +49,7 @@ const LandingPage = () => {
       <main>
         <Hero />
         <Stats />
+        <TrustedBy />
         <Services />
         <Steps />
         <Pricing />
