@@ -290,6 +290,33 @@ textarea:focus::placeholder {
 }
 
 /* ==========================================================================
+   ACCORDION (FAQ)
+   ========================================================================== */
+.faq-accordion .accordion-button {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: white !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: none !important;
+  padding: 1.25rem 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.faq-accordion .accordion-button:not(.collapsed) {
+  background: rgba(0, 212, 255, 0.1) !important;
+  border-color: rgba(0, 212, 255, 0.3);
+  color: var(--accent-cyan) !important;
+}
+
+.faq-accordion .accordion-button::after {
+  filter: invert(1);
+}
+
+.faq-accordion .accordion-button:not(.collapsed)::after {
+  filter: invert(0.8) sepia(1) saturate(5) hue-rotate(175deg); /* Efecto Cyan para el icono de la flecha */
+}
+
+/* ==========================================================================
    RESPONSIVO
    ========================================================================== */
 @media (max-width: 768px) {
