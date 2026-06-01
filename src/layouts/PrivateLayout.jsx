@@ -13,13 +13,7 @@ const PrivateLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(getInitialSidebar);
 
     useEffect(() => {
-        const onResize = () => {
-            if (window.innerWidth > 768) {
-                setSidebarOpen(true);
-            } else {
-                setSidebarOpen(false);
-            }
-        };
+        const onResize = () => setSidebarOpen(window.innerWidth > 768);
         window.addEventListener("resize", onResize);
         return () => window.removeEventListener("resize", onResize);
     }, []);

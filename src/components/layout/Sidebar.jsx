@@ -29,7 +29,7 @@ const Sidebar = ({ menuItems, isOpen, onClose }) => {
                         <Link
                             key={item.path}
                             to={item.path}
-                            onClick={onClose}
+                            onClick={() => { if (window.innerWidth <= 768) onClose(); }}
                             className={`nav-item ${isActive(item) ? "active" : ""}`}
                         >
                             <span className="nav-icon">{item.icon}</span>
