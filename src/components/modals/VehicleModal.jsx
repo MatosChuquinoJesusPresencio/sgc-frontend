@@ -1,5 +1,4 @@
-import { Modal, Button, Form, Row, Col } from "react-bootstrap";
-import { FaSave, FaTimes, FaEdit, FaPlus, FaCar, FaMotorcycle } from "react-icons/fa";
+import { X, Edit3, Plus, Save, Car, Bike } from "lucide-react";
 import { useForm } from "react-hook-form";
 import FormInput from "../form/FormInput";
 import { useEffect } from "react";
@@ -9,193 +8,133 @@ const VehicleModal = ({ show, onHide, onSubmit, editingVehicle = null, residents
     register,
     handleSubmit,
     reset,
-    setValue,
-    watch,
+    clearErrors,
     formState: { errors },
-  } = useForm();
-
-  const selectedType = watch("tipo");
+  } = useForm({
+    defaultValues: { placa: "", tipo: "Auto", marca: "", modelo: "", color: "", id_usuario: "" },
+  });
 
   useEffect(() => {
-    if (editingVehicle) {
-      setValue("marca", editingVehicle.marca);
-      setValue("modelo", editingVehicle.modelo);
-      setValue("color", editingVehicle.color);
-      setValue("placa", editingVehicle.placa);
-      setValue("tipo", editingVehicle.tipo || "Auto");
-
-      if (editingVehicle.id_inquilino_temporal) {
-        setValue("ownerType", "inquilino");
-        setValue("id_inquilino_temporal", editingVehicle.id_inquilino_temporal);
+    if (show) {
+      clearErrors();
+      if (editingVehicle) {
+        reset({
+          placa: editingVehicle.placa,
+          tipo: editingVehicle.tipo,
+          marca: editingVehicle.marca,
+          modelo: editingVehicle.modelo,
+          color: editingVehicle.color,
+          id_usuario: editingVehicle.id_usuario || "",
+        });
       } else {
-        setValue("ownerType", "propietario");
+        reset({ placa: "", tipo: "Auto", marca: "", modelo: "", color: "", id_usuario: "" });
       }
-    } else {
-      reset({
-        tipo: "Auto",
-        ownerType: "propietario"
-      });
     }
-  }, [editingVehicle, setValue, reset, show]);
+  }, [show, editingVehicle, reset, clearErrors]);
 
-  const handleFormSubmit = (data) => {
-    // Transform data for the database
-    const submissionData = {
-      marca: data.marca,
-      modelo: data.modelo,
-      color: data.color,
-      placa: data.placa,
-      tipo: data.tipo,
-      id_usuario: data.ownerType === "propietario" ? true : null, // Handled in Page onSubmit
-      id_inquilino_temporal: data.ownerType === "inquilino" ? parseInt(data.id_inquilino_temporal) : null
-    };
-    onSubmit(submissionData);
-  };
-
-  const ownerType = watch("ownerType");
+  if (!show) return null;
 
   return (
-    <Modal show={show} onHide={onHide} centered>
-      <Modal.Header closeButton className="border-0">
-        <Modal.Title className="fw-bold text-primary-theme d-flex align-items-center gap-2">
-          <div className="p-2 rounded-3 bg-primary bg-opacity-10 text-primary">
-            {editingVehicle ? <FaEdit /> : <FaPlus />}
+    <div className="modal-overlay" onClick={onHide}>
+      <div className="modal-content lg" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <div className="modal-title">
+            <div className="cell-icon primary">
+              {editingVehicle ? <Edit3 size={16} /> : <Plus size={16} />}
+            </div>
+            {editingVehicle ? "Editar Vehículo" : "Registrar Vehículo"}
           </div>
-          {editingVehicle ? "Editar Vehículo" : "Nuevo Vehículo"}
-        </Modal.Title>
-      </Modal.Header>
-      <Modal.Body className="py-4">
-        <Form onSubmit={handleSubmit(handleFormSubmit)}>
-          <Row className="mb-3">
-            <Col md={12}>
-              <Form.Label className="fw-bold small text-secondary mb-3">Tipo de Vehículo</Form.Label>
-              <div className="d-flex gap-3">
-                <div
-                  className={`flex-grow-1 p-3 border rounded-4 text-center cursor-pointer transition-all ${selectedType === 'Auto' ? 'border-primary bg-primary bg-opacity-10 text-primary fw-bold' : 'bg-light text-muted opacity-75'}`}
-                  onClick={() => setValue("tipo", "Auto")}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <FaCar size={20} className="mb-2 d-block mx-auto" />
-                  Auto
+          <button className="modal-close" onClick={onHide}>
+            <X size={16} />
+          </button>
+        </div>
+        <div className="modal-body">
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="grid-2">
+              <FormInput
+                label="Placa"
+                name="placa"
+                register={register}
+                validation={{ required: "La placa es requerida" }}
+                error={errors.placa}
+                placeholder="ABC-123"
+              />
+              <div className="form-group">
+                <label className="form-label">Tipo de Vehículo</label>
+                <div className="flex gap-2">
+                  <label className={`btn ${editingVehicle?.tipo === "Auto" || "Auto" ? "btn-primary" : "btn-outline"} btn-sm`} style={{ flex: 1 }}>
+                    <input
+                      type="radio"
+                      value="Auto"
+                      {...register("tipo", { required: true })}
+                      style={{ display: "none" }}
+                    />
+                    <Car size={14} /> Auto
+                  </label>
+                  <label className={`btn btn-outline btn-sm`} style={{ flex: 1 }}>
+                    <input
+                      type="radio"
+                      value="Moto"
+                      {...register("tipo", { required: true })}
+                      style={{ display: "none" }}
+                    />
+                    <Bike size={14} /> Moto
+                  </label>
                 </div>
-                <div
-                  className={`flex-grow-1 p-3 border rounded-4 text-center cursor-pointer transition-all ${selectedType === 'Moto' ? 'border-primary bg-primary bg-opacity-10 text-primary fw-bold' : 'bg-light text-muted opacity-75'}`}
-                  onClick={() => setValue("tipo", "Moto")}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <FaMotorcycle size={20} className="mb-2 d-block mx-auto" />
-                  Moto
-                </div>
-                <input type="hidden" {...register("tipo")} />
               </div>
-            </Col>
-          </Row>
-
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label className="fw-bold small text-secondary">¿A quién pertenece?</Form.Label>
-                <Form.Select
-                  {...register("ownerType")}
-                  className="rounded-pill border-light py-2 px-3 small"
-                >
-                  <option value="propietario">A mí (Propietario)</option>
-                  {residents.length > 0 && <option value="inquilino">A un Inquilino</option>}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-            {ownerType === "inquilino" && (
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label className="fw-bold small text-secondary">Seleccionar Inquilino</Form.Label>
-                  <Form.Select
-                    {...register("id_inquilino_temporal", { required: ownerType === "inquilino" })}
-                    className="rounded-pill border-light py-2 px-3 small"
-                    isInvalid={!!errors.id_inquilino_temporal}
-                  >
-                    <option value="">Seleccione...</option>
-                    {residents.map(r => (
-                      <option key={r.id} value={r.id}>{r.nombre}</option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-            )}
-          </Row>
-
-          <Row>
-            <Col md={6}>
               <FormInput
                 label="Marca"
                 name="marca"
                 register={register}
-                validation={{ required: "Requerido" }}
+                validation={{ required: "La marca es requerida" }}
                 error={errors.marca}
-                placeholder="Ej: Toyota"
+                placeholder="Toyota"
               />
-            </Col>
-            <Col md={6}>
               <FormInput
                 label="Modelo"
                 name="modelo"
                 register={register}
-                validation={{ required: "Requerido" }}
+                validation={{ required: "El modelo es requerido" }}
                 error={errors.modelo}
-                placeholder="Ej: Corolla"
+                placeholder="Corolla"
               />
-            </Col>
-          </Row>
-          <Row>
-            <Col md={6}>
               <FormInput
                 label="Color"
                 name="color"
                 register={register}
-                validation={{ required: "Requerido" }}
+                validation={{ required: "El color es requerido" }}
                 error={errors.color}
-                placeholder="Ej: Blanco"
+                placeholder="Rojo"
               />
-            </Col>
-            <Col md={6}>
-              <FormInput
-                label="Placa / Matrícula"
-                name="placa"
-                register={register}
-                validation={{ required: "Requerido" }}
-                error={errors.placa}
-                placeholder="Ej: ABC-123"
-              />
-            </Col>
-          </Row>
+            </div>
 
-          <div className="d-flex justify-content-end gap-2 mt-4">
-            <Button
-              variant="light"
-              onClick={onHide}
-              className="rounded-pill px-4 fw-bold text-secondary border-0"
-            >
-              <FaTimes className="me-2" /> Cancelar
-            </Button>
-            <Button
-              type="submit"
-              className="btn-primary-theme rounded-pill px-4 fw-bold shadow-sm border-0"
-            >
-              <FaSave className="me-2" />{" "}
-              {editingVehicle ? "Guardar Cambios" : "Registrar Vehículo"}
-            </Button>
-          </div>
-        </Form>
-      </Modal.Body>
-      <style>
-        {`
-                .text-primary-theme { color: #112d4d; }
-                .btn-primary-theme { background-color: #112d4d; color: white; border: none; }
-                .btn-primary-theme:hover { background-color: #1a3a5f; color: white; }
-                .cursor-pointer { cursor: pointer; }
-                .transition-all { transition: all 0.2s ease-in-out; }
-                `}
-      </style>
-    </Modal>
+            {residents.length > 0 && (
+              <div className="form-group">
+                <label className="form-label">Propietario / Residente</label>
+                <select
+                  className="form-select"
+                  {...register("id_usuario")}
+                >
+                  <option value="">Seleccionar propietario...</option>
+                  {residents.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="modal-footer" style={{ padding: "16px 0 0", border: "none" }}>
+              <button type="button" className="btn btn-outline" onClick={onHide}>Cancelar</button>
+              <button type="submit" className="btn btn-primary">
+                <Save size={16} /> {editingVehicle ? "Actualizar Vehículo" : "Registrar Vehículo"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   );
 };
 

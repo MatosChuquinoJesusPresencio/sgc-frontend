@@ -2,14 +2,14 @@ import logoSinFondo from "../../assets/logo-sin-fondo.svg";
 
 const AuthLogo = ({ title, subtitle }) => {
     return (
-        <div className="text-center mb-4">
+        <div className="mb-4">
             <img
                 src={logoSinFondo}
                 alt="Logo Condominio"
-                className="mb-3 rounded-circle shadow-sm login-logo"
+                className="login-logo"
             />
-            <h3 className="fw-bold text-dark mb-0 login-title">{title}</h3>
-            {subtitle && <p className="text-muted small">{subtitle}</p>}
+            <h1 className="login-title">{title}</h1>
+            {subtitle && <p className="login-subtitle">{subtitle}</p>}
         </div>
     );
 };

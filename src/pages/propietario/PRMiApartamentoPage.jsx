@@ -1,27 +1,17 @@
 import { useState, useMemo } from "react";
 
 import {
-  Card,
-  Col,
-  Row,
-  Button,
-  Table,
-  Badge,
-  Modal,
-  Alert,
-} from "react-bootstrap";
-import {
-  FaHome,
-  FaUsers,
-  FaPlus,
-  FaEdit,
-  FaTrash,
-  FaInfoCircle,
-  FaUserTag,
-  FaIdCard,
-  FaBuilding,
-  FaLayerGroup,
-} from "react-icons/fa";
+  Home,
+  Users,
+  Plus,
+  Edit3,
+  Trash2,
+  Info,
+  UserCheck,
+  CreditCard,
+  Building2,
+  Layers,
+} from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
 import { useData } from "../../hooks/useData";
@@ -29,8 +19,9 @@ import { useData } from "../../hooks/useData";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
 import AnimatedPage from "../../components/animations/AnimatedPage";
-import ResidentModal from "../../components/modals/ResidentModal";
-import MainTable from "../../components/ui/MainTable";
+import UserFormModal from "../../components/modals/UserFormModal";
+import DataTable from "../../components/ui/DataTable";
+import ConfirmDialog from "../../components/modals/ConfirmDialog";
 import { usePagination } from "../../hooks/usePagination";
 
 const PRMiApartamentoPage = () => {
@@ -41,7 +32,6 @@ const PRMiApartamentoPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingResident, setEditingResident] = useState(null);
   const [residentToDelete, setResidentToDelete] = useState(null);
-  const [deleteError, setDeleteError] = useState(null);
 
   const apartamentos = getTable("apartamentos");
   const pisos = getTable("pisos");
@@ -79,6 +69,15 @@ const PRMiApartamentoPage = () => {
     paginatedData: paginatedResidentes,
     itemsPerPage,
   } = usePagination(misResidentes);
+
+  const residentHasVehicles = useMemo(
+    () =>
+      residentToDelete &&
+      vehiculos.some(
+        (v) => v.id_inquilino_temporal === residentToDelete.id,
+      ),
+    [vehiculos, residentToDelete],
+  );
 
   const handleOpenModal = (resident = null) => {
     setEditingResident(resident);
@@ -121,18 +120,23 @@ const PRMiApartamentoPage = () => {
     setResidentToDelete(null);
   };
 
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setResidentToDelete(null);
+  };
+
   if (!miApto) {
     return (
       <AnimatedPage>
-        <div className="page-container d-flex align-items-center justify-content-center">
-          <Card className="card-custom p-5 text-center">
-            <FaHome size={60} className="text-muted mb-3 mx-auto" />
-            <h3 className="fw-bold text-dark">Sin Unidad Asignada</h3>
+        <div className="page-container flex items-center justify-center">
+          <div className="card card-custom p-5 text-center">
+            <Home size={60} className="text-muted mb-3" />
+            <h3 className="fw-bold">Sin Unidad Asignada</h3>
             <p className="text-muted">
               No se encontró una unidad vinculada a tu cuenta. Contacta con
               administración.
             </p>
-          </Card>
+          </div>
         </div>
       </AnimatedPage>
     );
@@ -142,115 +146,87 @@ const PRMiApartamentoPage = () => {
     <AnimatedPage>
       <div className="page-container">
         <DashboardHeader
-          icon={FaHome}
+          icon={Home}
           title="Detalles de mi Unidad"
           badgeText={`Unidad ${miApto.numero}`}
           welcomeText={`Información general y gestión de residentes para tu unidad en ${miCondo?.nombre}.`}
         />
 
-        <Row className="g-4 mb-5">
-          <Col lg={8}>
-            <Card className="card-custom overflow-hidden h-100">
-              <Card.Header className="bg-white border-0 pt-4 px-4">
-                <h5 className="fw-bold text-dark mb-0">
-                  Información de la Propiedad
-                </h5>
-              </Card.Header>
-              <Card.Body className="p-4">
-                <Row className="g-4">
-                  <Col md={6}>
-                    <div className="d-flex align-items-center gap-3 p-3 rounded-4 bg-light">
-                      <div className="p-3 text-primary-theme">
-                        <FaBuilding />
-                      </div>
-                      <div>
-                        <div className="x-small text-muted text-uppercase fw-bold">
-                          Torre / Bloque
-                        </div>
-                        <div className="fw-bold text-dark">
-                          {miTorre?.nombre || "N/A"}
-                        </div>
-                      </div>
-                    </div>
-                  </Col>
-                  <Col md={6}>
-                    <div className="d-flex align-items-center gap-3 p-3 rounded-4 bg-light">
-                      <div className="p-3 text-primary-theme">
-                        <FaLayerGroup />
-                      </div>
-                      <div>
-                        <div className="x-small text-muted text-uppercase fw-bold">
-                          Nivel / Piso
-                        </div>
-                        <div className="fw-bold text-dark">
-                          Piso {miPiso?.numero_piso || "N/A"}
-                        </div>
-                      </div>
-                    </div>
-                  </Col>
-                  <Col md={6}>
-                    <div className="d-flex align-items-center gap-3 p-3 rounded-4 bg-light">
-                      <div className="p-3 text-primary-theme">
-                        <FaHome />
-                      </div>
-                      <div>
-                        <div className="x-small text-muted text-uppercase fw-bold">
-                          Número de Unidad
-                        </div>
-                        <div className="fw-bold text-dark">{miApto.numero}</div>
-                      </div>
-                    </div>
-                  </Col>
-                  <Col md={6}>
-                    <div className="d-flex align-items-center gap-3 p-3 rounded-4 bg-light">
-                      <div className="p-3 text-primary-theme">
-                        <FaInfoCircle />
-                      </div>
-                      <div>
-                        <div className="x-small text-muted text-uppercase fw-bold">
-                          Superficie
-                        </div>
-                        <div className="fw-bold text-dark">
-                          {miApto.metraje} m²
-                        </div>
-                      </div>
-                    </div>
-                  </Col>
-                </Row>
-              </Card.Body>
-            </Card>
-          </Col>
+        <div className="grid grid-4 gap-4 mb-5">
+          <div className="card card-custom" style={{ gridColumn: "span 2" }}>
+            <div className="card-body">
+              <h5 className="fw-bold mb-3">
+                Información de la Propiedad
+              </h5>
+              <div className="grid grid-2 gap-3">
+                <div className="flex items-center gap-3 p-3">
+                  <div className="cell-icon primary">
+                    <Building2 size={18} />
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted fw-bold">Torre / Bloque</div>
+                    <div className="fw-bold">{miTorre?.nombre || "N/A"}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3">
+                  <div className="cell-icon primary">
+                    <Layers size={18} />
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted fw-bold">Nivel / Piso</div>
+                    <div className="fw-bold">Piso {miPiso?.numero_piso || "N/A"}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3">
+                  <div className="cell-icon primary">
+                    <Home size={18} />
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted fw-bold">Número de Unidad</div>
+                    <div className="fw-bold">{miApto.numero}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3">
+                  <div className="cell-icon primary">
+                    <Info size={18} />
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted fw-bold">Superficie</div>
+                    <div className="fw-bold">{miApto.metraje} m²</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           <StatCard
-            icon={FaUsers}
+            icon={Users}
             label="Residentes Registrados"
             value={misResidentes.length}
             colorClass="primary-theme"
-            colSize="col-12 col-md-5 col-lg-3"
-            useFullHeight={false}
           />
-        </Row>
+        </div>
 
-        <MainTable
+        <DataTable
           headers={["#", "Residente", "Identificación", "Rol", "Acciones"]}
           isEmpty={misResidentes.length === 0}
           emptyMessage="No hay residentes registrados. Haz clic en 'Añadir Residente' para empezar."
-          emptyIcon={FaUsers}
+          emptyIcon={Users}
           searchBar={
-            <div className="d-flex justify-content-between align-items-center">
-              <div className="w-100">
-                <h5 className="fw-bold text-dark mb-1">
+            <div className="flex items-center justify-between">
+              <div>
+                <h5 className="fw-bold mb-1">
                   Residentes Autorizados
                 </h5>
-                <p className="text-muted small mb-0">
+                <p className="text-muted text-sm mb-0">
                   Gestiona las personas que viven en tu unidad.
                 </p>
               </div>
-              <Button
-                className="btn-primary-theme rounded-pill px-4 fw-bold shadow-sm border-0 d-flex align-items-center gap-2"
+              <button
+                className="btn btn-primary btn-sm"
                 onClick={() => handleOpenModal()}
               >
-                <FaPlus /> Residente
-              </Button>
+                <Plus size={14} /> Residente
+              </button>
             </div>
           }
           paginationProps={{
@@ -264,148 +240,83 @@ const PRMiApartamentoPage = () => {
           {paginatedResidentes.map((resident, index) => {
             const actualIndex = (currentPage - 1) * itemsPerPage + index + 1;
             return (
-              <tr key={resident.id} className="border-bottom border-light">
-                <td className="px-4 py-3 text-center">
+              <tr key={resident.id}>
+                <td className="text-center">
                   <span className="text-secondary fw-bold">
                     {actualIndex.toString().padStart(2, "0")}
                   </span>
                 </td>
-                <td className="py-3">
-                  <div className="d-flex align-items-center gap-3">
-                    <div className="p-2 rounded-circle bg-light text-primary">
-                      <FaUserTag />
+                <td>
+                  <div className="flex items-center gap-3">
+                    <div className="cell-icon primary">
+                      <UserCheck size={14} />
                     </div>
-                    <div className="fw-bold text-dark">{resident.nombre}</div>
+                    <div className="fw-bold">{resident.nombre}</div>
                   </div>
                 </td>
-                <td className="py-3">
-                  <div className="small text-muted">
-                    <FaIdCard className="me-2" />
+                <td>
+                  <div className="text-sm text-muted">
+                    <CreditCard size={14} />
                     {resident.dni}
                   </div>
                 </td>
-                <td className="py-3">
-                  <Badge bg="light" className="text-primary-theme border">
+                <td>
+                  <span className="badge badge-info">
                     Residente
-                  </Badge>
+                  </span>
                 </td>
-                <td className="px-4 py-3 text-end">
-                  <div className="d-flex justify-content-end gap-2">
-                    <Button
-                      variant="light"
-                      className="btn-primary-theme btn-action"
+                <td>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      className="btn btn-outline btn-sm"
                       onClick={() => handleOpenModal(resident)}
                     >
-                      <FaEdit /> <span>Editar</span>
-                    </Button>
-                    <Button
-                      variant="light"
-                      className="btn-primary-theme btn-action"
+                      <Edit3 size={14} /> <span>Editar</span>
+                    </button>
+                    <button
+                      className="btn btn-outline btn-sm"
                       onClick={() => handleDelete(resident)}
                     >
-                      <FaTrash /> <span>Eliminar</span>
-                    </Button>
+                      <Trash2 size={14} /> <span>Eliminar</span>
+                    </button>
                   </div>
                 </td>
               </tr>
             );
           })}
-        </MainTable>
+        </DataTable>
       </div>
 
-      <ResidentModal
+      <UserFormModal
         show={showModal}
         onHide={() => setShowModal(false)}
         onSubmit={onSubmit}
-        editingResident={editingResident}
+        editingUser={editingResident}
+        scope="condo-admin"
+        condominio={miCondo}
       />
 
-      <Modal
-        show={showDeleteModal}
-        onHide={() => {
-          setShowDeleteModal(false);
-          setResidentToDelete(null);
-        }}
-        centered
-        className="modal-custom"
-      >
-        <Modal.Header closeButton className="border-0 p-4 pb-0">
-          <Modal.Title
-            className={`fw-bold ${vehiculos.some((v) => v.id_inquilino_temporal === residentToDelete?.id) ? "text-warning" : "text-danger"}`}
-          >
-            {vehiculos.some(
-              (v) => v.id_inquilino_temporal === residentToDelete?.id,
-            )
-              ? "Acción Bloqueada"
-              : "Confirmar Eliminación"}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="p-4">
-          {residentToDelete && (
-            <div className="text-center py-3">
-              {vehiculos.some(
-                (v) => v.id_inquilino_temporal === residentToDelete.id,
-              ) ? (
-                <>
-                  <div className="p-4 bg-warning bg-opacity-10 rounded-circle d-inline-block mb-3 text-warning">
-                    <FaInfoCircle size={40} />
-                  </div>
-                  <h5 className="fw-bold text-dark">No se puede eliminar</h5>
-                  <Alert
-                    variant="warning"
-                    className="border-0 rounded-4 small text-start mt-3"
-                  >
-                    El residente <strong>{residentToDelete.nombre}</strong>{" "}
-                    tiene vehículos registrados en el sistema. Por seguridad,
-                    debes eliminar sus vehículos antes de poder dar de baja al
-                    residente.
-                  </Alert>
-                </>
-              ) : (
-                <>
-                  <div className="p-4 bg-danger bg-opacity-10 rounded-circle d-inline-block mb-3 text-danger">
-                    <FaTrash size={40} />
-                  </div>
-                  <h5 className="fw-bold text-dark">
-                    ¿Eliminar a {residentToDelete.nombre}?
-                  </h5>
-                  <p className="text-secondary small">
-                    Esta acción es irreversible. El residente perderá el acceso
-                    a los servicios del condominio vinculados a tu unidad.
-                  </p>
-                </>
-              )}
-            </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer className="border-0 p-4 pt-0 d-flex gap-2">
-          <Button
-            variant="light"
-            onClick={() => {
-              setShowDeleteModal(false);
-              setResidentToDelete(null);
-            }}
-            className="rounded-pill px-4 flex-grow-1"
-          >
-            {vehiculos.some(
-              (v) => v.id_inquilino_temporal === residentToDelete?.id,
-            )
-              ? "Entendido"
-              : "Cancelar"}
-          </Button>
-          {!vehiculos.some(
-            (v) => v.id_inquilino_temporal === residentToDelete?.id,
-          ) && (
-            <Button
-              variant="danger"
-              onClick={confirmDelete}
-              className="rounded-pill px-4 flex-grow-1"
-            >
-              Confirmar Eliminación
-            </Button>
-          )}
-        </Modal.Footer>
-      </Modal>
+      <ConfirmDialog
+        show={showDeleteModal && !!residentHasVehicles}
+        onHide={closeDeleteModal}
+        onConfirm={closeDeleteModal}
+        title="Acción Bloqueada"
+        message={`El residente ${residentToDelete?.nombre} tiene vehículos registrados en el sistema. Por seguridad, debes eliminar sus vehículos antes de poder dar de baja al residente.`}
+        confirmText="Entendido"
+        confirmVariant="warning"
+        icon={Info}
+      />
+
+      <ConfirmDialog
+        show={showDeleteModal && !residentHasVehicles}
+        onHide={closeDeleteModal}
+        onConfirm={confirmDelete}
+        title={`¿Eliminar a ${residentToDelete?.nombre}?`}
+        message="Esta acción es irreversible. El residente perderá el acceso a los servicios del condominio vinculados a tu unidad."
+        confirmText="Confirmar Eliminación"
+        cancelText="Cancelar"
+        confirmVariant="danger"
+      />
     </AnimatedPage>
   );
 };

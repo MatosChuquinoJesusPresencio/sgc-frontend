@@ -1,49 +1,39 @@
-import { Modal, Button, ListGroup } from "react-bootstrap";
-import { FaExclamationTriangle, FaInfoCircle } from "react-icons/fa";
+import { X, AlertTriangle } from "lucide-react";
 
 const CondoRelationsModal = ({ show, onHide, condoName, relations }) => {
+  if (!show) return null;
+
   return (
-    <Modal
-      show={show}
-      onHide={onHide}
-      centered
-      className="border-0"
-    >
-      <Modal.Body className="p-4 text-center">
-        <div className="p-3 rounded-circle bg-warning bg-opacity-10 text-warning d-inline-block mb-4">
-          <FaExclamationTriangle size={40} />
+    <div className="modal-overlay" onClick={onHide}>
+      <div className="modal-content" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <div className="modal-title">
+            <div className="auth-success-icon warning">
+              <AlertTriangle size={20} />
+            </div>
+            No se puede eliminar
+          </div>
+          <button className="modal-close" onClick={onHide}>
+            <X size={16} />
+          </button>
         </div>
-        <h4 className="fw-bold text-dark mb-3">No se puede eliminar</h4>
-        <p className="text-secondary mb-4">
-          El condominio <strong>{condoName}</strong> tiene
-          relaciones activas que impiden su borrado:
-        </p>
-        <ListGroup
-          variant="flush"
-          className="text-start mb-4 bg-light rounded-3 p-2"
-        >
-          {relations.map((rel, idx) => (
-            <ListGroup.Item
-              key={idx}
-              className="bg-transparent border-0 d-flex align-items-center gap-2 small fw-medium text-secondary"
-            >
-              <FaInfoCircle className="text-warning" /> {rel}
-            </ListGroup.Item>
-          ))}
-        </ListGroup>
-        <p className="small text-muted mb-4">
-          Por favor, elimina primero estas dependencias antes de intentar
-          borrar el condominio.
-        </p>
-        <Button
-          variant="secondary"
-          onClick={onHide}
-          className="rounded-pill px-5 fw-bold border-0 shadow-sm"
-        >
-          Entendido
-        </Button>
-      </Modal.Body>
-    </Modal>
+        <div className="modal-body">
+          <p className="text-secondary" style={{ fontSize: 14 }}>
+            El condominio <strong>{condoName}</strong> no puede ser eliminado porque tiene las siguientes relaciones activas:
+          </p>
+          <div className="flex flex-col gap-2" style={{ marginTop: 12 }}>
+            {relations.map((rel, i) => (
+              <div key={i} className="flex items-center gap-2" style={{ padding: "8px 12px", background: "var(--bg)", borderRadius: "var(--radius-sm)" }}>
+                <span className="text-sm">{rel}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-primary" onClick={onHide}>Entendido</button>
+        </div>
+      </div>
+    </div>
   );
 };
 

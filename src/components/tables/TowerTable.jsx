@@ -1,14 +1,11 @@
 import { useState, useMemo } from "react";
-import { Table, Button, Badge } from "react-bootstrap";
-import { FaBuilding, FaEdit, FaTrash } from "react-icons/fa";
+import { Building2, Edit3, Trash2 } from "lucide-react";
+import { usePagination } from "../../hooks/usePagination";
+import DataTable from "../ui/DataTable";
 import SearchBar from "../ui/SearchBar";
-import TablePagination from "../ui/TablePagination";
-import EmptyState from "../ui/EmptyState";
 
 const TowerTable = ({ data, onEdit, onDelete }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 10;
 
   const filtered = useMemo(() => {
     return data.filter((t) =>
@@ -16,11 +13,7 @@ const TowerTable = ({ data, onEdit, onDelete }) => {
     );
   }, [data, searchTerm]);
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paginated = filtered.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
-  );
+  const { currentPage, setCurrentPage, totalPages, paginatedData } = usePagination(filtered);
 
   return (
     <>
@@ -34,65 +27,43 @@ const TowerTable = ({ data, onEdit, onDelete }) => {
           placeholder="Buscar torre por nombre..."
         />
       </div>
-      <div className="table-responsive">
-        <Table hover className="align-middle mb-0 custom-table">
-          <thead className="bg-light text-muted small text-uppercase">
-            <tr>
-              <th className="px-4 py-3 border-0">Nombre de la Torre</th>
-              <th className="py-3 border-0">ID Referencia</th>
-              <th className="px-4 py-3 border-0 text-end">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginated.length > 0 ? (
-              paginated.map((tower) => (
-                <tr key={tower.id} className="border-bottom border-light">
-                  <td className="px-4 py-3">
-                    <div className="d-flex align-items-center gap-3">
-                      <div className="p-2 rounded-3 bg-primary bg-opacity-10 text-primary-theme">
-                        <FaBuilding />
-                      </div>
-                      <div className="fw-bold text-dark">{tower.nombre}</div>
-                    </div>
-                  </td>
-                  <td className="py-3 text-muted small">#{tower.id}</td>
-                  <td className="px-4 py-3 text-end">
-                    <div className="d-flex justify-content-end gap-2">
-                      <Button
-                        variant="light"
-                        className="btn btn-sm btn-primary-theme btn-action-sm"
-                        onClick={() => onEdit(tower)}
-                      >
-                        <FaEdit /> <span>Editar</span>
-                      </Button>
-                      <Button
-                        variant="light"
-                        className="btn btn-sm btn-primary-theme btn-action-sm"
-                        onClick={() => onDelete(tower)}
-                      >
-                        <FaTrash /> <span>Eliminar</span>
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <EmptyState
-                colSpan={3}
-                message="No hay torres registradas."
-                icon={FaBuilding}
-              />
-            )}
-          </tbody>
-        </Table>
-      </div>
-      <TablePagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-        totalItems={filtered.length}
-        itemsShowing={paginated.length}
-      />
+      <DataTable
+        headers={["Nombre de la Torre", "ID Referencia", "Acciones"]}
+        isEmpty={paginatedData.length === 0}
+        emptyMessage="No hay torres registradas."
+        emptyIcon={Building2}
+        paginationProps={{
+          currentPage,
+          totalPages,
+          onPageChange: setCurrentPage,
+          totalItems: filtered.length,
+          itemsShowing: paginatedData.length,
+        }}
+      >
+        {paginatedData.map((tower) => (
+          <tr key={tower.id}>
+            <td>
+              <div className="cell-label">
+                <div className="cell-icon primary">
+                  <Building2 size={14} />
+                </div>
+                <div className="cell-title">{tower.nombre}</div>
+              </div>
+            </td>
+            <td><span className="text-muted">#{tower.id}</span></td>
+            <td>
+              <div className="cell-actions">
+                <button className="btn btn-outline btn-sm" onClick={() => onEdit(tower)}>
+                  <Edit3 size={13} /> Editar
+                </button>
+                <button className="btn btn-outline btn-sm" onClick={() => onDelete(tower)}>
+                  <Trash2 size={13} /> Eliminar
+                </button>
+              </div>
+            </td>
+          </tr>
+        ))}
+      </DataTable>
     </>
   );
 };

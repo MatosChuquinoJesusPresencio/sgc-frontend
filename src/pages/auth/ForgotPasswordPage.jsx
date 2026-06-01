@@ -1,13 +1,13 @@
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import { AlertTriangle, ArrowLeft, CheckCircle2 } from "lucide-react";
 import AnimatedPage from "../../components/animations/AnimatedPage";
 import { useAuth } from "../../hooks/useAuth";
 import AuthCard from "../../components/auth/AuthCard";
 import AuthLogo from "../../components/auth/AuthLogo";
 import FormInput from "../../components/form/FormInput";
 import AuthButton from "../../components/auth/AuthButton";
-import AuthAlert from "../../components/auth/AuthAlert";
 
 const ForgotPasswordPage = () => {
     const { forgotPassword, authLoading, authError, clearAuthError } = useAuth();
@@ -27,7 +27,7 @@ const ForgotPasswordPage = () => {
 
     return (
         <AnimatedPage>
-            <div className="container-fluid vh-100 d-flex justify-content-center align-items-center position-relative bg-login-image">
+            <div className="login-page">
                 <AuthCard>
                     <AuthLogo
                         title="Recuperar Contraseña"
@@ -42,7 +42,6 @@ const ForgotPasswordPage = () => {
                         <form noValidate onSubmit={handleSubmit(onSubmit)}>
                             <FormInput
                                 label="Correo Electrónico"
-                                icon="envelope"
                                 type="email"
                                 placeholder="ejemplo@correo.com"
                                 register={register}
@@ -66,31 +65,35 @@ const ForgotPasswordPage = () => {
                             />
 
                             {authError && (
-                                <div className="mt-1">
-                                    <AuthAlert type="danger" message={authError} onClose={clearAuthError} />
+                                <div className="alert alert-danger mt-3">
+                                    <AlertTriangle size={14} />
+                                    <span>{authError}</span>
+                                    <button
+                                        onClick={clearAuthError}
+                                        style={{ marginLeft: "auto", background: "none", border: "none", color: "inherit", cursor: "pointer" }}
+                                    >
+                                        ×
+                                    </button>
                                 </div>
                             )}
                         </form>
                     ) : (
-                        <div className="text-center mb-4">
-                            <div className="alert alert-success border-0 rounded-4 py-3 mb-3">
-                                <i className="bi bi-check-circle-fill fs-1 d-block mb-2 text-success"></i>
-                                <p className="mb-1 small">
-                                    Si el correo está registrado, recibirás las instrucciones de recuperación.
-                                </p>
+                        <div className="auth-success-card">
+                            <div className="auth-success-icon success">
+                                <CheckCircle2 size={28} />
                             </div>
-                            <p className="text-muted" style={{ fontSize: "0.75rem" }}>
-                                <i className="bi bi-terminal me-1"></i>
+                            <p className="auth-success-msg">
+                                Si el correo está registrado, recibirás las instrucciones de recuperación.
+                            </p>
+                            <p className="text-xs text-muted">
                                 Revisa la consola del navegador para ver el enlace simulado.
                             </p>
                         </div>
                     )}
 
-                    <div className="text-center">
-                        <Link to="/login" className="btn btn-link p-0 text-decoration-none small fw-semibold forgot-password-link">
-                            <i className="bi bi-arrow-left me-1"></i> Volver al inicio de sesión
-                        </Link>
-                    </div>
+                    <Link to="/login" className="back-link">
+                        <ArrowLeft size={14} /> Volver al inicio de sesión
+                    </Link>
                 </AuthCard>
             </div>
         </AnimatedPage>

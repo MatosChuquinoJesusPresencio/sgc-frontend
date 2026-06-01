@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { Card, Row, Col, Button, Form } from "react-bootstrap";
-import { FaLock, FaSave, FaShieldAlt, FaInfoCircle } from "react-icons/fa";
+import { Lock, Save, Shield, Info, AlertTriangle, CheckCircle } from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
 import { useData } from "../../hooks/useData";
@@ -10,7 +9,6 @@ import { useData } from "../../hooks/useData";
 import AnimatedPage from "../../components/animations/AnimatedPage";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import FormInput from "../../components/form/FormInput";
-import AuthAlert from "../../components/auth/AuthAlert";
 
 const ChangePasswordPage = () => {
   const navigate = useNavigate();
@@ -72,123 +70,109 @@ const ChangePasswordPage = () => {
     <AnimatedPage>
       <div className="page-container">
         <DashboardHeader
-          icon={FaLock}
           title="Configuración de Seguridad"
           badgeText="Perfil"
           welcomeText="Actualiza tus credenciales de acceso para mantener tu cuenta protegida."
         />
 
-        <Row className="justify-content-center">
-          <Col lg={6}>
-            <Card className="card-custom border-0 shadow-sm overflow-hidden bg-white">
-              <Card.Header className="border-0 bg-white pt-4 px-4 pb-0">
-                <h5 className="fw-bold text-dark d-flex align-items-center gap-2">
-                  <div className="p-2 rounded-3 bg-primary bg-opacity-10 text-primary-theme">
-                    <FaShieldAlt />
+        <div className="security-card">
+          <div className="card">
+            <div className="card-body">
+              <h5 className="fw-bold flex items-center gap-2 mb-4">
+                <div className="cell-icon primary">
+                  <Shield size={16} />
+                </div>
+                Cambiar Contraseña
+              </h5>
+
+              <form noValidate onSubmit={handleSubmit(onSubmit)}>
+                <div className="security-tip">
+                  <div className="security-tip-icon">
+                    <Info size={16} />
                   </div>
-                  Cambiar Contraseña
-                </h5>
-              </Card.Header>
-              <Card.Body className="p-4">
-                <Form noValidate onSubmit={handleSubmit(onSubmit)}>
-                  <div className="p-4 rounded-4 bg-light mb-4 border border-light">
-                    <div className="d-flex align-items-start gap-3">
-                      <div className="p-2 rounded-circle bg-white text-info shadow-sm">
-                        <FaInfoCircle />
-                      </div>
-                      <div>
-                        <h6 className="fw-bold text-dark mb-1">
-                          Recomendación
-                        </h6>
-                        <p className="small text-muted mb-0">
-                          Usa al menos 6 caracteres y combina letras con números
-                          para una mayor seguridad.
-                        </p>
-                      </div>
-                    </div>
+                  <div className="security-tip-text">
+                    <h6>Recomendación</h6>
+                    <p>Usa al menos 6 caracteres y combina letras con números para una mayor seguridad.</p>
                   </div>
+                </div>
 
-                  <FormInput
-                    label="Contraseña Actual"
-                    type="password"
-                    placeholder="Escribe tu contraseña actual"
-                    register={register}
-                    name="currentPassword"
-                    validation={{
-                      required: "La contraseña actual es obligatoria",
-                    }}
-                    error={errors.currentPassword}
-                  />
+                <FormInput
+                  label="Contraseña Actual"
+                  type="password"
+                  placeholder="Escribe tu contraseña actual"
+                  register={register}
+                  name="currentPassword"
+                  validation={{
+                    required: "La contraseña actual es obligatoria",
+                  }}
+                  error={errors.currentPassword}
+                />
 
-                  <FormInput
-                    label="Nueva Contraseña"
-                    type="password"
-                    placeholder="Mínimo 6 caracteres"
-                    register={register}
-                    name="newPassword"
-                    validation={{
-                      required: "La nueva contraseña es obligatoria",
-                      minLength: {
-                        value: 6,
-                        message: "Mínimo 6 caracteres",
-                      },
-                    }}
-                    error={errors.newPassword}
-                  />
+                <FormInput
+                  label="Nueva Contraseña"
+                  type="password"
+                  placeholder="Mínimo 6 caracteres"
+                  register={register}
+                  name="newPassword"
+                  validation={{
+                    required: "La nueva contraseña es obligatoria",
+                    minLength: {
+                      value: 6,
+                      message: "Mínimo 6 caracteres",
+                    },
+                  }}
+                  error={errors.newPassword}
+                />
 
-                  <FormInput
-                    label="Confirmar Nueva Contraseña"
-                    type="password"
-                    placeholder="Repite la nueva contraseña"
-                    register={register}
-                    name="confirmPassword"
-                    validation={{
-                      required: "Debe confirmar la nueva contraseña",
-                      validate: (value) =>
-                        value === newPassword || "Las contraseñas no coinciden",
-                    }}
-                    error={errors.confirmPassword}
-                  />
+                <FormInput
+                  label="Confirmar Nueva Contraseña"
+                  type="password"
+                  placeholder="Repite la nueva contraseña"
+                  register={register}
+                  name="confirmPassword"
+                  validation={{
+                    required: "Debe confirmar la nueva contraseña",
+                    validate: (value) =>
+                      value === newPassword || "Las contraseñas no coinciden",
+                  }}
+                  error={errors.confirmPassword}
+                />
 
-                  <div className="d-grid mt-4">
-                    <Button
-                      type="submit"
-                      className="btn-primary-theme rounded-pill py-2 fw-bold d-flex align-items-center justify-content-center gap-2 border-0"
-                      disabled={loading}
+                <button
+                  type="submit"
+                  className="btn btn-primary w-full mt-4"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <><span className="spinner" /> Actualizando...</>
+                  ) : (
+                    <><Save size={16} /> Actualizar Contraseña</>
+                  )}
+                </button>
+
+                {error && (
+                  <div className="alert alert-danger mt-3">
+                    <AlertTriangle size={14} />
+                    <span>{error}</span>
+                    <button
+                      onClick={() => setError(null)}
+                      style={{ marginLeft: "auto", background: "none", border: "none", color: "inherit", cursor: "pointer" }}
                     >
-                      {loading ? (
-                        "Actualizando..."
-                      ) : (
-                        <>
-                          <FaSave /> Actualizar Contraseña
-                        </>
-                      )}
-                    </Button>
+                      ×
+                    </button>
                   </div>
+                )}
 
-                  {error && (
-                    <div className="mt-3">
-                      <AuthAlert
-                        type="danger"
-                        message={error}
-                        onClose={() => setError(null)}
-                      />
-                    </div>
-                  )}
-
-                  {success && (
-                    <div className="mt-3">
-                      <AuthAlert
-                        type="success"
-                        message="¡Contraseña actualizada con éxito! Redirigiendo al inicio..."
-                      />
-                    </div>
-                  )}
-                </Form>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
+                {success && (
+                  <div className="alert alert-success mt-3">
+                    <CheckCircle size={14} />
+                    <span>¡Contraseña actualizada con éxito! Redirigiendo al inicio...</span>
+                  </div>
+                )}
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
     </AnimatedPage>
   );

@@ -1,16 +1,9 @@
-import { Modal, Button, Form } from "react-bootstrap";
-import { FaBuilding, FaTimes, FaSave, FaInfoCircle } from "react-icons/fa";
+import { X, Building2, Save, Info } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useEffect } from "react";
 import FormInput from "../form/FormInput";
 
-const CondoFormModal = ({
-  show,
-  onHide,
-  onSubmit,
-  editingCondo,
-  adminUsers,
-}) => {
+const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers }) => {
   const {
     register,
     handleSubmit,
@@ -18,159 +11,110 @@ const CondoFormModal = ({
     clearErrors,
     formState: { errors },
   } = useForm({
-    defaultValues: {
-      nombre: "",
-      direccion: "",
-      ciudad: "",
-      pais: "",
-      id_administrador: "",
-    },
+    defaultValues: { nombre: "", pais: "", ciudad: "", direccion: "", id_administrador: "" },
   });
 
   useEffect(() => {
     if (show) {
       clearErrors();
       if (editingCondo) {
-        const currentAdmin = adminUsers.find(
-          (u) => u.id_condominio === editingCondo.id,
-        );
         reset({
           nombre: editingCondo.nombre,
-          direccion: editingCondo.direccion,
-          ciudad: editingCondo.ciudad,
           pais: editingCondo.pais,
-          id_administrador: currentAdmin ? currentAdmin.id.toString() : "",
+          ciudad: editingCondo.ciudad,
+          direccion: editingCondo.direccion,
+          id_administrador: editingCondo.id_administrador || "",
         });
       } else {
-        reset({
-          nombre: "",
-          direccion: "",
-          ciudad: "",
-          pais: "",
-          id_administrador: "",
-        });
+        reset({ nombre: "", pais: "", ciudad: "", direccion: "", id_administrador: "" });
       }
     }
-  }, [show, editingCondo, reset, clearErrors, adminUsers]);
+  }, [show, editingCondo, reset, clearErrors]);
 
-  const handleFormSubmit = (data) => {
-    onSubmit(data);
-  };
+  if (!show) return null;
 
   return (
-    <Modal show={show} onHide={onHide} centered size="lg" className="border-0">
-      <Modal.Header closeButton className="border-0 pb-0">
-        <Modal.Title className="fw-bold text-primary-theme d-flex align-items-center gap-2">
-          <div className="p-2 rounded-3 bg-primary bg-opacity-10 text-primary-theme">
-            <FaBuilding />
+    <div className="modal-overlay" onClick={onHide}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <div className="modal-title">
+            <div className="cell-icon primary">
+              {editingCondo ? <Building2 size={16} /> : <Building2 size={16} />}
+            </div>
+            {editingCondo ? "Editar Condominio" : "Nuevo Condominio"}
           </div>
-          {editingCondo ? "Editar Condominio" : "Nuevo Condominio"}
-        </Modal.Title>
-      </Modal.Header>
-      <Modal.Body className="py-4">
-        <Form onSubmit={handleSubmit(handleFormSubmit)}>
-          <div className="row">
-            <div className="col-12">
+          <button className="modal-close" onClick={onHide}>
+            <X size={16} />
+          </button>
+        </div>
+        <div className="modal-body">
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="grid-2">
               <FormInput
                 label="Nombre del Condominio"
-                type="text"
-                placeholder="Ej. Residencial Las Flores"
                 name="nombre"
                 register={register}
-                validation={{ required: "El nombre es obligatorio" }}
+                validation={{ required: "El nombre es requerido" }}
                 error={errors.nombre}
+                placeholder="Ej: Condominio Las Palmas"
               />
-            </div>
-            <div className="col-12">
-              <FormInput
-                label="Dirección"
-                type="text"
-                placeholder="Av. Principal 123"
-                name="direccion"
-                register={register}
-                validation={{ required: "La dirección es obligatoria" }}
-                error={errors.direccion}
-              />
-            </div>
-            <div className="col-md-6">
-              <FormInput
-                label="Ciudad"
-                type="text"
-                placeholder="Lima"
-                name="ciudad"
-                register={register}
-                validation={{ required: "La ciudad es obligatoria" }}
-                error={errors.ciudad}
-              />
-            </div>
-            <div className="col-md-6">
               <FormInput
                 label="País"
-                type="text"
-                placeholder="Perú"
                 name="pais"
                 register={register}
-                validation={{ required: "El país es obligatorio" }}
+                validation={{ required: "El país es requerido" }}
                 error={errors.pais}
+                placeholder="Ej: Perú"
+              />
+              <FormInput
+                label="Ciudad"
+                name="ciudad"
+                register={register}
+                validation={{ required: "La ciudad es requerida" }}
+                error={errors.ciudad}
+                placeholder="Ej: Lima"
+              />
+              <FormInput
+                label="Dirección"
+                name="direccion"
+                register={register}
+                validation={{ required: "La dirección es requerida" }}
+                error={errors.direccion}
+                placeholder="Ej: Av. Principal 123"
               />
             </div>
 
-            <div className="col-12">
-              <div className="mb-4">
-                <label className="form-label text-secondary fw-semibold small mb-1">
-                  Asignar Administrador de Condominio
-                </label>
-                <Form.Select
-                  className={`form-control input-no-shadow ${errors.id_administrador ? "is-invalid" : ""}`}
-                  {...register("id_administrador")}
-                >
-                  <option value="">
-                    Sin asignar (puedes hacerlo después)...
-                  </option>
-                  {adminUsers
-                    .filter(
-                      (u) =>
-                        u.id_condominio === null ||
-                        (editingCondo && u.id_condominio === editingCondo.id),
-                    )
-                    .map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.nombre} ({u.email})
-                      </option>
-                    ))}
-                </Form.Select>
-                {errors.id_administrador && (
-                  <div className="invalid-feedback d-block mt-1">
-                    {errors.id_administrador.message}
-                  </div>
-                )}
-                <div className="x-small text-muted mt-1">
-                  <FaInfoCircle className="me-1" /> Solo se muestran
-                  administradores que no tienen un condominio asignado.
-                </div>
+            <div className="form-group">
+              <label className="form-label">Administrador del Condominio</label>
+              <select
+                className="form-select"
+                {...register("id_administrador")}
+              >
+                <option value="">Seleccionar administrador...</option>
+                {adminUsers
+                  .filter((u) => !u.id_condominio || (editingCondo && u.id_condominio === editingCondo.id))
+                  .map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.nombre} ({u.email})
+                    </option>
+                  ))}
+              </select>
+              <div className="flex items-center gap-1 mt-1">
+                <Info size={11} className="text-muted" />
+                <span className="text-xs text-muted">Solo se muestran los administradores disponibles.</span>
               </div>
             </div>
-          </div>
 
-          <div className="d-flex justify-content-end gap-2 mt-2">
-            <Button
-              variant="light"
-              onClick={onHide}
-              className="rounded-pill px-4 fw-bold text-secondary border-0"
-            >
-              <FaTimes className="me-2" /> Cancelar
-            </Button>
-            <Button
-              type="submit"
-              className="btn-primary-theme rounded-pill px-4 fw-bold shadow-sm border-0"
-            >
-              <FaSave className="me-2" />{" "}
-              {editingCondo ? "Actualizar Cambios" : "Guardar Condominio"}
-            </Button>
-          </div>
-        </Form>
-      </Modal.Body>
-    </Modal>
+            <div className="modal-footer" style={{ padding: "16px 0 0", border: "none" }}>
+              <button type="button" className="btn btn-outline" onClick={onHide}>Cancelar</button>
+              <button type="submit" className="btn btn-primary">
+                <Save size={16} /> {editingCondo ? "Actualizar" : "Crear Condominio"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   );
 };
 

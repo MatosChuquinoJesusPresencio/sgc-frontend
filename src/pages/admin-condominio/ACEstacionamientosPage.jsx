@@ -1,25 +1,17 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 
 import {
-  Button,
-  Col,
-  Row,
-  Badge,
-  Modal,
-  Form,
-  Tooltip,
-  OverlayTrigger,
-} from "react-bootstrap";
-import {
-  FaCar,
-  FaTrash,
-  FaInfoCircle,
-  FaCheckCircle,
-  FaExclamationTriangle,
-  FaEdit,
-  FaEye,
-} from "react-icons/fa";
+  Car,
+  Trash2,
+  Info,
+  CheckCircle,
+  AlertTriangle,
+  Edit3,
+  Eye,
+  X,
+  Save,
+} from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
 import { useData } from "../../hooks/useData";
@@ -29,9 +21,10 @@ import StatCard from "../../components/dashboard/StatCard";
 import AnimatedPage from "../../components/animations/AnimatedPage";
 import FormInput from "../../components/form/FormInput";
 import SearchBar from "../../components/ui/SearchBar";
-import MainTable from "../../components/ui/MainTable";
+import DataTable from "../../components/ui/DataTable";
 import NoCondoWarning from "../../components/ui/NoCondoWarning";
 import { usePagination } from "../../hooks/usePagination";
+import ConfirmDialog from "../../components/modals/ConfirmDialog";
 
 const ACEstacionamientosPage = () => {
   const { authUser } = useAuth();
@@ -251,48 +244,48 @@ const ACEstacionamientosPage = () => {
     <AnimatedPage>
       <div className="page-container">
         <DashboardHeader
-          icon={FaCar}
+          icon={Car}
           title="Gestión de Estacionamientos"
           badgeText={condominio?.nombre || "Condominio"}
           welcomeText="Administra los espacios de parqueo, asígnatos a unidades y visualiza la ocupación vehicular."
         >
-          <Button
-            className="btn-primary-theme btn-action"
+          <button
+            className="btn btn-primary"
             onClick={handleOpenCreate}
           >
-            <FaCar />
+            <Car size={16} />
             <span>Nuevo Estacionamiento</span>
-          </Button>
+          </button>
         </DashboardHeader>
 
-        <Row className="g-4 mb-5">
+        <div className="grid grid-4 gap-4 mb-5">
           <StatCard
-            icon={FaCar}
+            icon={Car}
             label="Total Espacios"
             value={stats.total}
             colorClass="primary-theme"
           />
           <StatCard
-            icon={FaCheckCircle}
+            icon={CheckCircle}
             label="Ocupados"
             value={stats.ocupados}
             colorClass="primary-theme"
           />
           <StatCard
-            icon={FaInfoCircle}
+            icon={Info}
             label="Disponibles"
             value={stats.disponibles}
             colorClass="primary-theme"
           />
           <StatCard
-            icon={FaExclamationTriangle}
+            icon={AlertTriangle}
             label="Con Vehículos"
             value={stats.conVehiculos}
             colorClass="primary-theme"
           />
-        </Row>
+        </div>
 
-        <MainTable
+        <DataTable
           headers={[
             "#",
             "Nro. Estacionamiento",
@@ -304,7 +297,7 @@ const ACEstacionamientosPage = () => {
           ]}
           isEmpty={paginatedData.length === 0}
           emptyMessage="No se encontraron estacionamientos."
-          emptyIcon={FaCar}
+          emptyIcon={Car}
           searchBar={
             <SearchBar
               searchTerm={searchTerm}
@@ -333,52 +326,46 @@ const ACEstacionamientosPage = () => {
           {paginatedData.map((est, index) => {
             const actualIndex = (currentPage - 1) * itemsPerPage + index + 1;
             return (
-              <tr key={est.id} className="border-bottom border-light">
+              <tr key={est.id}>
                 <td className="px-4 py-3 text-center">
                   <span className="text-secondary fw-bold">
                     {actualIndex.toString().padStart(2, "0")}
                   </span>
                 </td>
                 <td className="py-3">
-                  <div className="fw-bold text-dark">{est.numero}</div>
-                  <div className="x-small text-muted">
+                  <div className="fw-bold">{est.numero}</div>
+                  <div className="text-xs text-muted">
                     {est.cantidad_vehiculos > 0
                       ? est.tipo_vehiculo
                       : "Sin vehículos"}
                   </div>
                 </td>
                 <td className="py-3">
-                  <Badge
-                    bg="light"
-                    className="text-primary-theme border border-primary border-opacity-10 rounded-pill px-3 fw-medium"
-                  >
+                  <span className="badge badge-info">
                     Apto {est.aptoNumero}
-                  </Badge>
-                  <div className="x-small text-muted mt-1 ms-2">
+                  </span>
+                  <div className="text-xs text-muted mt-1">
                     {est.torreNombre}
                   </div>
                 </td>
                 <td className="py-3">
-                  <div className="small fw-medium text-secondary">
+                  <div className="text-sm fw-medium text-secondary">
                     {est.ownerName}
                   </div>
                 </td>
                 <td className="py-3">
-                  <Badge
-                    bg={est.ocupado ? "danger" : "success"}
-                    className={`rounded-pill px-3 fw-normal ${est.ocupado ? "bg-opacity-10 text-danger border border-danger border-opacity-25" : "bg-opacity-10 text-success border border-success border-opacity-25"}`}
-                  >
+                  <span className={`badge ${est.ocupado ? "badge-danger" : "badge-success"}`}>
                     {est.ocupado ? "Ocupado" : "Disponible"}
-                  </Badge>
+                  </span>
                 </td>
                 <td className="py-3 text-center">
                   <div className="text-center">
                     {est.cantidad_vehiculos > 0 ? (
                       <>
-                        <span className="fw-bold text-primary-theme">
+                        <span className="fw-bold text-accent">
                           {est.cantidad_vehiculos}
                         </span>
-                        <span className="text-muted x-small">
+                        <span className="text-muted text-xs">
                           {" "}
                           /{" "}
                           {est.tipo_vehiculo === "Auto"
@@ -391,247 +378,194 @@ const ACEstacionamientosPage = () => {
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-end">
-                  <div className="d-flex justify-content-end gap-2">
-                    <Button
-                      variant="light"
-                      className="btn btn-sm btn-primary-theme btn-action-sm"
+                <td className="px-4 py-3 text-right">
+                  <div className="flex justify-end gap-2">
+                    <button
+                      className="btn btn-outline btn-sm"
                       onClick={() => handleOpenVehicles(est)}
                       disabled={est.cantidad_vehiculos === 0}
                     >
-                      <FaEye /> <span>Detalles</span>
-                    </Button>
+                      <Eye size={14} /> <span>Detalles</span>
+                    </button>
 
-                    <Button
-                      variant="light"
-                      className="btn btn-sm btn-primary-theme btn-action-sm"
+                    <button
+                      className="btn btn-outline btn-sm"
                       onClick={() => handleOpenEdit(est)}
                       disabled={est.cantidad_vehiculos > 0}
-                      style={
-                        est.cantidad_vehiculos > 0
-                          ? { pointerEvents: "none" }
-                          : {}
-                      }
                     >
-                      <FaEdit /> <span>Editar</span>
-                    </Button>
+                      <Edit3 size={14} /> <span>Editar</span>
+                    </button>
 
-                    <Button
-                      variant="light"
-                      className="btn btn-sm btn-primary-theme btn-action-sm"
+                    <button
+                      className="btn btn-outline btn-sm"
                       onClick={() => handleOpenDelete(est)}
                       disabled={est.cantidad_vehiculos > 0}
-                      style={
-                        est.cantidad_vehiculos > 0
-                          ? { pointerEvents: "none" }
-                          : {}
-                      }
                     >
-                      <FaTrash /> <span>Eliminar</span>
-                    </Button>
+                      <Trash2 size={14} /> <span>Eliminar</span>
+                    </button>
                   </div>
                 </td>
               </tr>
             );
           })}
-        </MainTable>
+        </DataTable>
       </div>
 
-      <Modal
-        show={showFormModal}
-        onHide={() => setShowFormModal(false)}
-        centered
-      >
-        <Modal.Header closeButton className="border-0 p-4 pb-0">
-          <Modal.Title className="fw-bold text-primary-theme">
-            {editingEstacionamiento
-              ? "Editar Estacionamiento"
-              : "Nuevo Estacionamiento"}
-          </Modal.Title>
-        </Modal.Header>
-        <Form onSubmit={handleSubmit(onSubmit)}>
-          <Modal.Body className="p-4">
-            <Row className="g-3">
-              <Col md={12}>
-                <FormInput
-                  label="Número de Estacionamiento"
-                  name="numero"
-                  register={register}
-                  validation={{ required: "El número es requerido" }}
-                  error={errors.numero}
-                  placeholder="Ej: E-101"
-                />
-              </Col>
-              <Col md={12}>
-                <Form.Group className="mb-3">
-                  <Form.Label className="fw-semibold small text-secondary">
-                    Apartamiento Asignado
-                  </Form.Label>
-                  <Form.Select
-                    {...register("id_apartamento", {
-                      required: "Debe asignar un apartamento",
-                    })}
-                    isInvalid={!!errors.id_apartamento}
-                    className="rounded-pill border-light bg-light"
-                  >
-                    <option value="">Seleccionar apartamento...</option>
-                    {apartamentosCondo.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        Apto {a.numero} -{" "}
-                        {
-                          torres.find(
-                            (t) =>
-                              t.id ===
-                              pisos.find((p) => p.id === a.id_piso)?.id_torre,
-                          )?.nombre
-                        }
-                      </option>
-                    ))}
-                  </Form.Select>
-                  <Form.Control.Feedback type="invalid">
-                    {errors.id_apartamento?.message}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-            </Row>
-          </Modal.Body>
-          <Modal.Footer className="border-0 p-4 pt-0">
-            <Button
-              variant="light"
-              onClick={() => setShowFormModal(false)}
-              className="rounded-pill px-4"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              className="btn-primary-theme rounded-pill px-4"
-            >
-              {editingEstacionamiento
-                ? "Guardar Cambios"
-                : "Crear Estacionamiento"}
-            </Button>
-          </Modal.Footer>
-        </Form>
-      </Modal>
-
-      <Modal
-        show={showVehiclesModal}
-        onHide={() => setShowVehiclesModal(false)}
-        centered
-        size="md"
-      >
-        <Modal.Header closeButton className="border-0 p-4 pb-0">
-          <Modal.Title className="fw-bold text-primary-theme d-flex align-items-center gap-2">
-            <FaCar /> Vehículos en {selectedEstacionamiento?.numero}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="p-4">
-          <div className="mb-3">
-            <span className="text-muted small">Propietario: </span>
-            <span className="fw-bold text-dark">
-              {selectedEstacionamiento?.ownerName}
-            </span>
-          </div>
-          <div className="bg-light rounded-4 p-3">
-            {selectedEstacionamiento?.ownerVehicles.length > 0 ? (
-              <div className="d-flex flex-column gap-3">
-                {selectedEstacionamiento.ownerVehicles.map((v) => (
-                  <div
-                    key={v.id}
-                    className="d-flex align-items-center gap-3 p-2 bg-white rounded-3 border border-light shadow-sm"
-                  >
-                    <div className="bg-primary bg-opacity-10 p-2 rounded-3 text-primary">
-                      <FaCar size={20} />
-                    </div>
-                    <div className="flex-grow-1">
-                      <div className="fw-bold text-dark">
-                        {v.marca} {v.modelo}
-                      </div>
-                      <div className="x-small text-muted">
-                        Color: {v.color} • Placa:{" "}
-                        <span className="fw-bold">{v.placa}</span>
-                      </div>
+      {showFormModal && (
+        <div className="modal-overlay" onClick={() => setShowFormModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title">
+                {editingEstacionamiento
+                  ? "Editar Estacionamiento"
+                  : "Nuevo Estacionamiento"}
+              </div>
+              <button className="modal-close" onClick={() => setShowFormModal(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="modal-body">
+                <div className="grid-2 gap-3">
+                  <div>
+                    <FormInput
+                      label="Número de Estacionamiento"
+                      name="numero"
+                      register={register}
+                      validation={{ required: "El número es requerido" }}
+                      error={errors.numero}
+                      placeholder="Ej: E-101"
+                    />
+                  </div>
+                  <div>
+                    <div className="form-group mb-3">
+                      <label className="form-label fw-semibold text-sm text-secondary">
+                        Apartamento Asignado
+                      </label>
+                      <select
+                        className="form-select"
+                        {...register("id_apartamento", {
+                          required: "Debe asignar un apartamento",
+                        })}
+                      >
+                        <option value="">Seleccionar apartamento...</option>
+                        {apartamentosCondo.map((a) => (
+                          <option key={a.id} value={a.id}>
+                            Apto {a.numero} -{" "}
+                            {
+                              torres.find(
+                                (t) =>
+                                  t.id ===
+                                  pisos.find((p) => p.id === a.id_piso)?.id_torre,
+                              )?.nombre
+                            }
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <FaExclamationTriangle
-                  className="text-warning mb-2"
-                  size={24}
-                />
-                <div className="text-muted small italic">
-                  No hay vehículos registrados para este propietario.
-                </div>
-                <div className="x-small text-secondary">
-                  La cantidad indicada (
-                  {selectedEstacionamiento?.cantidad_vehiculos}) puede ser
-                  informativa o de inquilinos.
                 </div>
               </div>
-            )}
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setShowFormModal(false)}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                >
+                  {editingEstacionamiento
+                    ? "Guardar Cambios"
+                    : "Crear Estacionamiento"}
+                </button>
+              </div>
+            </form>
           </div>
-        </Modal.Body>
-        <Modal.Footer className="border-0 p-4 pt-0">
-          <Button
-            variant="primary-theme"
-            onClick={() => setShowVehiclesModal(false)}
-            className="rounded-pill px-4 w-100"
-          >
-            Entendido
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        </div>
+      )}
 
-      <Modal
+      {showVehiclesModal && (
+        <div className="modal-overlay" onClick={() => setShowVehiclesModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title flex items-center gap-2">
+                <Car size={16} /> Vehículos en {selectedEstacionamiento?.numero}
+              </div>
+              <button className="modal-close" onClick={() => setShowVehiclesModal(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="mb-3">
+                <span className="text-muted text-sm">Propietario: </span>
+                <span className="fw-bold">
+                  {selectedEstacionamiento?.ownerName}
+                </span>
+              </div>
+              <div className="p-3">
+                {selectedEstacionamiento?.ownerVehicles.length > 0 ? (
+                  <div className="flex flex-col gap-3">
+                    {selectedEstacionamiento.ownerVehicles.map((v) => (
+                      <div
+                        key={v.id}
+                        className="flex items-center gap-3 p-2"
+                      >
+                        <div className="cell-icon primary">
+                          <Car size={20} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div className="fw-bold">
+                            {v.marca} {v.modelo}
+                          </div>
+                          <div className="text-xs text-muted">
+                            Color: {v.color} • Placa:{" "}
+                            <span className="fw-bold">{v.placa}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <AlertTriangle
+                      className="text-warning mb-2"
+                      size={24}
+                    />
+                    <div className="text-muted text-sm">
+                      No hay vehículos registrados para este propietario.
+                    </div>
+                    <div className="text-xs text-secondary">
+                      La cantidad indicada (
+                      {selectedEstacionamiento?.cantidad_vehiculos}) puede ser
+                      informativa o de inquilinos.
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn btn-primary w-full"
+                onClick={() => setShowVehiclesModal(false)}
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ConfirmDialog
         show={showDeleteModal}
         onHide={() => setShowDeleteModal(false)}
-        centered
-      >
-        <Modal.Header closeButton className="border-0 p-4 pb-0">
-          <Modal.Title className="fw-bold text-danger">
-            Confirmar Eliminación
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="p-4">
-          <div className="text-center mb-4">
-            <div
-              className="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3"
-              style={{ width: "60px", height: "60px" }}
-            >
-              <FaExclamationTriangle size={30} />
-            </div>
-            <p className="mb-0 text-secondary fw-medium">
-              ¿Estás seguro de que deseas eliminar el estacionamiento{" "}
-              <span className="text-dark fw-bold">
-                {estacionamientoToDelete?.numero}
-              </span>
-              ?
-            </p>
-            <p className="small text-muted mt-2">
-              Esta acción no se puede deshacer.
-            </p>
-          </div>
-        </Modal.Body>
-        <Modal.Footer className="border-0 p-4 pt-0 d-flex gap-2">
-          <Button
-            variant="light"
-            onClick={() => setShowDeleteModal(false)}
-            className="rounded-pill px-4 flex-grow-1"
-          >
-            Cancelar
-          </Button>
-          <Button
-            variant="danger"
-            onClick={confirmDelete}
-            className="rounded-pill px-4 flex-grow-1"
-          >
-            Eliminar
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        onConfirm={confirmDelete}
+        title="Confirmar Eliminación"
+        message={`¿Estás seguro de que deseas eliminar el estacionamiento ${estacionamientoToDelete?.numero}?`}
+      />
     </AnimatedPage>
   );
 };

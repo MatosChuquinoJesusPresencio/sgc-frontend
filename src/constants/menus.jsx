@@ -1,34 +1,34 @@
-import { FaHome, FaUserShield, FaBuilding, FaSitemap, FaUsers, FaListAlt, FaCar, FaHistory, FaLock, FaShoppingCart } from "react-icons/fa";
+import { LayoutDashboard, ShieldCheck, Building2, GitBranch, Users, ClipboardList, Car, History, Lock, ShoppingCart, Home } from "lucide-react";
 
 export const MENU_BY_ROLE = {
     ADMIN_CONDOMINIO: [
-        { path: "/admin-condominio", label: "Inicio", icon: <FaBuilding />, exact: true },
-        { path: "/admin-condominio/mi-condominio", label: "Mi Condominio", icon: <FaBuilding /> },
-        { path: "/admin-condominio/infraestructura", label: "Infraestructura", icon: <FaSitemap /> },
-        { path: "/admin-condominio/usuarios", label: "Usuarios", icon: <FaUsers /> },
-        { path: "/admin-condominio/apartamentos", label: "Apartamentos", icon: <FaHome /> },
-        { path: "/admin-condominio/estacionamientos", label: "Estacionamientos", icon: <FaCar /> },
-        { path: "/admin-condominio/carritos", label: "Carritos", icon: <FaShoppingCart /> },
-        { path: "/admin-condominio/historial", label: "Historial", icon: <FaListAlt /> },
-        { path: "/perfil/cambiar-contraseña", label: "Contraseña", icon: <FaLock /> },
+        { path: "/admin-condominio", label: "Inicio", icon: <Building2 size={18} />, exact: true },
+        { path: "/admin-condominio/mi-condominio", label: "Mi Condominio", icon: <Building2 size={18} /> },
+        { path: "/admin-condominio/infraestructura", label: "Infraestructura", icon: <GitBranch size={18} /> },
+        { path: "/admin-condominio/usuarios", label: "Usuarios", icon: <Users size={18} /> },
+        { path: "/admin-condominio/apartamentos", label: "Apartamentos", icon: <Home size={18} /> },
+        { path: "/admin-condominio/estacionamientos", label: "Estacionamientos", icon: <Car size={18} /> },
+        { path: "/admin-condominio/carritos", label: "Carritos", icon: <ShoppingCart size={18} /> },
+        { path: "/admin-condominio/historial", label: "Historial", icon: <ClipboardList size={18} /> },
+        { path: "/perfil/cambiar-contraseña", label: "Contraseña", icon: <Lock size={18} /> },
     ],
 
     SUPER_ADMIN: [
-        { path: "/super-admin", label: "Inicio", icon: <FaUserShield />, exact: true },
-        { path: "/super-admin/condominios", label: "Condominios", icon: <FaBuilding /> },
-        { path: "/super-admin/apartamentos", label: "Apartamentos", icon: <FaSitemap /> },
-        { path: "/super-admin/estacionamientos", label: "Estacionamientos", icon: <FaCar /> },
-        { path: "/super-admin/usuarios", label: "Usuarios", icon: <FaUsers /> },
-        { path: "/super-admin/historial", label: "Historial", icon: <FaListAlt /> },
-        { path: "/perfil/cambiar-contraseña", label: "Contraseña", icon: <FaLock /> },
+        { path: "/super-admin", label: "Inicio", icon: <ShieldCheck size={18} />, exact: true },
+        { path: "/super-admin/condominios", label: "Condominios", icon: <Building2 size={18} /> },
+        { path: "/super-admin/apartamentos", label: "Apartamentos", icon: <Home size={18} /> },
+        { path: "/super-admin/estacionamientos", label: "Estacionamientos", icon: <Car size={18} /> },
+        { path: "/super-admin/usuarios", label: "Usuarios", icon: <Users size={18} /> },
+        { path: "/super-admin/historial", label: "Historial", icon: <ClipboardList size={18} /> },
+        { path: "/perfil/cambiar-contraseña", label: "Contraseña", icon: <Lock size={18} /> },
     ],
 
     PROPIETARIO: [
-        { path: "/propietario", label: "Inicio", icon: <FaHome />, exact: true },
-        { path: "/propietario/mi-apartamento", label: "Apartamento", icon: <FaHome /> },
-        { path: "/propietario/vehiculos", label: "Vehículos", icon: <FaCar /> },
-        { path: "/propietario/carritos", label: "Carritos", icon: <FaShoppingCart /> },
-        { path: "/propietario/historial", label: "Historial", icon: <FaHistory /> },
-        { path: "/perfil/cambiar-contraseña", label: "Contraseña", icon: <FaLock /> },
+        { path: "/propietario", label: "Inicio", icon: <LayoutDashboard size={18} />, exact: true },
+        { path: "/propietario/mi-apartamento", label: "Apartamento", icon: <Home size={18} /> },
+        { path: "/propietario/vehiculos", label: "Vehículos", icon: <Car size={18} /> },
+        { path: "/propietario/carritos", label: "Carritos", icon: <ShoppingCart size={18} /> },
+        { path: "/propietario/historial", label: "Historial", icon: <History size={18} /> },
+        { path: "/perfil/cambiar-contraseña", label: "Contraseña", icon: <Lock size={18} /> },
     ],
 };

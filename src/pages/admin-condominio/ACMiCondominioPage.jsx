@@ -1,22 +1,20 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { Modal, Button, Card, Row, Col, Form } from "react-bootstrap";
-
 import {
-  FaBuilding,
-  FaMapMarkerAlt,
-  FaCalendarAlt,
-  FaCog,
-  FaPlusCircle,
-  FaUsers,
-  FaTools,
-  FaExclamationTriangle,
-  FaInfoCircle,
-  FaEdit,
-  FaSave,
-  FaTimes,
-} from "react-icons/fa";
+  Building2,
+  MapPin,
+  Calendar,
+  Settings,
+  PlusCircle,
+  Users,
+  Wrench,
+  AlertTriangle,
+  Info,
+  Edit3,
+  Save,
+  X,
+} from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
 import { useData } from "../../hooks/useData";
@@ -115,308 +113,289 @@ const ACMiCondominioPage = () => {
     <AnimatedPage>
       <div className="page-container">
         <DashboardHeader
-          icon={FaBuilding}
+          icon={Building2}
           title="Mi Condominio"
           badgeText="Administrador"
           welcomeText={`Gestión y vista general de ${condominio.nombre}.`}
         />
 
-        <div className="row g-4 mb-5">
+        <div className="grid grid-4 gap-4 mb-5">
           <StatCard
-            icon={FaBuilding}
+            icon={Building2}
             label="Torres / Bloques"
             value={torres.length}
             colorClass="primary-theme"
           />
           <StatCard
-            icon={FaPlusCircle}
+            icon={PlusCircle}
             label="Total Apartamentos"
             value={aptos.length}
             colorClass="primary-theme"
           />
           <StatCard
-            icon={FaUsers}
+            icon={Users}
             label="Usuarios Registrados"
             value={usersInCondo.length}
             colorClass="primary-theme"
           />
           <StatCard
-            icon={FaTools}
+            icon={Wrench}
             label="Carritos de Carga"
             value={carts.length}
             colorClass="primary-theme"
           />
         </div>
 
-        <div className="row g-4">
-          <Col lg={5}>
-            <Card className="card-custom h-100 overflow-hidden bg-white">
-              <Card.Header className="border-0 bg-white pt-4 px-4 pb-0">
-                <h5 className="fw-bold text-dark d-flex align-items-center gap-2">
-                  <div className="p-2 rounded-3 bg-primary bg-opacity-10 text-primary">
-                    <FaInfoCircle />
+        <div className="grid grid-2 gap-4">
+          <div className="card h-100">
+            <div className="card-body">
+              <h5 className="fw-bold flex items-center gap-2">
+                <div className="cell-icon primary">
+                  <Info size={14} />
+                </div>
+                Información General
+              </h5>
+              <div className="p-4 mb-4">
+                <h3 className="fw-bold text-accent mb-1">
+                  {condominio.nombre}
+                </h3>
+                <p className="text-secondary mb-3 flex items-center gap-2">
+                  <MapPin className="text-danger" size={14} />
+                  {condominio.direccion}, {condominio.ciudad} (
+                  {condominio.pais})
+                </p>
+                <span className="badge badge-neutral text-sm fw-bold">
+                  <Calendar size={12} className="text-accent" />
+                  Registrado el{" "}
+                  {new Date(condominio.fecha_creacion).toLocaleDateString(
+                    "es-ES",
+                    { day: "2-digit", month: "long", year: "numeric" },
+                  )}
+                </span>
+              </div>
+
+              <h6 className="text-muted text-sm fw-bold mb-3">
+                Detalles de Infraestructura
+              </h6>
+              <div className="flex flex-col">
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-secondary text-sm">Total de Pisos</span>
+                  <span className="fw-bold">{pisos.length}</span>
+                </div>
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-secondary text-sm">
+                    Apartamentos Activos
+                  </span>
+                  <span className="fw-bold">{aptos.length}</span>
+                </div>
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-secondary text-sm">
+                    Puntos de Acceso Vehicular
+                  </span>
+                  <span className="fw-bold">
+                    2 (Entrada/Salida)
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="card h-100">
+            <div className="card-body">
+              <div className="flex items-center justify-between">
+                <h5 className="fw-bold flex items-center gap-2">
+                  <div className="cell-icon warning">
+                    <Settings size={14} />
                   </div>
-                  Información General
+                  Configuración del Sistema
                 </h5>
-              </Card.Header>
-              <Card.Body className="p-4">
-                <div className="p-4 rounded-4 bg-light mb-4">
-                  <h3 className="fw-bold text-primary-theme mb-1">
-                    {condominio.nombre}
-                  </h3>
-                  <p className="text-secondary mb-3 d-flex align-items-center gap-2">
-                    <FaMapMarkerAlt className="text-danger opacity-75" />
-                    {condominio.direccion}, {condominio.ciudad} (
-                    {condominio.pais})
-                  </p>
-                  <div className="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-sm small fw-bold">
-                    <FaCalendarAlt className="me-2 text-primary" />
-                    Registrado el{" "}
-                    {new Date(condominio.fecha_creacion).toLocaleDateString(
-                      "es-ES",
-                      { day: "2-digit", month: "long", year: "numeric" },
-                    )}
-                  </div>
-                </div>
-
-                <h6 className="text-muted small text-uppercase fw-bold mb-3 ls-1">
-                  Detalles de Infraestructura
-                </h6>
-                <div className="list-group list-group-flush bg-transparent">
-                  <div className="list-group-item bg-transparent px-0 border-light d-flex justify-content-between align-items-center">
-                    <span className="text-secondary small">Total de Pisos</span>
-                    <span className="fw-bold text-dark">{pisos.length}</span>
-                  </div>
-                  <div className="list-group-item bg-transparent px-0 border-light d-flex justify-content-between align-items-center">
-                    <span className="text-secondary small">
-                      Apartamentos Activos
-                    </span>
-                    <span className="fw-bold text-dark">{aptos.length}</span>
-                  </div>
-                  <div className="list-group-item bg-transparent px-0 border-light d-flex justify-content-between align-items-center">
-                    <span className="text-secondary small">
-                      Puntos de Acceso Vehicular
-                    </span>
-                    <span className="fw-bold text-dark">
-                      2 (Entrada/Salida)
-                    </span>
-                  </div>
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
-
-          <Col lg={7}>
-            <Card className="card-custom h-100 overflow-hidden bg-white">
-              <Card.Header className="border-0 bg-white pt-4 px-4 pb-0">
-                <div className="d-flex justify-content-between align-items-center">
-                  <h5 className="fw-bold text-dark d-flex align-items-center gap-2">
-                    <div className="p-2 rounded-3 bg-warning bg-opacity-10 text-warning">
-                      <FaCog />
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={handleShowEdit}
+                >
+                  <Edit3 size={14} /> {config ? "Editar" : "Configurar"}
+                </button>
+              </div>
+              {config ? (
+                <div className="grid grid-2 gap-4 mt-3">
+                  <div className="p-4">
+                    <div className="text-muted text-sm fw-bold mb-3">
+                      Límites de Vehículos
                     </div>
-                    Configuración del Sistema
+                    <div className="flex text-center">
+                      <div style={{ flex: 1 }}>
+                        <div className="fw-bold">{config.max_autos}</div>
+                        <div className="text-xs text-muted fw-bold">AUTOS</div>
+                      </div>
+                      <div className="vr mx-2"></div>
+                      <div style={{ flex: 1 }}>
+                        <div className="fw-bold">{config.max_motos}</div>
+                        <div className="text-xs text-muted fw-bold">MOTOS</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <div className="text-muted text-sm fw-bold mb-3">
+                      Servicio de Carritos
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="fw-bold">
+                        {config.tiempo_max_prestamo_min}
+                      </span>
+                      <span className="text-sm text-muted fw-bold">
+                        minutos máx.
+                      </span>
+                    </div>
+                    <div className="mt-2 pt-2 text-sm text-secondary">
+                      Penalización:{" "}
+                      <strong>
+                        S/ {config.penalizacion_por_minuto.toFixed(2)}
+                      </strong>{" "}
+                      / min.
+                    </div>
+                  </div>
+                  <div>
+                    <div className="alert alert-info flex items-center gap-3">
+                      <Info className="text-info" size={20} />
+                      <div>
+                        <h6 className="fw-bold mb-1">
+                          Personalización
+                        </h6>
+                        <p className="text-sm text-secondary mb-0">
+                          Como administrador, puedes ajustar estos parámetros
+                          para que se adapten a las reglas internas de tu
+                          condominio.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-5">
+                  <div className="auth-success-icon warning d-inline-block mb-3">
+                    <AlertTriangle size={30} />
+                  </div>
+                  <h5 className="fw-bold">
+                    Pendiente de Configuración
                   </h5>
+                  <p className="text-secondary text-sm">
+                    Establece los límites de vehículos y reglas de carritos
+                    para comenzar la gestión operativa.
+                  </p>
                   <button
-                    className="btn btn-sm btn-light rounded-pill px-3 fw-bold text-primary transition-all border shadow-sm d-flex align-items-center gap-2"
+                    className="btn btn-accent"
                     onClick={handleShowEdit}
                   >
-                    <FaEdit size={14} /> {config ? "Editar" : "Configurar"}
+                    Establecer Configuración
                   </button>
                 </div>
-              </Card.Header>
-              <Card.Body className="p-4">
-                {config ? (
-                  <div className="row g-4">
-                    <Col md={6}>
-                      <div className="p-4 rounded-4 border bg-white shadow-sm hover-up transition-all h-100">
-                        <div className="text-muted small text-uppercase fw-bold mb-3">
-                          Límites de Vehículos
-                        </div>
-                        <div className="row text-center">
-                          <Col>
-                            <div className="fs-3 fw-bold text-dark">
-                              {config.max_autos}
-                            </div>
-                            <div className="x-small text-muted fw-bold">
-                              AUTOS
-                            </div>
-                          </Col>
-                          <div className="vr p-0 opacity-10"></div>
-                          <Col>
-                            <div className="fs-3 fw-bold text-dark">
-                              {config.max_motos}
-                            </div>
-                            <div className="x-small text-muted fw-bold">
-                              MOTOS
-                            </div>
-                          </Col>
-                        </div>
-                      </div>
-                    </Col>
-                    <Col md={6}>
-                      <div className="p-4 rounded-4 border bg-white shadow-sm hover-up transition-all h-100">
-                        <div className="text-muted small text-uppercase fw-bold mb-3">
-                          Servicio de Carritos
-                        </div>
-                        <div className="d-flex align-items-baseline gap-2">
-                          <span className="fs-3 fw-bold text-dark">
-                            {config.tiempo_max_prestamo_min}
-                          </span>
-                          <span className="small text-muted fw-bold">
-                            minutos máx.
-                          </span>
-                        </div>
-                        <div className="mt-2 pt-2 border-top small text-secondary">
-                          Penalización:{" "}
-                          <strong>
-                            S/ {config.penalizacion_por_minuto.toFixed(2)}
-                          </strong>{" "}
-                          / min.
-                        </div>
-                      </div>
-                    </Col>
-                    <Col xs={12}>
-                      <div className="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25 rounded-4 p-4 d-flex align-items-center gap-3 mb-0">
-                        <FaInfoCircle className="text-info fs-4" />
-                        <div>
-                          <h6 className="fw-bold text-dark mb-1">
-                            Personalización
-                          </h6>
-                          <p className="small text-secondary mb-0">
-                            Como administrador, puedes ajustar estos parámetros
-                            para que se adapten a las reglas internas de tu
-                            condominio.
-                          </p>
-                        </div>
-                      </div>
-                    </Col>
-                  </div>
-                ) : (
-                  <div className="text-center py-5">
-                    <div className="p-4 rounded-circle bg-warning bg-opacity-10 text-warning d-inline-block mb-3">
-                      <FaExclamationTriangle size={30} />
-                    </div>
-                    <h5 className="fw-bold text-dark">
-                      Pendiente de Configuración
-                    </h5>
-                    <p className="text-secondary small px-5">
-                      Establece los límites de vehículos y reglas de carritos
-                      para comenzar la gestión operativa.
-                    </p>
-                    <Button
-                      variant="warning"
-                      className="rounded-pill px-4 fw-bold shadow-sm mt-2 border-0 text-white"
-                      onClick={handleShowEdit}
-                    >
-                      Establecer Configuración
-                    </Button>
-                  </div>
-                )}
-              </Card.Body>
-            </Card>
-          </Col>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      <Modal
-        show={showEditModal}
-        onHide={() => setShowEditModal(false)}
-        centered
-        className="border-0"
-      >
-        <Modal.Header closeButton className="border-0 pb-0">
-          <Modal.Title className="fw-bold text-primary-theme d-flex align-items-center gap-2">
-            <div className="p-2 rounded-3 bg-warning bg-opacity-10 text-warning">
-              <FaCog />
+      {showEditModal && (
+        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title flex items-center gap-2">
+                <div className="cell-icon warning">
+                  <Settings size={14} />
+                </div>
+                Configuración del Sistema
+              </div>
+              <button className="modal-close" onClick={() => setShowEditModal(false)}>
+                <X size={16} />
+              </button>
             </div>
-            Configuración del Sistema
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="py-4">
-          <Form onSubmit={handleSubmit(onSubmit)}>
-            <h6 className="text-muted small text-uppercase fw-bold mb-3 ls-1">
-              Límites de Estacionamiento
-            </h6>
-            <Row>
-              <Col md={6}>
-                <FormInput
-                  label="Máx. Autos por Apto."
-                  type="number"
-                  name="max_autos"
-                  register={register}
-                  validation={{
-                    required: "Requerido",
-                    min: { value: 0, message: "Mínimo 0" },
-                  }}
-                  error={errors.max_autos}
-                />
-              </Col>
-              <Col md={6}>
-                <FormInput
-                  label="Máx. Motos por Apto."
-                  type="number"
-                  name="max_motos"
-                  register={register}
-                  validation={{
-                    required: "Requerido",
-                    min: { value: 0, message: "Mínimo 0" },
-                  }}
-                  error={errors.max_motos}
-                />
-              </Col>
-            </Row>
+            <div className="modal-body">
+              <form onSubmit={handleSubmit(onSubmit)}>
+                <h6 className="text-muted text-sm fw-bold mb-3">
+                  Límites de Estacionamiento
+                </h6>
+                <div className="grid-2 gap-3">
+                  <div>
+                    <FormInput
+                      label="Máx. Autos por Apto."
+                      type="number"
+                      name="max_autos"
+                      register={register}
+                      validation={{
+                        required: "Requerido",
+                        min: { value: 0, message: "Mínimo 0" },
+                      }}
+                      error={errors.max_autos}
+                    />
+                  </div>
+                  <div>
+                    <FormInput
+                      label="Máx. Motos por Apto."
+                      type="number"
+                      name="max_motos"
+                      register={register}
+                      validation={{
+                        required: "Requerido",
+                        min: { value: 0, message: "Mínimo 0" },
+                      }}
+                      error={errors.max_motos}
+                    />
+                  </div>
+                </div>
 
-            <h6 className="text-muted small text-uppercase fw-bold mb-3 mt-2 ls-1">
-              Reglas de Carritos de Carga
-            </h6>
-            <Row>
-              <Col md={6}>
-                <FormInput
-                  label="Tiempo Máx (Minutos)"
-                  type="number"
-                  name="tiempo_max_prestamo_min"
-                  register={register}
-                  validation={{
-                    required: "Requerido",
-                    min: { value: 1, message: "Mínimo 1" },
-                  }}
-                  error={errors.tiempo_max_prestamo_min}
-                />
-              </Col>
-              <Col md={6}>
-                <FormInput
-                  label="Penalidad por Minuto (S/)"
-                  type="number"
-                  step="0.01"
-                  name="penalizacion_por_minuto"
-                  register={register}
-                  validation={{
-                    required: "Requerido",
-                    min: { value: 0, message: "Mínimo 0" },
-                  }}
-                  error={errors.penalizacion_por_minuto}
-                />
-              </Col>
-            </Row>
+                <h6 className="text-muted text-sm fw-bold mb-3 mt-2">
+                  Reglas de Carritos de Carga
+                </h6>
+                <div className="grid-2 gap-3">
+                  <div>
+                    <FormInput
+                      label="Tiempo Máx (Minutos)"
+                      type="number"
+                      name="tiempo_max_prestamo_min"
+                      register={register}
+                      validation={{
+                        required: "Requerido",
+                        min: { value: 1, message: "Mínimo 1" },
+                      }}
+                      error={errors.tiempo_max_prestamo_min}
+                    />
+                  </div>
+                  <div>
+                    <FormInput
+                      label="Penalidad por Minuto (S/)"
+                      type="number"
+                      step="0.01"
+                      name="penalizacion_por_minuto"
+                      register={register}
+                      validation={{
+                        required: "Requerido",
+                        min: { value: 0, message: "Mínimo 0" },
+                      }}
+                      error={errors.penalizacion_por_minuto}
+                    />
+                  </div>
+                </div>
 
-            <div className="d-flex justify-content-end gap-2 mt-3">
-              <Button
-                variant="light"
-                onClick={() => setShowEditModal(false)}
-                className="rounded-pill px-4 fw-bold text-secondary border-0"
-              >
-                <FaTimes className="me-2" /> Cancelar
-              </Button>
-              <Button
-                type="submit"
-                className="btn-primary-theme rounded-pill px-4 fw-bold shadow-sm border-0"
-              >
-                <FaSave className="me-2" /> Guardar Cambios
-              </Button>
+                <div className="flex justify-end gap-2 mt-3">
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    onClick={() => setShowEditModal(false)}
+                  >
+                    <X size={14} /> Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                  >
+                    <Save size={14} /> Guardar Cambios
+                  </button>
+                </div>
+              </form>
             </div>
-          </Form>
-        </Modal.Body>
-      </Modal>
+          </div>
+        </div>
+      )}
     </AnimatedPage>
   );
 };

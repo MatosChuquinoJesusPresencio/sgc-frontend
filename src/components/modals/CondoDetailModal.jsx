@@ -1,20 +1,10 @@
-import { Modal } from "react-bootstrap";
-import {
-  FaBuilding,
-  FaUsersCog,
-  FaCog,
-  FaPlusCircle,
-  FaMapMarkerAlt,
-  FaCalendarAlt,
-  FaInfoCircle,
-  FaExclamationTriangle,
-} from "react-icons/fa";
+import { X, Building2, UserCog, Settings, MapPin, Calendar, Info, AlertTriangle, PlusCircle } from "lucide-react";
 import { useData } from "../../hooks/useData";
 
 const CondoDetailModal = ({ show, onHide, condo }) => {
   const { getTable } = useData();
 
-  if (!condo) return null;
+  if (!condo || !show) return null;
 
   const usuarios = getTable("usuarios");
   const admin = usuarios.find(
@@ -46,38 +36,35 @@ const CondoDetailModal = ({ show, onHide, condo }) => {
     apartamentos: aptos.length,
     usuarios: usersInCondo.length,
     carritos: carts.length,
-    config: config,
+    config,
   };
 
   return (
-    <Modal
-      show={show}
-      onHide={onHide}
-      centered
-      size="lg"
-      className="border-0 shadow-lg"
-    >
-      <Modal.Header closeButton className="border-0 pb-0 bg-white">
-        <Modal.Title className="fw-bold text-primary-theme d-flex align-items-center gap-2">
-          <div className="p-2 rounded-3 bg-primary-theme bg-opacity-10 text-primary-theme">
-            <FaInfoCircle />
+    <div className="modal-overlay" onClick={onHide}>
+      <div className="modal-content lg" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <div className="modal-title">
+            <div className="cell-icon primary">
+              <Info size={16} />
+            </div>
+            Detalles del Condominio
           </div>
-          Detalles del Condominio
-        </Modal.Title>
-      </Modal.Header>
-      <Modal.Body className="p-3 bg-white">
-        <div className="row g-4">
-          <div className="col-12 col-md-6">
-            <div className="card border-0 bg-light rounded-4 p-4 h-100">
-              <h6 className="text-muted small text-uppercase fw-bold mb-3">
+          <button className="modal-close" onClick={onHide}>
+            <X size={16} />
+          </button>
+        </div>
+        <div className="modal-body">
+          <div className="grid-2" style={{ marginBottom: 16 }}>
+            <div className="card" style={{ padding: 20, background: "var(--bg)" }}>
+              <h6 className="text-xs fw-bold text-muted mb-3" style={{ textTransform: "uppercase", letterSpacing: 1 }}>
                 Información General
               </h6>
-              <h3 className="fw-bold text-dark mb-1">{condo.nombre}</h3>
-              <p className="text-secondary mb-3">
+              <h3 className="fw-bold mb-1">{condo.nombre}</h3>
+              <p className="text-secondary mb-3" style={{ fontSize: 14 }}>
                 {condo.direccion}, {condo.ciudad}
               </p>
-              <div className="d-flex align-items-center gap-2 text-muted small">
-                <FaCalendarAlt /> Registrado el{" "}
+              <div className="flex items-center gap-2 text-muted text-xs">
+                <Calendar size={13} /> Registrado el{" "}
                 {new Date(condo.fecha_creacion).toLocaleDateString("es-ES", {
                   day: "2-digit",
                   month: "long",
@@ -85,144 +72,92 @@ const CondoDetailModal = ({ show, onHide, condo }) => {
                 })}
               </div>
 
-              <div className="mt-4 pt-3 border-top border-secondary border-opacity-10">
-                <h6 className="text-muted small text-uppercase fw-bold mb-2 text-secondary">
+              <div className="mt-4 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
+                <h6 className="text-xs fw-bold text-muted mb-2" style={{ textTransform: "uppercase", letterSpacing: 1 }}>
                   Administrador Asignado
                 </h6>
                 {admin ? (
-                  <div className="d-flex align-items-center gap-3 bg-white p-3 rounded-3 border">
-                    <div className="p-2 rounded-circle bg-primary-theme bg-opacity-10 text-primary-theme">
-                      <FaUsersCog size={20} />
+                  <div className="flex items-center gap-3" style={{ padding: 12, background: "var(--bg-card)", borderRadius: "var(--radius)", border: "1px solid var(--border)" }}>
+                    <div className="cell-icon primary">
+                      <UserCog size={18} />
                     </div>
-                    <div className="overflow-hidden">
-                      <div className="fw-bold text-dark text-truncate">
-                        {admin.nombre}
-                      </div>
-                      <div className="small text-muted text-truncate">
-                        {admin.email}
-                      </div>
+                    <div className="truncate">
+                      <div className="cell-title truncate">{admin.nombre}</div>
+                      <div className="cell-sub truncate">{admin.email}</div>
                     </div>
                   </div>
                 ) : (
-                  <div className="alert alert-light border small text-muted py-2">
+                  <div className="alert alert-warning" style={{ fontSize: 13, padding: "8px 12px" }}>
                     No hay un administrador asignado actualmente.
                   </div>
                 )}
               </div>
             </div>
-          </div>
 
-          <div className="col-12 col-md-6">
-            <div className="row g-3">
-              <div className="col-6">
-                <div className="bg-white border rounded-4 p-3 text-center shadow-sm h-100 transition-all hover-up">
-                  <div className="text-primary-theme fs-4 mb-1">
-                    <FaBuilding />
-                  </div>
-                  <div className="fw-bold fs-5">{stats.torres}</div>
-                  <div className="x-small text-muted text-uppercase fw-bold">
-                    Torres
-                  </div>
+            <div>
+              <div className="grid-2" style={{ gap: 8 }}>
+                <div className="card" style={{ padding: 16, textAlign: "center" }}>
+                  <div className="text-accent mb-1"><Building2 size={20} /></div>
+                  <div className="fw-800" style={{ fontSize: 20 }}>{stats.torres}</div>
+                  <div className="text-xs text-muted fw-bold" style={{ textTransform: "uppercase", letterSpacing: 0.5 }}>Torres</div>
                 </div>
-              </div>
-              <div className="col-6">
-                <div className="bg-white border rounded-4 p-3 text-center shadow-sm h-100 transition-all hover-up">
-                  <div className="text-secondary-theme fs-4 mb-1">
-                    <FaMapMarkerAlt />
-                  </div>
-                  <div className="fw-bold fs-5">{stats.apartamentos}</div>
-                  <div className="x-small text-muted text-uppercase fw-bold">
-                    Aptos.
-                  </div>
+                <div className="card" style={{ padding: 16, textAlign: "center" }}>
+                  <div className="text-accent mb-1"><MapPin size={20} /></div>
+                  <div className="fw-800" style={{ fontSize: 20 }}>{stats.apartamentos}</div>
+                  <div className="text-xs text-muted fw-bold" style={{ textTransform: "uppercase", letterSpacing: 0.5 }}>Aptos.</div>
                 </div>
-              </div>
-              <div className="col-6">
-                <div className="bg-white border rounded-4 p-3 text-center shadow-sm h-100 transition-all hover-up">
-                  <div className="text-primary-theme fs-4 mb-1">
-                    <FaUsersCog size={24} />
-                  </div>
-                  <div className="fw-bold fs-5">{stats.usuarios}</div>
-                  <div className="x-small text-muted text-uppercase fw-bold">
-                    Usuarios
-                  </div>
+                <div className="card" style={{ padding: 16, textAlign: "center" }}>
+                  <div className="text-accent mb-1"><UserCog size={20} /></div>
+                  <div className="fw-800" style={{ fontSize: 20 }}>{stats.usuarios}</div>
+                  <div className="text-xs text-muted fw-bold" style={{ textTransform: "uppercase", letterSpacing: 0.5 }}>Usuarios</div>
                 </div>
-              </div>
-              <div className="col-6">
-                <div className="bg-white border rounded-4 p-3 text-center shadow-sm h-100 transition-all hover-up">
-                  <div className="text-secondary-theme fs-4 mb-1">
-                    <FaPlusCircle />
-                  </div>
-                  <div className="fw-bold fs-5">{stats.carritos}</div>
-                  <div className="x-small text-muted text-uppercase fw-bold">
-                    Carritos
-                  </div>
+                <div className="card" style={{ padding: 16, textAlign: "center" }}>
+                  <div className="text-accent mb-1"><PlusCircle size={20} /></div>
+                  <div className="fw-800" style={{ fontSize: 20 }}>{stats.carritos}</div>
+                  <div className="text-xs text-muted fw-bold" style={{ textTransform: "uppercase", letterSpacing: 0.5 }}>Carritos</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {stats.config ? (
-            <div className="col-12">
-              <div className="card border-0 bg-primary-theme bg-opacity-10 rounded-4 p-4 shadow-sm">
-                <h6 className="text-primary-theme small text-uppercase fw-bold mb-3 d-flex align-items-center gap-2">
-                  <FaCog /> Configuración del Sistema
-                </h6>
-                <div className="row g-3">
-                  <div className="col-6 col-md-3">
-                    <div className="x-small text-muted text-uppercase fw-bold mb-1">
-                      Máx. Autos
-                    </div>
-                    <div className="fw-bold text-dark fs-5">
-                      {stats.config.max_autos}
-                    </div>
-                  </div>
-                  <div className="col-6 col-md-3">
-                    <div className="x-small text-muted text-uppercase fw-bold mb-1">
-                      Máx. Motos
-                    </div>
-                    <div className="fw-bold text-dark fs-5">
-                      {stats.config.max_motos}
-                    </div>
-                  </div>
-                  <div className="col-6 col-md-3">
-                    <div className="x-small text-muted text-uppercase fw-bold mb-1">
-                      Préstamo
-                    </div>
-                    <div className="fw-bold text-dark fs-5">
-                      {stats.config.tiempo_max_prestamo_min} min.
-                    </div>
-                  </div>
-                  <div className="col-6 col-md-3">
-                    <div className="x-small text-muted text-uppercase fw-bold mb-1">
-                      Penalización
-                    </div>
-                    <div className="fw-bold text-dark fs-5">
-                      S/ {stats.config.penalizacion_por_minuto.toFixed(2)}
-                    </div>
-                  </div>
+          {config ? (
+            <div className="card" style={{ padding: 20, background: "var(--accent-light)" }}>
+              <h6 className="flex items-center gap-2 text-xs fw-bold mb-3" style={{ color: "var(--accent)", textTransform: "uppercase", letterSpacing: 1 }}>
+                <Settings size={14} /> Configuración del Sistema
+              </h6>
+              <div className="grid-4">
+                <div>
+                  <div className="text-xs text-muted fw-bold mb-1" style={{ textTransform: "uppercase" }}>Máx. Autos</div>
+                  <div className="fw-800" style={{ fontSize: 20 }}>{config.max_autos}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted fw-bold mb-1" style={{ textTransform: "uppercase" }}>Máx. Motos</div>
+                  <div className="fw-800" style={{ fontSize: 20 }}>{config.max_motos}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted fw-bold mb-1" style={{ textTransform: "uppercase" }}>Préstamo</div>
+                  <div className="fw-800" style={{ fontSize: 20 }}>{config.tiempo_max_prestamo_min} min.</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted fw-bold mb-1" style={{ textTransform: "uppercase" }}>Penalización</div>
+                  <div className="fw-800" style={{ fontSize: 20 }}>S/ {config.penalizacion_por_minuto.toFixed(2)}</div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="col-12">
-              <div className="alert alert-warning bg-warning bg-opacity-10 border-warning border-opacity-25 rounded-4 p-4 d-flex align-items-center gap-3">
-                <FaExclamationTriangle className="text-warning fs-4" />
-                <div>
-                  <h6 className="fw-bold text-dark mb-1">
-                    Aún no está configurada
-                  </h6>
-                  <p className="small text-secondary mb-0">
-                    Este condominio no tiene una configuración del sistema
-                    activa. Algunas funcionalidades podrían no estar
-                    disponibles.
-                  </p>
-                </div>
+            <div className="alert alert-warning flex items-center gap-3" style={{ borderRadius: "var(--radius-lg)", padding: 16 }}>
+              <AlertTriangle size={20} />
+              <div>
+                <h6 className="fw-bold mb-1">Aún no está configurada</h6>
+                <p className="text-sm text-secondary mb-0">
+                  Este condominio no tiene una configuración del sistema activa.
+                </p>
               </div>
             </div>
           )}
         </div>
-      </Modal.Body>
-    </Modal>
+      </div>
+    </div>
   );
 };
 

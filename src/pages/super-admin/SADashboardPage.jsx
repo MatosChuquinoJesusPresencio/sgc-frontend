@@ -1,309 +1,233 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-
 import {
-  FaUserShield,
-  FaBuilding,
-  FaUsers,
-  FaMapMarkerAlt,
-  FaEnvelope,
-  FaCircle,
-  FaCar,
-  FaShoppingCart,
-  FaClock,
-} from "react-icons/fa";
-
+  ShieldCheck,
+  Building2,
+  Users,
+  Car,
+  ShoppingCart,
+  ArrowRight,
+  TrendingUp,
+  Activity,
+  ClipboardList,
+} from "lucide-react";
 import { useData } from "../../hooks/useData";
 import { useAuth } from "../../hooks/useAuth";
-
-import DashboardHeader from "../../components/dashboard/DashboardHeader";
-import StatCard from "../../components/dashboard/StatCard";
-import DashboardTable from "../../components/dashboard/DashboardTable";
-import CondoDetailModal from "../../components/modals/CondoDetailModal";
 import AnimatedPage from "../../components/animations/AnimatedPage";
-import EmptyState from "../../components/ui/EmptyState";
 
 const SADashboardPage = () => {
   const navigate = useNavigate();
   const { getTable } = useData();
   const { authUser } = useAuth();
 
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedCondo, setSelectedCondo] = useState(null);
-
   const condominios = getTable("condominios");
   const usuarios = getTable("usuarios");
-  const roles = getTable("roles");
   const logsVehicular = getTable("logs_acceso_vehicular");
   const logsCarrito = getTable("logs_prestamo_carrito");
+  const torres = getTable("torres");
+  const apartamentos = getTable("apartamentos");
 
   const totalCondominios = condominios.length;
   const totalUsuarios = usuarios.length;
-  const totalRoles = roles.length;
+  const totalTorres = torres.length;
+  const totalAptos = apartamentos.length;
 
-  const recentCondominios = [...condominios]
-    .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion))
-    .slice(0, 5);
-  const recentUsuarios = [...usuarios].slice(-5).reverse();
+  const activeVehicles = logsVehicular.filter((l) => !l.fecha_salida).length;
+  const activeLoans = logsCarrito.filter((l) => !l.fecha_salida).length;
 
-  const recentAccess = [...logsVehicular]
-    .sort((a, b) => new Date(b.fecha_entrada) - new Date(a.fecha_entrada))
-    .slice(0, 5);
+  const activeUsers = usuarios.filter((u) => u.activo).length;
 
-  const recentLoans = [...logsCarrito]
-    .sort((a, b) => new Date(b.fecha_entrada) - new Date(a.fecha_entrada))
-    .slice(0, 5);
+  const recentCondos = useMemo(
+    () => [...condominios].sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion)).slice(0, 4),
+    [condominios]
+  );
 
-  const getRoleName = (roleId) => {
-    const role = roles.find((r) => r.id === roleId);
-    return role ? role.nombre : "N/A";
-  };
+  const recentVehicular = useMemo(
+    () => [...logsVehicular].sort((a, b) => new Date(b.fecha_entrada) - new Date(a.fecha_entrada)).slice(0, 5),
+    [logsVehicular]
+  );
 
-  const handleDetailClick = (condo) => {
-    setSelectedCondo(condo);
-    setShowDetailModal(true);
-  };
+  const recentLoans = useMemo(
+    () => [...logsCarrito].sort((a, b) => new Date(b.fecha_entrada) - new Date(a.fecha_entrada)).slice(0, 5),
+    [logsCarrito]
+  );
+
+  const quickLinks = [
+    { label: "Condominios", sub: `${totalCondominios} registrados`, icon: Building2, color: "accent", path: "/super-admin/condominios" },
+    { label: "Usuarios", sub: `${activeUsers} activos de ${totalUsuarios}`, icon: Users, color: "success", path: "/super-admin/usuarios" },
+    { label: "Apartamentos", sub: `${totalAptos} en total`, icon: Building2, color: "info", path: "/super-admin/apartamentos" },
+    { label: "Historial", sub: "Accesos y préstamos", icon: ClipboardList, color: "warning", path: "/super-admin/historial" },
+  ];
 
   return (
     <AnimatedPage>
       <div className="page-container">
-        <DashboardHeader
-          icon={FaUserShield}
-          title="Panel de Control Global"
-          badgeText="Super Admin"
-          welcomeText={`Bienvenido, ${authUser?.nombre || "Administrador"}. Control total de la plataforma.`}
-        ></DashboardHeader>
-
-        <div className="row g-4 mb-5">
-          <StatCard
-            icon={FaBuilding}
-            label="Total Condominios"
-            value={totalCondominios}
-            colorClass="primary-theme"
-          />
-          <StatCard
-            icon={FaUsers}
-            label="Usuarios Activos"
-            value={totalUsuarios}
-            colorClass="primary-theme"
-          />
-          <StatCard
-            icon={FaUserShield}
-            label="Roles del Sistema"
-            value={totalRoles}
-            colorClass="primary-theme"
-          />
+        <div className="greeting-banner">
+          <h1>Panel de Control Global</h1>
+          <p>Bienvenido, {authUser?.nombre || "Administrador"}. Control total de la plataforma.</p>
         </div>
 
-        <div className="row g-4">
-          <DashboardTable
-            title="Condominios"
-            buttonText="Ver todos"
-            onButtonClick={() => navigate("/super-admin/condominios")}
-            headers={["Información", "Ubicación", "Acción"]}
-          >
-            {recentCondominios.length > 0 ? (
-              recentCondominios.map((condo) => (
-                <tr key={condo.id}>
-                  <td className="px-4 py-3">
-                    <div className="fw-bold text-dark mb-0">{condo.nombre}</div>
-                    <div className="x-small text-muted">
-                      ID: {condo.id.toString().padStart(3, "0")}
-                    </div>
-                  </td>
-                  <td className="py-3">
-                    <div className="small fw-medium text-dark">
-                      {condo.direccion}
-                    </div>
-                    <div className="x-small text-muted">
-                      <FaMapMarkerAlt className="me-1" />
-                      {condo.ciudad}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-end">
-                    <button
-                      className="btn btn-sm btn-primary-theme btn-action-sm"
-                      onClick={() => handleDetailClick(condo)}
-                    >
-                      Detalles
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <EmptyState 
-                colSpan={3} 
-                message="No hay condominios registrados." 
-                icon={FaBuilding} 
-              />
-            )}
-          </DashboardTable>
-
-          <DashboardTable
-            title="Usuarios"
-            buttonText="Ver todos"
-            onButtonClick={() => navigate("/super-admin/usuarios")}
-            headers={["Usuario", "Rol", "Acción"]}
-          >
-            {recentUsuarios.length > 0 ? (
-              recentUsuarios.map((u) => (
-                <tr key={u.id}>
-                  <td className="px-4 py-3">
-                    <div className="fw-bold text-dark mb-0">{u.nombre}</div>
-                    <div className="x-small text-muted">
-                      <FaEnvelope className="me-1" />
-                      {u.email}
-                    </div>
-                  </td>
-                  <td className="py-3">
-                    <div className="small fw-medium text-dark">
-                      {getRoleName(u.id_rol)}
-                    </div>
-                    <div className="x-small d-flex align-items-center gap-1">
-                      <FaCircle
-                        className={u.activo ? "text-success" : "text-danger"}
-                        style={{ fontSize: "6px" }}
-                      />
-                      <span className="text-muted">
-                        {u.activo ? "Activo" : "Inactivo"}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-end">
-                    <button
-                      className="btn btn-sm btn-primary-theme btn-action-sm"
-                      onClick={() =>
-                        navigate(
-                          `/super-admin/usuarios?search=${encodeURIComponent(u.nombre)}`,
-                        )
-                      }
-                    >
-                      Gestionar
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <EmptyState 
-                colSpan={3} 
-                message="No hay usuarios registrados recientemente." 
-                icon={FaUsers} 
-              />
-            )}
-          </DashboardTable>
+        <div className="grid grid-4 gap-4 mb-5">
+          <div className="stat-card">
+            <div className="stat-icon accent"><Building2 size={20} /></div>
+            <div className="stat-content">
+              <div className="stat-label">Condominios</div>
+              <div className="stat-value">{totalCondominios}</div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon success"><Users size={20} /></div>
+            <div className="stat-content">
+              <div className="stat-label">Usuarios Activos</div>
+              <div className="stat-value">{activeUsers}</div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon warning"><Car size={20} /></div>
+            <div className="stat-content">
+              <div className="stat-label">Vehículos en Recinto</div>
+              <div className="stat-value">{activeVehicles}</div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon info"><ShoppingCart size={20} /></div>
+            <div className="stat-content">
+              <div className="stat-label">Carritos en Uso</div>
+              <div className="stat-value">{activeLoans}</div>
+            </div>
+          </div>
         </div>
 
-        <div className="row g-4 mt-2">
-          <DashboardTable
-            title="Accesos Vehiculares (Global)"
-            buttonText="Ver historial"
-            onButtonClick={() => navigate("/super-admin/historial?tab=estacionamiento")}
-            headers={["Vehículo", "Condominio", "Ingreso", "Estado"]}
-          >
-            {recentAccess.length > 0 ? (
-              recentAccess.map((log) => (
-                <tr key={log.id}>
-                  <td className="px-4 py-3">
-                    <div className="fw-bold text-dark">{log.placa}</div>
-                    <div className="x-small text-muted">{log.metodo}</div>
-                  </td>
-                  <td className="py-3">
-                    <div className="small fw-medium text-dark">
-                      {condominios.find((c) => c.id === usuarios.find(u => u.id_condominio)?.id_condominio)?.nombre || "N/A"}
+        <div className="dashboard-grid-2">
+          <div className="widget-card">
+            <div className="widget-header">
+              <span className="widget-title"><Building2 size={16} /> Condominios Recientes</span>
+              <button className="btn btn-ghost btn-sm" onClick={() => navigate("/super-admin/condominios")}>
+                Ver todos <ArrowRight size={14} />
+              </button>
+            </div>
+            <div className="widget-body">
+              {recentCondos.length > 0 ? (
+                recentCondos.map((c) => (
+                  <div key={c.id} className="feed-item">
+                    <div className="feed-dot accent" />
+                    <div className="feed-content">
+                      <div className="feed-title">{c.nombre}</div>
+                      <div className="feed-sub">{c.ciudad}, {c.pais}</div>
                     </div>
-                  </td>
-                  <td className="py-3">
-                    <div className="small fw-medium text-dark">
-                      {new Date(log.fecha_entrada).toLocaleDateString()}
-                    </div>
-                    <div className="x-small text-muted">
-                      <FaClock className="me-1" />
-                      {new Date(log.fecha_entrada).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-end">
-                    {log.fecha_salida ? (
-                      <span className="badge bg-light text-muted fw-normal px-3 py-2 rounded-pill">
-                        Salió
-                      </span>
-                    ) : (
-                      <span className="badge badge-status-active">
-                        En recinto
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <EmptyState
-                colSpan={4}
-                message="No hay registros de acceso vehicular global."
-                icon={FaCar}
-              />
-            )}
-          </DashboardTable>
+                    <div className="feed-meta">{new Date(c.fecha_creacion).toLocaleDateString()}</div>
+                  </div>
+                ))
+              ) : (
+                <div className="empty-feed">No hay condominios registrados.</div>
+              )}
+            </div>
+          </div>
 
-          <DashboardTable
-            title="Préstamos de Carritos (Global)"
-            buttonText="Ver historial"
-            onButtonClick={() => navigate("/super-admin/historial?tab=carritos")}
-            headers={["Carrito / Usuario", "Apartamento", "Estado"]}
-          >
-            {recentLoans.length > 0 ? (
-              recentLoans.map((loan) => (
-                <tr key={loan.id}>
-                  <td className="px-4 py-3">
-                    <div className="fw-bold text-dark">
-                      Carrito #{loan.id_carrito}
+          <div className="widget-card">
+            <div className="widget-header">
+              <span className="widget-title"><Activity size={16} /> Accesos Vehiculares Recientes</span>
+              <button className="btn btn-ghost btn-sm" onClick={() => navigate("/super-admin/historial?tab=estacionamiento")}>
+                Ver historial <ArrowRight size={14} />
+              </button>
+            </div>
+            <div className="widget-body">
+              {recentVehicular.length > 0 ? (
+                recentVehicular.map((log) => (
+                  <div key={log.id} className="feed-item">
+                    <div className={`feed-dot ${log.fecha_salida ? "inactive" : "active"}`} />
+                    <div className="feed-content">
+                      <div className="feed-title">{log.placa}</div>
+                      <div className="feed-sub">{log.metodo}</div>
                     </div>
-                    <div className="x-small text-muted">
-                      <FaUsers className="me-1 x-small" /> {loan.solicitante}
+                    <div className="feed-meta">
+                      {new Date(log.fecha_entrada).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </div>
-                  </td>
-                  <td className="py-3">
-                    <div className="small fw-medium text-dark">
-                      ID Apto: {loan.id_apartamento}
+                  </div>
+                ))
+              ) : (
+                <div className="empty-feed">Sin actividad vehicular reciente.</div>
+              )}
+            </div>
+          </div>
+
+          <div className="widget-card">
+            <div className="widget-header">
+              <span className="widget-title"><ShoppingCart size={16} /> Préstamos de Carritos</span>
+              <button className="btn btn-ghost btn-sm" onClick={() => navigate("/super-admin/historial?tab=carritos")}>
+                Ver historial <ArrowRight size={14} />
+              </button>
+            </div>
+            <div className="widget-body">
+              {recentLoans.length > 0 ? (
+                recentLoans.map((loan) => (
+                  <div key={loan.id} className="feed-item">
+                    <div className={`feed-dot ${loan.fecha_salida ? "inactive" : "warning"}`} />
+                    <div className="feed-content">
+                      <div className="feed-title">Carrito #{loan.id_carrito}</div>
+                      <div className="feed-sub">Solicitante: {loan.solicitante}</div>
                     </div>
-                    <div className="x-small text-muted">
-                      Inicio:{" "}
-                      {new Date(loan.fecha_entrada).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                    <div className="feed-meta">
+                      {new Date(loan.fecha_entrada).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </div>
-                  </td>
-                  <td className="px-4 py-3 text-end">
-                    {loan.fecha_salida ? (
-                      <span className="badge bg-light text-muted fw-normal px-3 py-2 rounded-pill">
-                        Finalizado
-                      </span>
-                    ) : (
-                      <span className="badge badge-status-inactive">
-                        En uso
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <EmptyState
-                colSpan={3}
-                message="No hay préstamos de carritos activos."
-                icon={FaShoppingCart}
-              />
-            )}
-          </DashboardTable>
+                  </div>
+                ))
+              ) : (
+                <div className="empty-feed">Sin préstamos activos.</div>
+              )}
+            </div>
+          </div>
+
+          <div className="widget-card">
+            <div className="widget-header">
+              <span className="widget-title"><TrendingUp size={16} /> Resumen del Sistema</span>
+            </div>
+            <div className="widget-body">
+              <div className="summary-grid">
+                <div className="summary-item">
+                  <div className="summary-value">{totalCondominios}</div>
+                  <div className="summary-label">Condominios</div>
+                </div>
+                <div className="summary-item">
+                  <div className="summary-value">{totalTorres}</div>
+                  <div className="summary-label">Torres</div>
+                </div>
+                <div className="summary-item">
+                  <div className="summary-value">{totalAptos}</div>
+                  <div className="summary-label">Apartamentos</div>
+                </div>
+                <div className="summary-item">
+                  <div className="summary-value">{totalUsuarios}</div>
+                  <div className="summary-label">Usuarios</div>
+                </div>
+              </div>
+            </div>
+            <div style={{ padding: "12px 20px", borderTop: "1px solid var(--border)" }}>
+              <button className="btn btn-primary w-full" onClick={() => navigate("/super-admin/condominios")}>
+                Ir a Gestión de Condominios <ArrowRight size={14} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 20 }}>
+          <h3 className="widget-title mb-4">Acceso Rápido</h3>
+          <div className="dashboard-grid-3">
+            {quickLinks.map((link) => (
+              <div key={link.label} className="quick-link-card" onClick={() => navigate(link.path)}>
+                <div className={`quick-link-icon ${link.color}`}>
+                  <link.icon size={20} />
+                </div>
+                <div>
+                  <div className="quick-link-title">{link.label}</div>
+                  <div className="quick-link-sub">{link.sub}</div>
+                </div>
+                <ArrowRight size={16} className="quick-link-arrow" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-
-      <CondoDetailModal
-        show={showDetailModal}
-        onHide={() => setShowDetailModal(false)}
-        condo={selectedCondo}
-      />
     </AnimatedPage>
   );
 };

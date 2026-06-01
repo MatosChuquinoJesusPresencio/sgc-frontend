@@ -3,10 +3,10 @@ const AuthButton = ({ type, text, loadingText, loading, id }) => {
         <button
             type={type}
             id={id}
-            className="btn w-100 text-light py-2 rounded-3 fw-semibold shadow-sm transition btn-login"
             disabled={loading}
+            className="btn btn-primary w-full py-2"
         >
-            {loading && <span className="spinner-border spinner-border-sm me-2"></span>}
+            {loading && <span className="spinner" />}
             {loading ? loadingText : text}
         </button>
     );

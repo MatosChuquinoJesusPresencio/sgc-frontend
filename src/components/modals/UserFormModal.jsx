@@ -1,5 +1,4 @@
-import { Modal, Button, Form, Row, Col } from "react-bootstrap";
-import { FaUserPlus, FaEdit, FaSave } from "react-icons/fa";
+import { X, UserPlus, Edit3, Save } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useEffect } from "react";
 import FormInput from "../form/FormInput";
@@ -11,6 +10,8 @@ const UserFormModal = ({
   editingUser,
   condominios,
   authUser,
+  scope = "super-admin",
+  condominio,
 }) => {
   const {
     register,
@@ -51,24 +52,29 @@ const UserFormModal = ({
     }
   }, [show, editingUser, reset, clearErrors]);
 
+  if (!show) return null;
+
   const handleFormSubmit = (data) => {
     onSubmit(data);
   };
 
   return (
-    <Modal show={show} onHide={onHide} centered size="lg">
-      <Modal.Header closeButton className="border-0 pb-0 px-4 pt-4">
-        <Modal.Title className="fw-bold text-primary-theme d-flex align-items-center gap-2">
-          <div className="p-2 rounded-3 bg-primary bg-opacity-10 text-primary">
-            {editingUser ? <FaEdit /> : <FaUserPlus />}
+    <div className="modal-overlay" onClick={onHide}>
+      <div className="modal-content lg" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <div className="modal-title">
+            <div className="cell-icon primary">
+              {editingUser ? <Edit3 size={16} /> : <UserPlus size={16} />}
+            </div>
+            {editingUser ? "Editar Usuario" : "Crear Nuevo Usuario"}
           </div>
-          {editingUser ? "Editar Usuario" : "Crear Nuevo Usuario"}
-        </Modal.Title>
-      </Modal.Header>
-      <Modal.Body className="p-4">
-        <Form onSubmit={handleSubmit(handleFormSubmit)}>
-          <Row>
-            <Col md={6}>
+          <button className="modal-close" onClick={onHide}>
+            <X size={16} />
+          </button>
+        </div>
+        <div className="modal-body">
+          <form onSubmit={handleSubmit(handleFormSubmit)}>
+            <div className="grid-2">
               <FormInput
                 label="Nombre Completo"
                 name="nombre"
@@ -77,8 +83,6 @@ const UserFormModal = ({
                 error={errors.nombre}
                 placeholder="Nombre y Apellidos"
               />
-            </Col>
-            <Col md={6}>
               <FormInput
                 label="Correo Electrónico"
                 name="email"
@@ -94,90 +98,98 @@ const UserFormModal = ({
                 error={errors.email}
                 placeholder="ejemplo@correo.com"
               />
-            </Col>
-          </Row>
+            </div>
 
-          <Row>
-            <Col md={6}>
-              <div className="mb-4">
-                <label className="form-label text-secondary fw-semibold small mb-1">
-                  Rol en el Sistema
+            <div className="grid-2">
+              <div className="form-group">
+                <label className="form-label">
+                  {scope === "condo-admin" ? "Tipo de Usuario" : "Rol en el Sistema"}
                 </label>
-                <Form.Select
+                <select
+                  className={`form-select ${errors.id_rol ? "error" : ""}`}
                   {...register("id_rol", { required: "Selecciona un rol" })}
-                  className={`form-control input-no-shadow ${errors.id_rol ? "is-invalid" : ""}`}
                 >
-                  <option value="1">Super Admin</option>
-                  <option value="2">Admin Condominio</option>
-                  <option value="3">Propietario</option>
-                  <option value="4">Seguridad</option>
-                </Form.Select>
-                {errors.id_rol && (
-                  <div className="invalid-feedback">{errors.id_rol.message}</div>
-                )}
+                  {scope === "condo-admin" ? (
+                    <>
+                      <option value="3">Propietario / Residente</option>
+                      <option value="4">Agente de Seguridad</option>
+                      <option value="2">Administrador</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="1">Super Admin</option>
+                      <option value="2">Admin Condominio</option>
+                      <option value="3">Propietario</option>
+                      <option value="4">Seguridad</option>
+                    </>
+                  )}
+                </select>
+                {errors.id_rol && <div className="form-error">{errors.id_rol.message}</div>}
               </div>
-            </Col>
-            <Col md={6}>
-              <div className="mb-4">
-                <label className="form-label text-secondary fw-semibold small mb-1">
-                  Condominio Asignado
-                </label>
-                <Form.Select
-                  {...register("id_condominio")}
-                  className="form-control input-no-shadow"
-                >
-                  <option value="">Ninguno (Acceso Global)</option>
-                  {condominios.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nombre}
-                    </option>
-                  ))}
-                </Form.Select>
-                <div className="x-small text-muted mt-1">
-                  Obligatorio para Admins de Condo y Residentes.
+
+              {scope === "condo-admin" ? (
+                <div className="form-group">
+                  <label className="form-label">Condominio</label>
+                  <input
+                    className="form-input"
+                    value={condominio?.nombre || ""}
+                    disabled
+                    style={{ background: "var(--bg)" }}
+                  />
+                  <div className="text-xs text-muted mt-1">
+                    El usuario se registrará automáticamente en este condominio.
+                  </div>
+                </div>
+              ) : (
+                <div className="form-group">
+                  <label className="form-label">Condominio Asignado</label>
+                  <select
+                    className="form-select"
+                    {...register("id_condominio")}
+                  >
+                    <option value="">Ninguno (Acceso Global)</option>
+                    {condominios.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.nombre}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="text-xs text-muted mt-1">
+                    Obligatorio para Admins de Condo y Residentes.
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="switch-group mb-4">
+              <div>
+                <div className="switch-label">Estado de la cuenta</div>
+                <div className="switch-desc">
+                  {editingUser?.id === authUser?.id
+                    ? "No puedes desactivar tu propia cuenta."
+                    : "Los usuarios inactivos no podrán iniciar sesión."}
                 </div>
               </div>
-            </Col>
-          </Row>
-
-          <div className="p-3 mb-4 rounded-4 bg-light border-0 d-flex justify-content-between align-items-center">
-            <div>
-              <span className="fw-bold text-dark d-block">
-                Estado de la cuenta
-              </span>
-              <span className="text-muted small">
-                {editingUser?.id === authUser?.id
-                  ? "No puedes desactivar tu propia cuenta."
-                  : "Los usuarios inactivos no podrán iniciar sesión."}
-              </span>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  {...register("activo")}
+                  disabled={editingUser?.id === authUser?.id}
+                />
+                <span className="switch-slider" />
+              </label>
             </div>
-            <Form.Check
-              type="switch"
-              id="user-status-switch"
-              {...register("activo")}
-              disabled={editingUser?.id === authUser?.id}
-            />
-          </div>
 
-          <div className="d-flex justify-content-end gap-2 mt-4">
-            <Button
-              variant="light"
-              onClick={onHide}
-              className="rounded-pill px-4 fw-bold text-secondary border-0"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              className="btn-primary-theme rounded-pill px-4 fw-bold shadow-sm border-0"
-            >
-              <FaSave className="me-2" />{" "}
-              {editingUser ? "Actualizar Datos" : "Registrar Usuario"}
-            </Button>
-          </div>
-        </Form>
-      </Modal.Body>
-    </Modal>
+            <div className="modal-footer" style={{ padding: "16px 0 0", border: "none" }}>
+              <button type="button" className="btn btn-outline" onClick={onHide}>Cancelar</button>
+              <button type="submit" className="btn btn-primary">
+                <Save size={16} /> {editingUser ? "Actualizar Datos" : "Registrar Usuario"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   );
 };
 

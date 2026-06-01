@@ -1,25 +1,44 @@
+import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
-
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import Sidebar from "../components/layout/Sidebar";
-
 import { useAuth } from "../hooks/useAuth";
-
 import { MENU_BY_ROLE } from "../constants/menus";
+
+const getInitialSidebar = () => window.innerWidth > 768;
 
 const PrivateLayout = () => {
     const { authUser } = useAuth();
+    const [sidebarOpen, setSidebarOpen] = useState(getInitialSidebar);
+
+    useEffect(() => {
+        const onResize = () => {
+            if (window.innerWidth > 768) {
+                setSidebarOpen(true);
+            } else {
+                setSidebarOpen(false);
+            }
+        };
+        window.addEventListener("resize", onResize);
+        return () => window.removeEventListener("resize", onResize);
+    }, []);
 
     const menuItems = MENU_BY_ROLE[authUser?.role] || [];
 
     return (
-        <>
-            <Header />
-            <Sidebar menuItems={menuItems} />
-            <Outlet />
-            <Footer />
-        </>
+        <div className="app-layout">
+            <Sidebar
+                menuItems={menuItems}
+                isOpen={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
+            />
+            <div className={`app-main${sidebarOpen ? " sidebar-open" : ""}`}>
+                <Header onMenuClick={() => setSidebarOpen(prev => !prev)} />
+                <Outlet />
+                <Footer />
+            </div>
+        </div>
     );
 };
 

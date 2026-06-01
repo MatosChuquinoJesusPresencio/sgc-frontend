@@ -50,7 +50,7 @@ const NotFoundPage = () => {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Space+Mono:wght@400;700&display=swap');
-        .nf-root { position:fixed;inset:0;background:var(--primary-color);overflow:hidden;font-family:'Space Mono',monospace; }
+        .nf-root { position:fixed;inset:0;background:var(--primary);overflow:hidden;font-family:'Space Mono',monospace; }
         .nf-root::before {
           content:'';position:fixed;inset:0;
           background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.10) 3px,rgba(0,0,0,.10) 4px);
@@ -58,8 +58,8 @@ const NotFoundPage = () => {
         }
         .nf-crack {
           position:fixed;left:0;right:0;height:3px;top:50%;transform:translateY(-50%);
-          background:linear-gradient(90deg,transparent 0%,var(--accent-color) 25%,#fff 50%,var(--accent-color) 75%,transparent 100%);
-          opacity:0;z-index:800;box-shadow:0 0 12px var(--accent-color);
+          background:linear-gradient(90deg,transparent 0%,var(--accent) 25%,#fff 50%,var(--accent) 75%,transparent 100%);
+          opacity:0;z-index:800;box-shadow:0 0 12px var(--accent);
           animation:nfCrack .3s ease .65s forwards;
         }
         @keyframes nfCrack {
@@ -77,20 +77,20 @@ const NotFoundPage = () => {
           font-family:'Black Han Sans',sans-serif;
           font-size:clamp(100px,18vw,240px);
           line-height:1;color:transparent;
-          -webkit-text-stroke:clamp(1px,.3vw,3px) var(--text-color);
+          -webkit-text-stroke:clamp(1px,.3vw,3px) #f8fafc;
           position:relative;display:inline-block;
           animation:nfShake .45s ease .15s, nfGrow .65s cubic-bezier(.34,1.46,.64,1) .72s forwards;
         }
         .nf-404::before {
           content:'404';position:absolute;inset:0;
           font-family:'Black Han Sans',sans-serif;font-size:inherit;
-          color:transparent;-webkit-text-stroke:clamp(1px,.3vw,3px) var(--accent-color);
+          color:transparent;-webkit-text-stroke:clamp(1px,.3vw,3px) var(--accent);
           animation:nfGlR 3s infinite 1.6s;clip-path:polygon(0 28%,100% 28%,100% 52%,0 52%);pointer-events:none;
         }
         .nf-404::after {
           content:'404';position:absolute;inset:0;
           font-family:'Black Han Sans',sans-serif;font-size:inherit;
-          color:transparent;-webkit-text-stroke:clamp(1px,.3vw,3px) #a8c8f0;
+          color:transparent;-webkit-text-stroke:clamp(1px,.3vw,3px) #93c5fd;
           animation:nfGlC 3s infinite 1.9s;clip-path:polygon(0 60%,100% 60%,100% 78%,0 78%);pointer-events:none;
         }
         @keyframes nfShake {
@@ -110,28 +110,28 @@ const NotFoundPage = () => {
           0%,83%,100%{transform:translateX(0);opacity:0} 84%{transform:translateX(6px);opacity:.9}
           86%{transform:translateX(-5px);opacity:.6} 88%{opacity:0}
         }
-        .nf-hl  { font-size:clamp(11px,1.8vw,18px);letter-spacing:clamp(3px,1vw,7px);text-transform:uppercase;color:var(--text-color);opacity:0;animation:nfUp .45s ease 1.3s forwards;margin-bottom:clamp(6px,1.2vw,12px); }
-        .nf-sub { font-size:clamp(10px,1.3vw,13px);color:rgba(249,247,247,.5);letter-spacing:clamp(1px,.5vw,3px);opacity:0;animation:nfUp .45s ease 1.5s forwards;margin-bottom:clamp(24px,4vw,40px); }
+        .nf-hl  { font-size:clamp(11px,1.8vw,18px);letter-spacing:clamp(3px,1vw,7px);text-transform:uppercase;color:#f8fafc;opacity:0;animation:nfUp .45s ease 1.3s forwards;margin-bottom:clamp(6px,1.2vw,12px); }
+        .nf-sub { font-size:clamp(10px,1.3vw,13px);color:rgba(248,250,252,.5);letter-spacing:clamp(1px,.5vw,3px);opacity:0;animation:nfUp .45s ease 1.5s forwards;margin-bottom:clamp(24px,4vw,40px); }
         @keyframes nfUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
         .nf-btn {
           display:inline-block;padding:clamp(10px,1.5vw,14px) clamp(20px,4vw,40px);
           font-family:'Space Mono',monospace;font-size:clamp(10px,1.2vw,13px);
           letter-spacing:clamp(2px,.6vw,4px);text-transform:uppercase;text-decoration:none;
-          color:var(--primary-color);background:var(--accent-color);border:none;cursor:pointer;
+          color:var(--primary);background:var(--accent);border:none;cursor:pointer;
           position:relative;overflow:hidden;opacity:0;animation:nfUp .45s ease 1.7s forwards;
           transition:color .28s;clip-path:polygon(7px 0%,100% 0%,calc(100% - 7px) 100%,0% 100%);font-weight:700;
         }
         .nf-btn::before {
-          content:'';position:absolute;inset:0;background:var(--text-color);
+          content:'';position:absolute;inset:0;background:#f8fafc;
           transform:translateX(-102%);transition:transform .3s cubic-bezier(.77,0,.18,1);z-index:0;
         }
-        .nf-btn:hover::before{transform:translateX(0)} .nf-btn:hover{color:var(--primary-color)}
+        .nf-btn:hover::before{transform:translateX(0)} .nf-btn:hover{color:var(--primary)}
         .nf-btn span{position:relative;z-index:1}
         .nf-frag {
-          position:fixed;width:2px;opacity:0;background:var(--accent-color);
+          position:fixed;width:2px;opacity:0;background:var(--accent);
           animation:nfFrag .75s ease .65s forwards;z-index:600;
         }
-        .nf-frag.b{background:#a8c8f0}
+        .nf-frag.b{background:#93c5fd}
         @keyframes nfFrag {
           0%  {opacity:1;transform:translateY(0) scaleY(1)}
           100%{opacity:0;transform:translateY(var(--dy)) translateX(var(--dx)) scaleY(.2)}

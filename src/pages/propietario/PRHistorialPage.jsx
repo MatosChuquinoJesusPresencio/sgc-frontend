@@ -1,17 +1,16 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 
-import { Card, Row, Col, Pagination, Tabs, Tab, Badge } from "react-bootstrap";
 import {
-  FaHistory,
-  FaShoppingCart,
-  FaCar,
-  FaCheckCircle,
-  FaHome,
-  FaUser,
-  FaClock,
-  FaCalendarAlt,
-} from "react-icons/fa";
+  History,
+  ShoppingCart,
+  Car,
+  CheckCircle,
+  Home,
+  User,
+  Clock,
+  Calendar,
+} from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
 import { useData } from "../../hooks/useData";
@@ -19,9 +18,10 @@ import { useData } from "../../hooks/useData";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
 import AnimatedPage from "../../components/animations/AnimatedPage";
-import MainTable from "../../components/ui/MainTable";
+import DataTable from "../../components/ui/DataTable";
 import SearchBar from "../../components/ui/SearchBar";
 import { usePagination } from "../../hooks/usePagination";
+import { useHistoryMappings } from "../../hooks/useHistoryMappings";
 import { formatDateTime } from "../../utils/formatters";
 
 const PRHistorialPage = () => {
@@ -32,12 +32,14 @@ const PRHistorialPage = () => {
   const logsCarritos = getTable("logs_prestamo_carrito");
   const logsVehiculos = getTable("logs_acceso_vehicular");
   const carritos = getTable("carritos_carga");
-  const vehiculosTable = getTable("vehiculos");
   const apartamentos = getTable("apartamentos");
   const usuarios = getTable("usuarios");
   const inquilinos = getTable("inquilinos_temporales");
   const estacionamientos = getTable("estacionamientos");
   const configuraciones = getTable("configuraciones");
+  const torres = getTable("torres");
+  const pisos = getTable("pisos");
+  const condominios = getTable("condominios");
 
   const [now, setNow] = useState(new Date());
 
@@ -49,6 +51,15 @@ const PRHistorialPage = () => {
   const miApto = useMemo(
     () => apartamentos.find((a) => a.id_usuario === authUser?.id),
     [apartamentos, authUser],
+  );
+
+  const config = useMemo(
+    () =>
+      miApto &&
+      configuraciones.find(
+        (c) => c.id_condominio === miApto.id_condominio,
+      ),
+    [configuraciones, miApto],
   );
 
   const initialTab = searchParams.get("tab") || "carritos";
@@ -64,75 +75,26 @@ const PRHistorialPage = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
 
-  const mappedLogsCarritos = useMemo(() => {
-    if (!miApto) return [];
-
-    const config = configuraciones.find(
-      (c) => c.id_condominio === miApto.id_condominio,
-    );
-
-    return logsCarritos
-      .filter((log) => log.id_apartamento === miApto.id)
-      .map((log) => {
-        const carrito = carritos.find((c) => c.id === log.id_carrito);
-        const user = log.id_usuario ? usuarios.find((u) => u.id === log.id_usuario) : null;
-        const inquilino = log.id_inquilino_temporal ? inquilinos.find((i) => i.id === log.id_inquilino_temporal) : null;
-
-        let liveFine = log.penalizacion || 0;
-
-        if (!log.fecha_salida && config) {
-          const startDate = new Date(log.fecha_entrada);
-          const diffMs = now - startDate;
-          const diffMins = Math.floor(diffMs / 60000);
-
-          if (diffMins > config.tiempo_max_prestamo_min) {
-            liveFine =
-              (diffMins - config.tiempo_max_prestamo_min) *
-              config.penalizacion_por_minuto;
-          }
-        }
-
-        return {
-          ...log,
-          carritoNombre: carrito?.nombre || `Carrito ${log.id_carrito}`,
-          usuarioNombre: user?.nombre || inquilino?.nombre || "N/A",
-          estado: log.fecha_salida ? "Devuelto" : "En uso",
-          penalizacionCalculada: liveFine,
-        };
-      })
-      .sort((a, b) => new Date(b.fecha_entrada) - new Date(a.fecha_entrada));
-  }, [logsCarritos, carritos, miApto, usuarios, configuraciones, now]);
-
-  const mappedLogsEstacionamiento = useMemo(() => {
-    if (!miApto) return [];
-
-    const misEstacionamientosIds = estacionamientos
-      .filter((e) => e.id_apartamento === miApto.id)
-      .map((e) => e.id);
-
-    return logsVehiculos
-      .filter((log) => misEstacionamientosIds.includes(log.id_estacionamiento))
-      .map((log) => {
-        const vehiculo = vehiculosTable.find((v) => v.id === log.id_vehiculo);
-        const estacionamiento = estacionamientos.find(
-          (e) => e.id === log.id_estacionamiento,
-        );
-
-        return {
-          ...log,
-          vehiculoInfo: vehiculo
-            ? `${vehiculo.marca} ${vehiculo.modelo} (${vehiculo.color})`
-            : "Vehículo externo",
-          estacionamientoNumero: estacionamiento?.numero || "N/A",
-          estado: log.fecha_salida ? "Fuera" : "En recinto",
-        };
-      })
-      .sort((a, b) => new Date(b.fecha_entrada) - new Date(a.fecha_entrada));
-  }, [logsVehiculos, vehiculosTable, estacionamientos, miApto]);
+  const { mappedCarritos, mappedEstacionamiento } = useHistoryMappings({
+    logsCarrito: logsCarritos,
+    logsEstacionamiento: logsVehiculos,
+    apartamentos,
+    estacionamientos,
+    carritos,
+    usuarios,
+    inquilinosTemporales: inquilinos,
+    torres,
+    pisos,
+    condominios,
+    configuraciones,
+    config,
+    now,
+    idApartamentoFilter: miApto?.id,
+  });
 
   const filteredData = useMemo(() => {
     const source =
-      activeTab === "carritos" ? mappedLogsCarritos : mappedLogsEstacionamiento;
+      activeTab === "carritos" ? mappedCarritos : mappedEstacionamiento;
 
     return source.filter((item) => {
       const matchesSearch =
@@ -142,7 +104,7 @@ const PRHistorialPage = () => {
             item.vehiculoInfo.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesSearch;
     });
-  }, [activeTab, mappedLogsCarritos, mappedLogsEstacionamiento, searchTerm]);
+  }, [activeTab, mappedCarritos, mappedEstacionamiento, searchTerm]);
 
   const {
     currentPage,
@@ -155,14 +117,14 @@ const PRHistorialPage = () => {
   if (!miApto) {
     return (
       <AnimatedPage>
-        <div className="page-container d-flex align-items-center justify-content-center">
-          <Card className="card-custom p-5 text-center">
-            <FaHistory size={60} className="text-muted mb-3 mx-auto" />
-            <h3 className="fw-bold text-dark">Actividad no disponible</h3>
+        <div className="page-container flex items-center justify-center">
+          <div className="card card-custom p-5 text-center">
+            <History size={60} className="text-muted mb-3" />
+            <h3 className="fw-bold">Actividad no disponible</h3>
             <p className="text-muted">
               Necesitas una unidad asignada para ver tu historial.
             </p>
-          </Card>
+          </div>
         </div>
       </AnimatedPage>
     );
@@ -172,34 +134,34 @@ const PRHistorialPage = () => {
     <AnimatedPage>
       <div className="page-container">
         <DashboardHeader
-          icon={FaHistory}
+          icon={History}
           title="Mi Historial de Actividad"
           badgeText="Residente"
           welcomeText="Consulta el historial de accesos de tus vehículos y préstamos de carritos."
         />
 
-        <Row className="g-4 mb-5">
+        <div className="grid grid-3 gap-4 mb-5">
           <StatCard
-            icon={FaCar}
+            icon={Car}
             label="Accesos Vehiculares"
-            value={mappedLogsEstacionamiento.length}
+            value={mappedEstacionamiento.length}
             colorClass="primary-theme"
           />
           <StatCard
-            icon={FaShoppingCart}
+            icon={ShoppingCart}
             label="Uso de Carritos"
-            value={mappedLogsCarritos.length}
+            value={mappedCarritos.length}
             colorClass="primary-theme"
           />
           <StatCard
-            icon={FaCheckCircle}
+            icon={CheckCircle}
             label="Registros Totales"
             value={filteredData.length}
             colorClass="primary-theme"
           />
-        </Row>
+        </div>
 
-        <MainTable
+        <DataTable
           headers={
             activeTab === "carritos"
               ? ["#", "Unidad", "Carrito", "Solicitante", "Salida", "Retorno", "Multa", "Estado"]
@@ -218,56 +180,44 @@ const PRHistorialPage = () => {
               ? "No hay registros de carritos."
               : "No hay registros de acceso vehicular."
           }
-          emptyIcon={activeTab === "carritos" ? FaShoppingCart : FaCar}
+          emptyIcon={activeTab === "carritos" ? ShoppingCart : Car}
           searchBar={
             <>
-              <div className="mb-4 d-inline-block">
-                <Tabs
-                  activeKey={activeTab}
-                  onSelect={(k) => {
-                    setActiveTab(k);
+              <div className="tabs mb-4">
+                <button
+                  className={`tab ${activeTab === "carritos" ? "active" : ""}`}
+                  onClick={() => {
+                    setActiveTab("carritos");
                     setSearchTerm("");
                     setCurrentPage(1);
                   }}
-                  className="custom-tabs border-0"
-                  variant="pills"
                 >
-                  <Tab
-                    eventKey="carritos"
-                    title={
-                      <span>
-                        <FaShoppingCart className="me-2" /> Historial Carritos
-                      </span>
-                    }
-                  />
-                  <Tab
-                    eventKey="estacionamiento"
-                    title={
-                      <span>
-                        <FaCar className="me-2" /> Historial Accesos
-                      </span>
-                    }
-                  />
-                </Tabs>
+                  <ShoppingCart size={14} /> Historial Carritos
+                </button>
+                <button
+                  className={`tab ${activeTab === "estacionamiento" ? "active" : ""}`}
+                  onClick={() => {
+                    setActiveTab("estacionamiento");
+                    setSearchTerm("");
+                    setCurrentPage(1);
+                  }}
+                >
+                  <Car size={14} /> Historial Accesos
+                </button>
               </div>
 
-              <Row className="align-items-center g-3">
-                <Col md={12}>
-                  <SearchBar
-                    searchTerm={searchTerm}
-                    onSearchChange={(val) => {
-                      setSearchTerm(val);
-                      setCurrentPage(1);
-                    }}
-                    placeholder={
-                      activeTab === "carritos"
-                        ? "Buscar por nombre de carrito..."
-                        : "Buscar por placa o modelo..."
-                    }
-                    colSize={{ search: 12, filter: 0 }}
-                  />
-                </Col>
-              </Row>
+              <SearchBar
+                searchTerm={searchTerm}
+                onSearchChange={(val) => {
+                  setSearchTerm(val);
+                  setCurrentPage(1);
+                }}
+                placeholder={
+                  activeTab === "carritos"
+                    ? "Buscar por nombre de carrito..."
+                    : "Buscar por placa o modelo..."
+                }
+              />
             </>
           }
           paginationProps={{
@@ -283,100 +233,96 @@ const PRHistorialPage = () => {
 
             if (activeTab === "carritos") {
               return (
-                <tr key={log.id} className="border-bottom border-light">
-                  <td className="px-4 py-3 text-center">
+                <tr key={log.id}>
+                  <td className="text-center">
                     <span className="text-secondary fw-bold">
                       {actualIndex.toString().padStart(2, "0")}
                     </span>
                   </td>
-                  <td className="py-3">
-                    <div className="small">
-                      <FaHome className="me-1 text-muted" />{" "}
+                  <td>
+                    <div className="text-sm">
+                      <Home size={14} className="text-muted" />{" "}
                       {log.aptoNumero || log.id_apartamento}
                     </div>
                   </td>
-                  <td className="py-3">
-                    <div className="small fw-medium">
+                  <td>
+                    <div className="text-sm fw-medium">
                       {log.carritoNombre || `Carrito ${log.id_carrito}`}
                     </div>
                   </td>
-                  <td className="py-3">
-                    <div className="small text-muted">
-                      <FaUser className="me-1" />{" "}
+                  <td>
+                    <div className="text-sm text-muted">
+                      <User size={14} />{" "}
                       {log.usuarioNombre || log.solicitante}
                     </div>
                   </td>
-                   <td className="py-3">
-                    <div className="x-small">
-                      <FaClock className="me-1 text-muted" />{" "}
+                   <td>
+                    <div className="text-xs">
+                      <Clock size={12} className="text-muted" />{" "}
                       {formatDateTime(log.fecha_entrada)}
                     </div>
                   </td>
-                  <td className="py-3">
-                    <div className="x-small">
-                      <FaClock className="me-1 text-muted" />{" "}
+                  <td>
+                    <div className="text-xs">
+                      <Clock size={12} className="text-muted" />{" "}
                       {log.fecha_salida ? formatDateTime(log.fecha_salida) : "---"}
                     </div>
                   </td>
-                  <td className="py-3">
+                  <td>
                     {log.penalizacionCalculada > 0 ? (
-                      <span className="text-danger fw-bold small">
+                      <span className="text-danger fw-bold text-sm">
                         S/. {log.penalizacionCalculada.toFixed(2)}
                       </span>
                     ) : (
-                      <span className="text-muted small">S/. 0.00</span>
+                      <span className="text-muted text-sm">S/. 0.00</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-end">
-                    <Badge
-                      className={`${log.fecha_salida ? "badge-status-active" : "badge-status-warning"} rounded-pill px-3 py-1 border-0`}
-                    >
+                  <td>
+                    <span className={`badge ${log.fecha_salida ? "badge-success" : "badge-warning"}`}>
                       {log.fecha_salida ? "Devuelto" : "En uso"}
-                    </Badge>
+                    </span>
                   </td>
                 </tr>
               );
             } else {
               return (
-                <tr key={log.id} className="border-bottom border-light">
-                  <td className="px-4 py-3 text-center">
+                <tr key={log.id}>
+                  <td className="text-center">
                     <span className="text-secondary fw-bold">
                       {actualIndex.toString().padStart(2, "0")}
                     </span>
                   </td>
-                  <td className="py-3">
-                    <div className="fw-bold small">{log.placa}</div>
-                    <div className="x-small text-muted">{log.vehiculoInfo}</div>
+                  <td>
+                    <div className="fw-bold text-sm">{log.placa}</div>
+                    <div className="text-xs text-muted">{log.vehiculoInfo}</div>
                   </td>
-                  <td className="py-3 text-center">
-                    <Badge bg="dark" className="rounded-2">
+                  <td className="text-center">
+                    <span className="badge badge-neutral">
                       {log.estacionamientoNumero || log.id_estacionamiento}
-                    </Badge>
+                    </span>
                   </td>
-                  <td className="py-3">
-                    <div className="x-small">
-                      <FaCalendarAlt className="me-1 text-muted" />{" "}
+                  <td>
+                    <div className="text-xs">
+                      <Calendar size={12} className="text-muted" />{" "}
                       {formatDateTime(log.fecha_entrada)}
                     </div>
                   </td>
-                  <td className="py-3">
-                    <div className="x-small">
-                      <FaCalendarAlt className="me-1 text-muted" />{" "}
+                  <td>
+                    <div className="text-xs">
+                      <Calendar size={12} className="text-muted" />{" "}
                       {formatDateTime(log.fecha_salida)}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-end">
-                    <Badge
-                      className={`${log.fecha_salida ? "badge-status-inactive" : "badge-status-info"} rounded-pill px-3 py-1 border-0`}
-                    >
+                  <td>
+                    <span className={`badge ${log.fecha_salida ? "badge-neutral" : "badge-info"}`}>
                       {log.estado}
-                    </Badge>
+                    </span>
                   </td>
                 </tr>
               );
             }
           })}
-        </MainTable>
+        </DataTable>
       </div>
     </AnimatedPage>
   );

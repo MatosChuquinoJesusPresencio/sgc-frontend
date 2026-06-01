@@ -1,4 +1,4 @@
-import { Card, Pagination } from "react-bootstrap";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const TablePagination = ({
   currentPage,
@@ -10,54 +10,38 @@ const TablePagination = ({
   if (!totalItems || totalItems === 0) return null;
 
   return (
-    <Card.Footer className="bg-white border-0 py-3 px-4 d-flex flex-column flex-md-row justify-content-between align-items-center border-top gap-3">
-      <div className="small text-muted fw-medium">
-        Mostrando <span className="text-dark fw-bold">{itemsShowing}</span> de{" "}
-        <span className="text-dark fw-bold">{totalItems}</span> registros
+    <div className="pagination">
+      <div className="pagination-info">
+        Mostrando <strong>{itemsShowing}</strong> de <strong>{totalItems}</strong> registros
       </div>
       {totalPages > 1 && (
-        <Pagination className="mb-0 pagination-sm custom-pagination">
-          <Pagination.Prev
+        <div className="pagination-btns">
+          <button
+            className="pagination-btn"
             disabled={currentPage === 1}
             onClick={() => onPageChange(currentPage - 1)}
-          />
+          >
+            <ChevronLeft size={14} />
+          </button>
           {[...Array(totalPages)].map((_, i) => (
-            <Pagination.Item
+            <button
               key={i + 1}
-              active={i + 1 === currentPage}
+              className={`pagination-btn ${i + 1 === currentPage ? "active" : ""}`}
               onClick={() => onPageChange(i + 1)}
             >
               {i + 1}
-            </Pagination.Item>
+            </button>
           ))}
-          <Pagination.Next
+          <button
+            className="pagination-btn"
             disabled={currentPage === totalPages}
             onClick={() => onPageChange(currentPage + 1)}
-          />
-        </Pagination>
+          >
+            <ChevronRight size={14} />
+          </button>
+        </div>
       )}
-      <style>
-        {`
-                .custom-pagination .page-link {
-                    border: none;
-                    color: #495057;
-                    margin: 0 2px;
-                    border-radius: 8px !important;
-                    font-weight: 600;
-                    padding: 0.5rem 0.8rem;
-                }
-                .custom-pagination .page-item.active .page-link {
-                    background-color: #112d4d !important;
-                    color: white !important;
-                    box-shadow: 0 4px 10px rgba(17, 45, 77, 0.2);
-                }
-                .custom-pagination .page-item.disabled .page-link {
-                    background-color: transparent;
-                    opacity: 0.5;
-                }
-                `}
-      </style>
-    </Card.Footer>
+    </div>
   );
 };
 

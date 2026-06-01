@@ -1,20 +1,21 @@
 import { useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 
-import { Button, Col, Row, Badge, Modal, Form } from "react-bootstrap";
 import {
-  FaShoppingCart,
-  FaTrash,
-  FaInfoCircle,
-  FaCheckCircle,
-  FaExclamationTriangle,
-  FaEdit,
-  FaTools,
-  FaPlusCircle,
-  FaEye,
-  FaUser,
-  FaClock,
-} from "react-icons/fa";
+  ShoppingCart,
+  Trash2,
+  Info,
+  CheckCircle,
+  AlertTriangle,
+  Edit3,
+  Wrench,
+  PlusCircle,
+  Eye,
+  User,
+  Clock,
+  X,
+  Save,
+} from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
 import { useData } from "../../hooks/useData";
@@ -24,9 +25,11 @@ import StatCard from "../../components/dashboard/StatCard";
 import AnimatedPage from "../../components/animations/AnimatedPage";
 import FormInput from "../../components/form/FormInput";
 import SearchBar from "../../components/ui/SearchBar";
-import MainTable from "../../components/ui/MainTable";
+import DataTable from "../../components/ui/DataTable";
 import NoCondoWarning from "../../components/ui/NoCondoWarning";
 import { usePagination } from "../../hooks/usePagination";
+import ConfirmDialog from "../../components/modals/ConfirmDialog";
+import { formatDateTime } from "../../utils/formatters";
 
 const ACCarritosPage = () => {
   const { authUser } = useAuth();
@@ -98,7 +101,6 @@ const ACCarritosPage = () => {
             (a) => a.id === activeLoan.id_apartamento,
           );
 
-          // Calculate real-time fine
           if (config) {
             const startDate = new Date(activeLoan.fecha_entrada);
             const diffMs = now - startDate;
@@ -237,36 +239,19 @@ const ACCarritosPage = () => {
     switch (status) {
       case "Disponible":
         return (
-          <Badge
-            bg="success"
-            className="bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 fw-normal"
-          >
-            Disponible
-          </Badge>
+          <span className="badge badge-success">Disponible</span>
         );
       case "En uso":
         return (
-          <Badge
-            bg="primary"
-            className="bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3 fw-normal"
-          >
-            En uso
-          </Badge>
+          <span className="badge badge-info">En uso</span>
         );
       case "Mantenimiento":
         return (
-          <Badge
-            bg="warning"
-            className="bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-pill px-3 fw-normal"
-          >
-            Mantenimiento
-          </Badge>
+          <span className="badge badge-warning">Mantenimiento</span>
         );
       default:
         return (
-          <Badge bg="secondary" className="rounded-pill px-3 fw-normal">
-            {status}
-          </Badge>
+          <span className="badge badge-neutral">{status}</span>
         );
     }
   };
@@ -275,48 +260,48 @@ const ACCarritosPage = () => {
     <AnimatedPage>
       <div className="page-container">
         <DashboardHeader
-          icon={FaShoppingCart}
+          icon={ShoppingCart}
           title="Gestión de Carritos de Carga"
           badgeText={condominio?.nombre || "Condominio"}
           welcomeText="Administra la flota de carritos disponibles para los residentes y monitorea su estado operativo."
         >
-          <Button
-            className="btn-primary-theme btn-action"
+          <button
+            className="btn btn-primary"
             onClick={handleOpenCreate}
           >
-            <FaPlusCircle />
+            <PlusCircle size={16} />
             <span>Nuevo Carrito</span>
-          </Button>
+          </button>
         </DashboardHeader>
 
-        <Row className="g-4 mb-5">
+        <div className="grid grid-4 gap-4 mb-5">
           <StatCard
-            icon={FaShoppingCart}
+            icon={ShoppingCart}
             label="Total Carritos"
             value={stats.total}
             colorClass="primary-theme"
           />
           <StatCard
-            icon={FaCheckCircle}
+            icon={CheckCircle}
             label="Disponibles"
             value={stats.disponibles}
             colorClass="primary-theme"
           />
           <StatCard
-            icon={FaInfoCircle}
+            icon={Info}
             label="En Uso"
             value={stats.enUso}
             colorClass="primary-theme"
           />
           <StatCard
-            icon={FaTools}
+            icon={Wrench}
             label="En Mantenimiento"
             value={stats.mantenimiento}
             colorClass="primary-theme"
           />
-        </Row>
+        </div>
 
-        <MainTable
+        <DataTable
           headers={[
             "#",
             "Código de Carrito",
@@ -327,7 +312,7 @@ const ACCarritosPage = () => {
           ]}
           isEmpty={paginatedData.length === 0}
           emptyMessage="No se encontraron carritos registrados."
-          emptyIcon={FaShoppingCart}
+          emptyIcon={ShoppingCart}
           searchBar={
             <SearchBar
               searchTerm={searchTerm}
@@ -355,20 +340,20 @@ const ACCarritosPage = () => {
           {paginatedData.map((carrito, index) => {
             const actualIndex = (currentPage - 1) * itemsPerPage + index + 1;
             return (
-              <tr key={carrito.id} className="border-bottom border-light">
+              <tr key={carrito.id}>
                 <td className="px-4 py-3 text-center">
                   <span className="text-secondary fw-bold">
                     {actualIndex.toString().padStart(2, "0")}
                   </span>
                 </td>
                 <td className="py-3">
-                  <div className="d-flex align-items-center gap-3">
-                    <div className="p-2 rounded-3 bg-light text-primary-theme">
-                      <FaShoppingCart />
+                  <div className="flex items-center gap-3">
+                    <div className="cell-icon primary">
+                      <ShoppingCart size={14} />
                     </div>
                     <div>
-                      <div className="fw-bold text-dark">{carrito.codigo}</div>
-                      <div className="x-small text-muted">ID: {carrito.id}</div>
+                      <div className="fw-bold">{carrito.codigo}</div>
+                      <div className="text-xs text-muted">ID: {carrito.id}</div>
                     </div>
                   </div>
                 </td>
@@ -376,292 +361,228 @@ const ACCarritosPage = () => {
                 <td className="py-3">
                   {carrito.currentUser ? (
                     <div>
-                      <div className="small fw-bold text-dark">
+                      <div className="text-sm fw-bold">
                         {carrito.currentUser.nombre}
                       </div>
-                      <div className="x-small text-muted">
+                      <div className="text-xs text-muted">
                         Apto {carrito.currentUser.aptoNumero}
                       </div>
                     </div>
                   ) : (
-                    <span className="text-muted small">—</span>
+                    <span className="text-muted text-sm">—</span>
                   )}
                 </td>
                 <td className="py-3">
                   {carrito.fine > 0 ? (
-                    <Badge
-                      bg="danger"
-                      className="bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3 fw-bold"
-                    >
+                    <span className="badge badge-danger">
                       S/. {carrito.fine.toFixed(2)}
-                    </Badge>
+                    </span>
                   ) : (
-                    <span className="text-muted small">S/ 0.00</span>
+                    <span className="text-muted text-sm">S/ 0.00</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-end">
-                  <div className="d-flex justify-content-end gap-2">
-                    <Button
-                      variant="light"
-                      className="btn btn-sm btn-primary-theme btn-action-sm"
+                <td className="px-4 py-3 text-right">
+                  <div className="flex justify-end gap-2">
+                    <button
+                      className="btn btn-outline btn-sm"
                       onClick={() => handleOpenDetails(carrito)}
                       disabled={!carrito.currentUser}
                     >
-                      <FaEye /> <span>Detalles</span>
-                    </Button>
+                      <Eye size={14} /> <span>Detalles</span>
+                    </button>
 
-                    <Button
-                      variant="light"
-                      className="btn btn-sm btn-primary-theme btn-action-sm"
+                    <button
+                      className="btn btn-outline btn-sm"
                       onClick={() => handleOpenEdit(carrito)}
                     >
-                      <FaEdit /> <span>Editar</span>
-                    </Button>
+                      <Edit3 size={14} /> <span>Editar</span>
+                    </button>
 
-                    <Button
-                      variant="light"
-                      className="btn btn-sm btn-primary-theme btn-action-sm"
+                    <button
+                      className="btn btn-outline btn-sm"
                       onClick={() => handleOpenDelete(carrito)}
                       disabled={carrito.estado === "En uso"}
-                      style={
-                        carrito.estado === "En uso"
-                          ? { pointerEvents: "none" }
-                          : {}
-                      }
                     >
-                      <FaTrash /> <span>Eliminar</span>
-                    </Button>
+                      <Trash2 size={14} /> <span>Eliminar</span>
+                    </button>
                   </div>
                 </td>
               </tr>
             );
           })}
-        </MainTable>
+        </DataTable>
       </div>
 
-      <Modal
-        show={showFormModal}
-        onHide={() => setShowFormModal(false)}
-        centered
-      >
-        <Modal.Header closeButton className="border-0 p-4 pb-0">
-          <Modal.Title className="fw-bold text-primary-theme">
-            {editingCarrito ? "Editar Carrito" : "Nuevo Carrito"}
-          </Modal.Title>
-        </Modal.Header>
-        <Form onSubmit={handleSubmit(onSubmit)}>
-          <Modal.Body className="p-4">
-            <Row className="g-3">
-              <Col md={12}>
-                <FormInput
-                  label="Código del Carrito"
-                  name="codigo"
-                  register={register}
-                  validation={{ required: "El código es requerido" }}
-                  error={errors.codigo}
-                  placeholder="Ej: C-101"
-                />
-              </Col>
-              <Col md={12}>
-                <Form.Group className="mb-3">
-                  <Form.Label className="fw-semibold small text-secondary">
-                    Estado Inicial
-                  </Form.Label>
-                  <Form.Select
-                    {...register("estado", {
-                      required: "El estado es requerido",
-                    })}
-                    isInvalid={!!errors.estado}
-                    className="rounded-pill border-light bg-light"
-                  >
-                    <option value="Disponible">Disponible</option>
-                    <option value="En uso">En uso</option>
-                    <option value="Mantenimiento">Mantenimiento</option>
-                  </Form.Select>
-                  <Form.Control.Feedback type="invalid">
-                    {errors.estado?.message}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-            </Row>
-          </Modal.Body>
-          <Modal.Footer className="border-0 p-4 pt-0">
-            <Button
-              variant="light"
-              onClick={() => setShowFormModal(false)}
-              className="rounded-pill px-4"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              className="btn-primary-theme rounded-pill px-4"
-            >
-              {editingCarrito ? "Guardar Cambios" : "Crear Carrito"}
-            </Button>
-          </Modal.Footer>
-        </Form>
-      </Modal>
+      {showFormModal && (
+        <div className="modal-overlay" onClick={() => setShowFormModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title">
+                {editingCarrito ? "Editar Carrito" : "Nuevo Carrito"}
+              </div>
+              <button className="modal-close" onClick={() => setShowFormModal(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="modal-body">
+                <div className="grid-2 gap-3">
+                  <div>
+                    <FormInput
+                      label="Código del Carrito"
+                      name="codigo"
+                      register={register}
+                      validation={{ required: "El código es requerido" }}
+                      error={errors.codigo}
+                      placeholder="Ej: C-101"
+                    />
+                  </div>
+                  <div>
+                    <div className="form-group">
+                      <label className="form-label fw-semibold text-sm text-secondary">
+                        Estado Inicial
+                      </label>
+                      <select
+                        className="form-select"
+                        {...register("estado", {
+                          required: "El estado es requerido",
+                        })}
+                      >
+                        <option value="Disponible">Disponible</option>
+                        <option value="En uso">En uso</option>
+                        <option value="Mantenimiento">Mantenimiento</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setShowFormModal(false)}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                >
+                  {editingCarrito ? "Guardar Cambios" : "Crear Carrito"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
-      <Modal
+      <ConfirmDialog
         show={showDeleteModal}
         onHide={() => setShowDeleteModal(false)}
-        centered
-      >
-        <Modal.Header closeButton className="border-0 p-4 pb-0">
-          <Modal.Title className="fw-bold text-danger">
-            Confirmar Eliminación
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="p-4">
-          <div className="text-center mb-4">
-            <div
-              className="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3"
-              style={{ width: "60px", height: "60px" }}
-            >
-              <FaExclamationTriangle size={30} />
-            </div>
-            <p className="mb-0 text-secondary fw-medium">
-              ¿Estás seguro de que deseas eliminar el carrito{" "}
-              <span className="text-dark fw-bold">
-                {carritoToDelete?.codigo}
-              </span>
-              ?
-            </p>
-            <p className="small text-muted mt-2">
-              Esta acción no se puede deshacer.
-            </p>
-          </div>
-        </Modal.Body>
-        <Modal.Footer className="border-0 p-4 pt-0 d-flex gap-2">
-          <Button
-            variant="light"
-            onClick={() => setShowDeleteModal(false)}
-            className="rounded-pill px-4 flex-grow-1"
-          >
-            Cancelar
-          </Button>
-          <Button
-            variant="danger"
-            onClick={confirmDelete}
-            className="rounded-pill px-4 flex-grow-1"
-          >
-            Eliminar
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        onConfirm={confirmDelete}
+        title="Confirmar Eliminación"
+        message={`¿Estás seguro de que deseas eliminar el carrito ${carritoToDelete?.codigo}?`}
+      />
 
-      <Modal
-        show={showDetailsModal}
-        onHide={() => setShowDetailsModal(false)}
-        centered
-        size="md"
-      >
-        <Modal.Header closeButton className="border-0 p-4 pb-0">
-          <Modal.Title className="fw-bold text-primary-theme d-flex align-items-center gap-2">
-            <FaInfoCircle /> Detalle de Uso
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="p-4">
-          <div className="mb-4 d-flex align-items-center gap-3 p-3 bg-light rounded-4">
-            <div className="p-3 bg-white rounded-3 shadow-sm text-primary-theme">
-              <FaShoppingCart size={24} />
-            </div>
-            <div>
-              <div className="fw-bold text-dark">
-                Carrito {selectedCarrito?.codigo}
+      {showDetailsModal && (
+        <div className="modal-overlay" onClick={() => setShowDetailsModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title flex items-center gap-2">
+                <Info size={16} /> Detalle de Uso
               </div>
-              <div className="small text-muted">
-                ID Sistema: {selectedCarrito?.id}
-              </div>
+              <button className="modal-close" onClick={() => setShowDetailsModal(false)}>
+                <X size={16} />
+              </button>
             </div>
-          </div>
-
-          {selectedCarrito?.currentUser ? (
-            <div className="d-flex flex-column gap-4">
-              <section>
-                <h6 className="fw-bold text-secondary mb-3 small text-uppercase">
-                  Usuario en Posesión
-                </h6>
-                <div className="d-flex align-items-center gap-3 p-3 border rounded-4 bg-white shadow-sm">
-                  <div className="p-2 rounded-circle bg-primary bg-opacity-10 text-primary">
-                    <FaUser />
+            <div className="modal-body">
+              <div className="flex items-center gap-3 p-3 mb-4">
+                <div className="cell-icon primary">
+                  <ShoppingCart size={24} />
+                </div>
+                <div>
+                  <div className="fw-bold">
+                    Carrito {selectedCarrito?.codigo}
                   </div>
-                  <div className="flex-grow-1">
-                    <div className="fw-bold text-dark">
-                      {selectedCarrito.currentUser.nombre}
-                    </div>
-                    <div className="small text-muted">
-                      {selectedCarrito.currentUser.solicitante} • Apto{" "}
-                      {selectedCarrito.currentUser.aptoNumero}
-                    </div>
+                  <div className="text-sm text-muted">
+                    ID Sistema: {selectedCarrito?.id}
                   </div>
                 </div>
-              </section>
+              </div>
 
-              <section>
-                <h6 className="fw-bold text-secondary mb-3 small text-uppercase">
-                  Detalles del Préstamo
-                </h6>
-                <div className="p-3 border rounded-4 bg-white shadow-sm">
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <div className="small text-muted d-flex align-items-center gap-2">
-                      <FaClock className="text-primary" /> Fecha de Salida
-                    </div>
-                    <div className="small fw-bold">
-                      {new Date(
-                        selectedCarrito.currentUser.fechaEntrada,
-                      ).toLocaleString("es-ES", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </div>
-                  </div>
-                  {selectedCarrito.fine > 0 && (
-                    <div className="d-flex justify-content-between align-items-center mb-2 text-danger">
-                      <div className="small d-flex align-items-center gap-2">
-                        <FaExclamationTriangle /> Multa Acumulada
+              {selectedCarrito?.currentUser ? (
+                <div className="flex flex-col gap-4">
+                  <section>
+                    <h6 className="fw-bold text-secondary mb-3 text-sm">
+                      Usuario en Posesión
+                    </h6>
+                    <div className="flex items-center gap-3 p-3">
+                      <div className="cell-icon primary">
+                        <User size={14} />
                       </div>
-                      <div className="small fw-bold">
-                        S/ {selectedCarrito.fine.toFixed(2)}
+                      <div style={{ flex: 1 }}>
+                        <div className="fw-bold">
+                          {selectedCarrito.currentUser.nombre}
+                        </div>
+                        <div className="text-sm text-muted">
+                          {selectedCarrito.currentUser.solicitante} • Apto{" "}
+                          {selectedCarrito.currentUser.aptoNumero}
+                        </div>
                       </div>
                     </div>
-                  )}
-                  <div className="d-flex justify-content-between align-items-center pt-2 border-top">
-                    <div className="small text-muted">Estado del Préstamo</div>
-                    <Badge
-                      bg="primary"
-                      className="bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3 fw-normal"
-                    >
-                      Activo
-                    </Badge>
-                  </div>
+                  </section>
+
+                  <section>
+                    <h6 className="fw-bold text-secondary mb-3 text-sm">
+                      Detalles del Préstamo
+                    </h6>
+                    <div className="p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm text-muted flex items-center gap-2">
+                          <Clock size={12} className="text-accent" /> Fecha de Salida
+                        </div>
+                        <div className="text-sm fw-bold">
+                          {formatDateTime(selectedCarrito.currentUser.fechaEntrada)}
+                        </div>
+                      </div>
+                      {selectedCarrito.fine > 0 && (
+                        <div className="flex items-center justify-between mb-2 text-danger">
+                          <div className="text-sm flex items-center gap-2">
+                            <AlertTriangle size={12} /> Multa Acumulada
+                          </div>
+                          <div className="text-sm fw-bold">
+                            S/ {selectedCarrito.fine.toFixed(2)}
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between pt-2">
+                        <div className="text-sm text-muted">Estado del Préstamo</div>
+                        <span className="badge badge-info">Activo</span>
+                      </div>
+                    </div>
+                  </section>
                 </div>
-              </section>
+              ) : (
+                <div className="text-center py-4">
+                  <CheckCircle className="text-success mb-2" size={32} />
+                  <div className="fw-bold">Carrito Disponible</div>
+                  <p className="text-muted text-sm">
+                    Este carrito no se encuentra en uso actualmente.
+                  </p>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="text-center py-4">
-              <FaCheckCircle className="text-success mb-2" size={32} />
-              <div className="fw-bold text-dark">Carrito Disponible</div>
-              <p className="text-muted small">
-                Este carrito no se encuentra en uso actualmente.
-              </p>
+            <div className="modal-footer">
+              <button
+                className="btn btn-primary w-full"
+                onClick={() => setShowDetailsModal(false)}
+              >
+                Entendido
+              </button>
             </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer className="border-0 p-4 pt-0">
-          <Button
-            variant="primary"
-            className="btn-primary-theme rounded-pill px-4 w-100 fw-bold shadow-sm"
-            onClick={() => setShowDetailsModal(false)}
-          >
-            Entendido
-          </Button>
-        </Modal.Footer>
-      </Modal>
+          </div>
+        </div>
+      )}
     </AnimatedPage>
   );
 };

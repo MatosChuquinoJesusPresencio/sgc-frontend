@@ -1,16 +1,14 @@
 import { useState, useMemo } from "react";
 
-import { Card, Col, Row, Button, Badge, Modal } from "react-bootstrap";
 import {
-  FaCar,
-  FaPlus,
-  FaPalette,
-  FaParking,
-  FaTrash,
-  FaEdit,
-  FaExclamationTriangle,
-  FaMotorcycle,
-} from "react-icons/fa";
+  Car,
+  Plus,
+  Palette,
+  ParkingCircle,
+  Trash2,
+  Edit3,
+  Bike,
+} from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
 import { useData } from "../../hooks/useData";
@@ -19,7 +17,8 @@ import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
 import AnimatedPage from "../../components/animations/AnimatedPage";
 import VehicleModal from "../../components/modals/VehicleModal";
-import MainTable from "../../components/ui/MainTable";
+import DataTable from "../../components/ui/DataTable";
+import ConfirmDialog from "../../components/modals/ConfirmDialog";
 import { usePagination } from "../../hooks/usePagination";
 
 const PRVehiculosPage = () => {
@@ -124,14 +123,14 @@ const PRVehiculosPage = () => {
   if (!miApto) {
     return (
       <AnimatedPage>
-        <div className="page-container d-flex align-items-center justify-content-center">
-          <Card className="card-custom p-5 text-center">
-            <FaCar size={60} className="text-muted mb-3 mx-auto" />
-            <h3 className="fw-bold text-dark">Sin Unidad Asignada</h3>
+        <div className="page-container flex items-center justify-center">
+          <div className="card card-custom p-5 text-center">
+            <Car size={60} className="text-muted mb-3" />
+            <h3 className="fw-bold">Sin Unidad Asignada</h3>
             <p className="text-muted">
               No puedes gestionar vehículos sin una unidad vinculada.
             </p>
-          </Card>
+          </div>
         </div>
       </AnimatedPage>
     );
@@ -141,66 +140,62 @@ const PRVehiculosPage = () => {
     <AnimatedPage>
       <div className="page-container">
         <DashboardHeader
-          icon={FaCar}
+          icon={Car}
           title="Gestión de Mis Vehículos"
           badgeText={miApto.numero}
           welcomeText="Registra y administra los vehículos autorizados para tu estacionamiento."
         />
 
-        <Row className="g-4 mb-5">
+        <div className="grid grid-4 gap-4 mb-5">
           <StatCard
-            icon={FaCar}
+            icon={Car}
             label="Vehículos Registrados"
             value={misVehiculos.length}
             colorClass="primary-theme"
-            colSize="col-12 col-md-5 col-lg-3"
-            useFullHeight={false}
           />
-          <Col lg={8}>
-            <Card className="card-custom bg-white h-100 d-flex flex-row align-items-center px-4">
-              <div className="p-3 rounded-circle bg-info bg-opacity-10 text-info me-4">
-                <FaParking size={24} />
-              </div>
-              <div>
-                <h6 className="fw-bold text-dark mb-1">
-                  Estacionamiento Asignado
-                </h6>
-                <p className="mb-0 text-muted small">
-                  {miEstacionamiento ? (
-                    <>
-                      Tu unidad cuenta con el espacio:{" "}
-                      <Badge bg="dark" className="ms-2">
-                        {miEstacionamiento.numero}
-                      </Badge>
-                    </>
-                  ) : (
-                    "No tienes un espacio de estacionamiento asignado actualmente."
-                  )}
-                </p>
-              </div>
-            </Card>
-          </Col>
-        </Row>
+          <div className="card card-custom flex items-center px-4">
+            <div className="p-3 cell-icon info mr-4">
+              <ParkingCircle size={24} />
+            </div>
+            <div>
+              <h6 className="fw-bold mb-1">
+                Estacionamiento Asignado
+              </h6>
+              <p className="mb-0 text-muted text-sm">
+                {miEstacionamiento ? (
+                  <>
+                    Tu unidad cuenta con el espacio:{" "}
+                    <span className="badge badge-neutral">
+                      {miEstacionamiento.numero}
+                    </span>
+                  </>
+                ) : (
+                  "No tienes un espacio de estacionamiento asignado actualmente."
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
 
-        <MainTable
+        <DataTable
           headers={["#", "Vehículo", "Placa", "Asignado a", "Color", "Acciones"]}
           isEmpty={misVehiculos.length === 0}
           emptyMessage="No tienes vehículos registrados."
-          emptyIcon={FaCar}
+          emptyIcon={Car}
           searchBar={
-            <div className="d-flex justify-content-between align-items-center">
+            <div className="flex items-center justify-between">
               <div>
-                <h5 className="fw-bold text-dark mb-1">Lista de Vehículos</h5>
-                <p className="text-muted small mb-0">
+                <h5 className="fw-bold mb-1">Lista de Vehículos</h5>
+                <p className="text-muted text-sm mb-0">
                   Vehículos que tienen permitido el ingreso al condominio.
                 </p>
               </div>
-              <Button
-                className="btn-primary-theme rounded-pill px-4 fw-bold shadow-sm border-0 d-flex align-items-center gap-2"
+              <button
+                className="btn btn-primary btn-sm"
                 onClick={() => handleOpenModal()}
               >
-                <FaPlus /> Registrar Vehículo
-              </Button>
+                <Plus size={14} /> Registrar Vehículo
+              </button>
             </div>
           }
           paginationProps={{
@@ -214,63 +209,58 @@ const PRVehiculosPage = () => {
           {paginatedVehiculos.map((v, index) => {
             const actualIndex = (currentPage - 1) * itemsPerPage + index + 1;
             return (
-              <tr key={v.id} className="border-bottom border-light">
-                <td className="px-4 py-3 text-center">
+              <tr key={v.id}>
+                <td className="text-center">
                   <span className="text-secondary fw-bold">
                     {actualIndex.toString().padStart(2, "0")}
                   </span>
                 </td>
-                <td className="py-3">
-                  <div className="d-flex align-items-center gap-3">
-                    <div className="p-2 rounded-3 bg-light text-primary">
-                      {v.tipo === "Moto" ? <FaMotorcycle /> : <FaCar />}
+                <td>
+                  <div className="flex items-center gap-3">
+                    <div className="cell-icon primary">
+                      {v.tipo === "Moto" ? <Bike size={14} /> : <Car size={14} />}
                     </div>
                     <div>
-                      <div className="fw-bold text-dark">{v.marca}</div>
-                      <div className="x-small text-muted">{v.modelo}</div>
+                      <div className="fw-bold">{v.marca}</div>
+                      <div className="text-xs text-muted">{v.modelo}</div>
                     </div>
                   </div>
                 </td>
-                <td className="py-3">
-                  <Badge bg="dark" className="px-3 py-2 fw-bold letter-spacing-1">
+                <td>
+                  <span className="badge badge-neutral">
                     {v.placa}
-                  </Badge>
+                  </span>
                 </td>
-                <td className="py-3">
-                  <Badge
-                    bg={v.id_usuario === authUser?.id ? "primary" : "info"}
-                    className="fw-normal"
-                  >
+                <td>
+                  <span className="badge badge-info">
                     {v.propietarioNombre}
-                  </Badge>
+                  </span>
                 </td>
-                <td className="py-3">
-                  <div className="d-flex align-items-center gap-2 small">
-                    <FaPalette className="text-muted" /> {v.color}
+                <td>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Palette size={14} className="text-muted" /> {v.color}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-end">
-                  <div className="d-flex justify-content-end gap-2">
-                    <Button
-                      variant="light"
-                      className="btn-primary-theme btn-action"
+                <td>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      className="btn btn-outline btn-sm"
                       onClick={() => handleOpenModal(v)}
                     >
-                      <FaEdit /> <span>Editar</span>
-                    </Button>
-                    <Button
-                      variant="light"
-                      className="btn-primary-theme btn-action"
+                      <Edit3 size={14} /> <span>Editar</span>
+                    </button>
+                    <button
+                      className="btn btn-outline btn-sm"
                       onClick={() => handleDeleteClick(v)}
                     >
-                      <FaTrash /> <span>Eliminar</span>
-                    </Button>
+                      <Trash2 size={14} /> <span>Eliminar</span>
+                    </button>
                   </div>
                 </td>
               </tr>
             );
           })}
-        </MainTable>
+        </DataTable>
       </div>
 
       <VehicleModal
@@ -281,45 +271,16 @@ const PRVehiculosPage = () => {
         residents={misResidentes}
       />
 
-      <Modal
+      <ConfirmDialog
         show={showConfirmDelete}
         onHide={() => setShowConfirmDelete(false)}
-        centered
-        size="sm"
-      >
-        <Modal.Body className="text-center p-4">
-          <div className="p-3 rounded-circle bg-danger bg-opacity-10 text-danger d-inline-block mb-3">
-            <FaExclamationTriangle size={30} />
-          </div>
-          <h5 className="fw-bold text-dark">Eliminar Vehículo</h5>
-          <p className="text-secondary small mb-1">
-            ¿Estás seguro de eliminar el vehículo
-          </p>
-          <p className="fw-bold text-dark mb-3">
-            {vehicleToDelete?.marca} {vehicleToDelete?.modelo} &mdash;{" "}
-            <span className="badge bg-dark px-2">{vehicleToDelete?.placa}</span>
-          </p>
-          <p className="x-small text-muted">
-            Esta acción no se puede deshacer.
-          </p>
-          <div className="d-flex justify-content-center gap-2 mt-3">
-            <Button
-              variant="light"
-              onClick={() => setShowConfirmDelete(false)}
-              className="rounded-pill px-4 fw-bold text-secondary border-0"
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleConfirmDelete}
-              className="rounded-pill px-4 fw-bold shadow-sm border-0"
-            >
-              Eliminar
-            </Button>
-          </div>
-        </Modal.Body>
-      </Modal>
+        onConfirm={handleConfirmDelete}
+        title="Eliminar Vehículo"
+        message={`¿Estás seguro de eliminar el vehículo ${vehicleToDelete?.marca} ${vehicleToDelete?.modelo} — ${vehicleToDelete?.placa}? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        confirmVariant="danger"
+      />
     </AnimatedPage>
   );
 };

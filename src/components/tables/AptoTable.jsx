@@ -1,15 +1,12 @@
-import React, { useState, useMemo } from "react";
-import { Table, Button } from "react-bootstrap";
-import { FaHome, FaEdit, FaTrash, FaUser } from "react-icons/fa";
+import { useState, useMemo } from "react";
+import { Home, Edit3, Trash2, User } from "lucide-react";
+import { usePagination } from "../../hooks/usePagination";
+import DataTable from "../ui/DataTable";
 import SearchBar from "../ui/SearchBar";
-import TablePagination from "../ui/TablePagination";
-import EmptyState from "../ui/EmptyState";
 
 const AptoTable = ({ data, pisos, torres, usuarios, onEdit, onDelete }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [towerFilter, setTowerFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 10;
 
   const filtered = useMemo(() => {
     return data.filter((a) => {
@@ -24,11 +21,7 @@ const AptoTable = ({ data, pisos, torres, usuarios, onEdit, onDelete }) => {
     });
   }, [data, searchTerm, towerFilter, pisos, usuarios]);
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paginated = filtered.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
-  );
+  const { currentPage, setCurrentPage, totalPages, paginatedData } = usePagination(filtered);
 
   return (
     <>
@@ -49,100 +42,64 @@ const AptoTable = ({ data, pisos, torres, usuarios, onEdit, onDelete }) => {
             { value: "all", label: "Todas las Torres" },
             ...torres.map((t) => ({ value: t.id.toString(), label: t.nombre })),
           ]}
-          colSize={{ search: 6, filter: 6 }}
         />
       </div>
-      <div className="table-responsive">
-        <Table hover className="align-middle mb-0 custom-table">
-          <thead className="bg-light text-muted small text-uppercase">
-            <tr>
-              <th className="px-4 py-3 border-0">Apartamento</th>
-              <th className="py-3 border-0">Ubicación</th>
-              <th className="py-3 border-0">Propietario</th>
-              <th className="px-4 py-3 border-0 text-end">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginated.length > 0 ? (
-              paginated.map((apto) => {
-                const piso = pisos.find((p) => p.id === apto.id_piso);
-                const torre = torres.find((t) => t.id === piso?.id_torre);
-                const owner = usuarios.find((u) => u.id === apto.id_usuario);
+      <DataTable
+        headers={["Apartamento", "Ubicación", "Propietario", "Acciones"]}
+        isEmpty={paginatedData.length === 0}
+        emptyMessage="No hay apartamentos registrados."
+        emptyIcon={Home}
+        paginationProps={{
+          currentPage,
+          totalPages,
+          onPageChange: setCurrentPage,
+          totalItems: filtered.length,
+          itemsShowing: paginatedData.length,
+        }}
+      >
+        {paginatedData.map((apto) => {
+          const piso = pisos.find((p) => p.id === apto.id_piso);
+          const torre = torres.find((t) => t.id === piso?.id_torre);
+          const owner = usuarios.find((u) => u.id === apto.id_usuario);
 
-                return (
-                  <tr key={apto.id} className="border-bottom border-light">
-                    <td className="px-4 py-3">
-                      <div className="d-flex align-items-center gap-3">
-                        <div className="p-2 rounded-3 bg-success bg-opacity-10 text-primary-theme">
-                          <FaHome />
-                        </div>
-                        <div>
-                          <div className="fw-bold text-dark">
-                            Apto {apto.numero}
-                          </div>
-                          <div className="x-small text-muted">
-                            {apto.metraje} m²
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3">
-                      <div className="small fw-medium">
-                        {torre?.nombre} • Piso {piso?.numero_piso}
-                      </div>
-                    </td>
-                    <td className="py-3">
-                      <div className="d-flex align-items-center gap-2 small">
-                        <FaUser className="text-muted x-small" />
-                        <span
-                          className={
-                            owner
-                              ? "text-dark fw-semibold"
-                              : "text-danger italic"
-                          }
-                        >
-                          {owner?.nombre || "Sin asignar"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-end">
-                      <div className="d-flex justify-content-end gap-2">
-                        <Button
-                          variant="light"
-                          className="btn btn-sm btn-primary-theme btn-action-sm"
-                          onClick={() => onEdit(apto)}
-                        >
-                          <FaEdit /> <span>Editar</span>
-                        </Button>
-                        <Button
-                          variant="light"
-                          className="btn btn-sm btn-primary-theme btn-action-sm"
-                          onClick={() => onDelete(apto)}
-                        >
-                          <FaTrash /> <span>Eliminar</span>
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
-              <EmptyState
-                colSpan={4}
-                message="No hay apartamentos registrados."
-                icon={FaHome}
-              />
-            )}
-          </tbody>
-        </Table>
-      </div>
-      <TablePagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-        totalItems={filtered.length}
-        itemsShowing={paginated.length}
-      />
+          return (
+            <tr key={apto.id}>
+              <td>
+                <div className="cell-label">
+                  <div className="cell-icon success">
+                    <Home size={14} />
+                  </div>
+                  <div>
+                    <div className="cell-title">Apto {apto.numero}</div>
+                    <div className="cell-sub">{apto.metraje} m²</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span className="fw-medium">{torre?.nombre} • Piso {piso?.numero_piso}</span>
+              </td>
+              <td>
+                <div className="flex items-center gap-2">
+                  <User size={13} className="text-muted" />
+                  <span className={owner ? "fw-medium" : "text-danger"}>
+                    {owner?.nombre || "Sin asignar"}
+                  </span>
+                </div>
+              </td>
+              <td>
+                <div className="cell-actions">
+                  <button className="btn btn-outline btn-sm" onClick={() => onEdit(apto)}>
+                    <Edit3 size={13} /> Editar
+                  </button>
+                  <button className="btn btn-outline btn-sm" onClick={() => onDelete(apto)}>
+                    <Trash2 size={13} /> Eliminar
+                  </button>
+                </div>
+              </td>
+            </tr>
+          );
+        })}
+      </DataTable>
     </>
   );
 };

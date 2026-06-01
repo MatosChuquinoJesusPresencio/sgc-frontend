@@ -1,12 +1,12 @@
 import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
+import { AlertTriangle } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import AnimatedPage from "../../components/animations/AnimatedPage";
 import AuthCard from "../../components/auth/AuthCard";
 import AuthLogo from "../../components/auth/AuthLogo";
 import FormInput from "../../components/form/FormInput";
 import AuthButton from "../../components/auth/AuthButton";
-import AuthAlert from "../../components/auth/AuthAlert";
 
 const LoginPage = () => {
     const navigate = useNavigate();
@@ -28,7 +28,7 @@ const LoginPage = () => {
 
     return (
         <AnimatedPage>
-            <div className="container-fluid vh-100 d-flex justify-content-center align-items-center position-relative bg-login-image">
+            <div className="login-page">
                 <AuthCard>
                     <AuthLogo
                         title="Bienvenido"
@@ -68,19 +68,15 @@ const LoginPage = () => {
                             error={errors.password}
                         />
 
-                        <div className="d-flex justify-content-between align-items-center mb-4">
-                            <div className="form-check">
+                        <div className="flex items-center justify-between mb-4">
+                            <label className="form-check">
                                 <input
-                                    className="form-check-input custom-checkbox"
                                     type="checkbox"
-                                    id="rememberMe"
                                     {...register("rememberMe")}
                                 />
-                                <label className="form-check-label small text-secondary fw-semibold" htmlFor="rememberMe">
-                                    Recuérdame
-                                </label>
-                            </div>
-                            <Link to="/forgot-password" className="btn btn-link p-0 text-decoration-none small fw-semibold forgot-password-link">
+                                <label>Recuérdame</label>
+                            </label>
+                            <Link to="/forgot-password" className="forgot-link">
                                 ¿Olvidaste tu contraseña?
                             </Link>
                         </div>
@@ -93,8 +89,15 @@ const LoginPage = () => {
                         />
 
                         {authError && (
-                            <div className="mt-3">
-                                <AuthAlert type="danger" message={authError} onClose={clearAuthError} />
+                            <div className="alert alert-danger mt-3">
+                                <AlertTriangle size={14} />
+                                <span>{authError}</span>
+                                <button
+                                    onClick={clearAuthError}
+                                    style={{ marginLeft: "auto", background: "none", border: "none", color: "inherit", cursor: "pointer" }}
+                                >
+                                    ×
+                                </button>
                             </div>
                         )}
                     </form>

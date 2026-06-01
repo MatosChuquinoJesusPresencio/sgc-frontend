@@ -1,29 +1,38 @@
-import { Form } from 'react-bootstrap';
-
 const FormInput = ({ label, type, placeholder, register, name, validation, error, ...rest }) => {
     return (
-        <Form.Group className="mb-4">
+        <div className="form-group">
             {label && (
-                <Form.Label className="text-secondary fw-semibold small mb-1">
-                    {label}
-                </Form.Label>
+                <label className="form-label">{label}</label>
             )}
-
-            <Form.Control
-                type={type}
-                placeholder={placeholder}
-                isInvalid={!!error}
-                className="input-no-shadow"
-                {...register(name, validation)}
-                {...rest}
-            />
-
+            {type === "select" ? (
+                <select
+                    className={`form-select ${error ? "error" : ""}`}
+                    {...register(name, validation)}
+                    {...rest}
+                >
+                    {placeholder && <option value="">{placeholder}</option>}
+                    {rest.children}
+                </select>
+            ) : type === "textarea" ? (
+                <textarea
+                    className={`form-input ${error ? "error" : ""}`}
+                    placeholder={placeholder}
+                    {...register(name, validation)}
+                    {...rest}
+                />
+            ) : (
+                <input
+                    type={type || "text"}
+                    className={`form-input ${error ? "error" : ""}`}
+                    placeholder={placeholder}
+                    {...register(name, validation)}
+                    {...rest}
+                />
+            )}
             {error && (
-                <Form.Control.Feedback type="invalid" className="d-block mt-1">
-                    {error.message}
-                </Form.Control.Feedback>
+                <div className="form-error">{error.message}</div>
             )}
-        </Form.Group>
+        </div>
     );
 };
 

@@ -1,13 +1,13 @@
 import { useForm } from "react-hook-form";
 import { useSearchParams, Link } from "react-router-dom";
 import { useState, useRef } from "react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import AnimatedPage from "../../components/animations/AnimatedPage";
 import { useAuth } from "../../hooks/useAuth";
 import AuthCard from "../../components/auth/AuthCard";
 import AuthLogo from "../../components/auth/AuthLogo";
 import FormInput from "../../components/form/FormInput";
 import AuthButton from "../../components/auth/AuthButton";
-import AuthAlert from "../../components/auth/AuthAlert";
 
 const ResetPasswordPage = () => {
     const [searchParams] = useSearchParams();
@@ -36,7 +36,7 @@ const ResetPasswordPage = () => {
 
     return (
         <AnimatedPage>
-            <div className="container-fluid vh-100 d-flex justify-content-center align-items-center position-relative bg-login-image">
+            <div className="login-page">
                 <AuthCard>
                     <AuthLogo
                         title="Nueva Contraseña"
@@ -48,32 +48,35 @@ const ResetPasswordPage = () => {
                     />
 
                     {isSuccess ? (
-                        <div className="text-center mb-4">
-                            <div className="alert alert-success border-0 rounded-4 py-3 mb-4">
-                                <i className="bi bi-shield-check fs-1 d-block mb-2 text-success"></i>
-                                <p className="mb-0 small">
+                        <>
+                            <div className="auth-success-card">
+                                <div className="auth-success-icon success">
+                                    <CheckCircle2 size={28} />
+                                </div>
+                                <p className="auth-success-msg">
                                     Tu contraseña ha sido restablecida. Ya puedes iniciar sesión.
                                 </p>
                             </div>
-                            <Link to="/login" id="btn-go-to-login" className="btn btn-primary-theme w-100 py-2 rounded-3 fw-semibold">
-                                <i className="bi bi-box-arrow-in-right me-2"></i>Ir al Login
+                            <Link to="/login" id="btn-go-to-login" className="btn btn-primary w-full">
+                                Ir al Login
                             </Link>
-                        </div>
+                        </>
                     ) : !tokenStatus.valid ? (
-                        <div className="text-center mb-4">
-                            <div className="alert alert-danger border-0 rounded-4 py-3 mb-4">
-                                <i className="bi bi-x-octagon fs-1 d-block mb-2"></i>
-                                <p className="mb-0 small">{tokenStatus.reason}</p>
+                        <>
+                            <div className="auth-success-card">
+                                <div className="auth-success-icon warning">
+                                    <AlertTriangle size={28} />
+                                </div>
+                                <p className="auth-success-msg">{tokenStatus.reason}</p>
                             </div>
-                            <Link to="/forgot-password" className="btn btn-primary-theme w-100 py-2 rounded-3 fw-semibold">
+                            <Link to="/forgot-password" className="btn btn-primary w-full">
                                 Solicitar nuevo enlace
                             </Link>
-                        </div>
+                        </>
                     ) : (
                         <form noValidate onSubmit={handleSubmit(onSubmit)}>
                             <FormInput
                                 label="Nueva Contraseña"
-                                icon="lock"
                                 type="password"
                                 placeholder="Mínimo 6 caracteres"
                                 register={register}
@@ -87,7 +90,6 @@ const ResetPasswordPage = () => {
 
                             <FormInput
                                 label="Confirmar Contraseña"
-                                icon="lock"
                                 type="password"
                                 placeholder="Repite tu contraseña"
                                 register={register}
@@ -100,8 +102,15 @@ const ResetPasswordPage = () => {
                             />
 
                             {authError && (
-                                <div className="mb-3">
-                                    <AuthAlert type="danger" message={authError} onClose={clearAuthError} />
+                                <div className="alert alert-danger mb-3">
+                                    <AlertTriangle size={14} />
+                                    <span>{authError}</span>
+                                    <button
+                                        onClick={clearAuthError}
+                                        style={{ marginLeft: "auto", background: "none", border: "none", color: "inherit", cursor: "pointer" }}
+                                    >
+                                        ×
+                                    </button>
                                 </div>
                             )}
 
@@ -113,11 +122,9 @@ const ResetPasswordPage = () => {
                                 loading={authLoading}
                             />
 
-                            <div className="text-center">
-                                <Link to="/login" className="btn btn-link p-0 text-decoration-none small fw-semibold forgot-password-link">
-                                    Volver al inicio de sesión
-                                </Link>
-                            </div>
+                            <Link to="/login" className="back-link">
+                                Volver al inicio de sesión
+                            </Link>
                         </form>
                     )}
                 </AuthCard>

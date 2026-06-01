@@ -1,24 +1,20 @@
 import AnimatedPage from "../animations/AnimatedPage";
-import { FaExclamationTriangle } from "react-icons/fa";
-import { Card } from "react-bootstrap";
+import { AlertTriangle } from "lucide-react";
 
 const NoCondoWarning = () => {
   return (
     <AnimatedPage>
-      <div className="page-container d-flex align-items-center justify-content-center">
-        <Card
-          className="card-custom p-5 text-center"
-          style={{ maxWidth: "500px", width: "100%" }}
-        >
-          <div className="p-4 rounded-circle bg-warning bg-opacity-10 text-warning d-inline-block mb-4">
-            <FaExclamationTriangle size={50} />
+      <div className="page-container flex items-center justify-center">
+        <div className="card" style={{ maxWidth: "500px", width: "100%", padding: 40, textAlign: "center" }}>
+          <div className="auth-success-icon warning" style={{ margin: "0 auto 16px" }}>
+            <AlertTriangle size={28} />
           </div>
-          <h3 className="fw-bold text-dark">Sin condominio asignado</h3>
-          <p className="text-secondary">
+          <h3 className="fw-bold mb-2">Sin condominio asignado</h3>
+          <p className="text-secondary" style={{ fontSize: 14 }}>
             Actualmente no tienes un condominio bajo tu administración. Contacta
             con el Super Administrador para que se te asigne uno.
           </p>
-        </Card>
+        </div>
       </div>
     </AnimatedPage>
   );

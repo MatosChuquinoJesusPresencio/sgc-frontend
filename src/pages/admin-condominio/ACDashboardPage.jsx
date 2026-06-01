@@ -1,47 +1,38 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Badge } from "react-bootstrap";
-
 import {
-  FaBuilding,
-  FaHome,
-  FaUserFriends,
-  FaCar,
-  FaShoppingCart,
-  FaUser,
-  FaEnvelope,
-  FaCircle,
-  FaClock,
-  FaExclamationTriangle,
-} from "react-icons/fa";
-
+  Building2,
+  Home,
+  Users,
+  Car,
+  ShoppingCart,
+  GitBranch,
+  Layers,
+  ArrowRight,
+  Activity,
+  Settings,
+  AlertTriangle,
+} from "lucide-react";
 import { useData } from "../../hooks/useData";
 import { useAuth } from "../../hooks/useAuth";
-
-import DashboardHeader from "../../components/dashboard/DashboardHeader";
-import StatCard from "../../components/dashboard/StatCard";
-import DashboardTable from "../../components/dashboard/DashboardTable";
 import AnimatedPage from "../../components/animations/AnimatedPage";
-import EmptyState from "../../components/ui/EmptyState";
 import NoCondoWarning from "../../components/ui/NoCondoWarning";
 
 const ACDashboardPage = () => {
   const navigate = useNavigate();
-
   const { getTable } = useData();
   const { authUser } = useAuth();
 
   const apartamentos = getTable("apartamentos");
   const usuarios = getTable("usuarios");
-  const roles = getTable("roles");
   const logs_acceso_vehicular = getTable("logs_acceso_vehicular");
   const logs_prestamo_carrito = getTable("logs_prestamo_carrito");
   const condominios = getTable("condominios");
+  const configuraciones = getTable("configuraciones");
 
   const currentCondoId = authUser?.id_condominio;
   const condominio = condominios.find((c) => c.id === currentCondoId);
 
-  const configuraciones = getTable("configuraciones");
   const config = useMemo(
     () => configuraciones.find((c) => c.id_condominio === currentCondoId),
     [configuraciones, currentCondoId],
@@ -49,325 +40,243 @@ const ACDashboardPage = () => {
 
   if (!condominio) return <NoCondoWarning />;
 
-  const torres = getTable("torres").filter(
-    (t) => t.id_condominio === currentCondoId,
-  );
+  const torres = getTable("torres").filter((t) => t.id_condominio === currentCondoId);
   const torresIds = torres.map((t) => t.id);
-  const pisosIds = getTable("pisos")
-    .filter((p) => torresIds.includes(p.id_torre))
-    .map((p) => p.id);
+  const allPisos = getTable("pisos").filter((p) => torresIds.includes(p.id_torre));
+  const pisosIds = allPisos.map((p) => p.id);
   const aptosCondo = apartamentos.filter((a) => pisosIds.includes(a.id_piso));
   const aptosIds = aptosCondo.map((a) => a.id);
-  const estIds = getTable("estacionamientos")
-    .filter((e) => aptosIds.includes(e.id_apartamento))
-    .map((e) => e.id);
+  const estacionamientos = getTable("estacionamientos").filter((e) => aptosIds.includes(e.id_apartamento));
+  const estIds = estacionamientos.map((e) => e.id);
 
-  const condoUsers = currentCondoId
-    ? usuarios.filter((u) => u.id_condominio === currentCondoId)
-    : [];
-  const totalAptos = aptosCondo.length;
+  const condoUsers = usuarios.filter((u) => u.id_condominio === currentCondoId);
   const totalPropietarios = condoUsers.filter((u) => u.id_rol === 3).length;
+  const totalSeguridad = condoUsers.filter((u) => u.id_rol === 4).length;
 
-  const filteredVehiculoLogs = logs_acceso_vehicular.filter((log) =>
-    estIds.includes(log.id_estacionamiento),
+  const filteredVehiculoLogs = logs_acceso_vehicular.filter((log) => estIds.includes(log.id_estacionamiento));
+  const filteredCarritoLogs = logs_prestamo_carrito.filter((log) => aptosIds.includes(log.id_apartamento));
+
+  const activeVehicles = filteredVehiculoLogs.filter((l) => !l.fecha_salida).length;
+  const activeCarLoans = filteredCarritoLogs.filter((l) => !l.fecha_salida).length;
+
+  const recentAccess = useMemo(
+    () => [...filteredVehiculoLogs].sort((a, b) => new Date(b.fecha_entrada) - new Date(a.fecha_entrada)).slice(0, 5),
+    [filteredVehiculoLogs]
   );
-  const filteredCarritoLogs = logs_prestamo_carrito.filter((log) =>
-    aptosIds.includes(log.id_apartamento),
+
+  const recentLoans = useMemo(
+    () => [...filteredCarritoLogs].sort((a, b) => new Date(b.fecha_entrada) - new Date(a.fecha_entrada)).slice(0, 5),
+    [filteredCarritoLogs]
   );
 
-  const activeVehicles = filteredVehiculoLogs.filter(
-    (log) => !log.fecha_salida,
-  ).length;
-  const activeCarLoans = filteredCarritoLogs.filter(
-    (log) => !log.fecha_salida,
-  ).length;
+  const totalEstacionamientos = estacionamientos.length;
+  const ocupados = estacionamientos.filter((e) => e.cantidad_vehiculos > 0).length;
+  const pctOcupacion = totalEstacionamientos > 0 ? Math.round((ocupados / totalEstacionamientos) * 100) : 0;
 
-  const recentAccess = [...filteredVehiculoLogs]
-    .sort((a, b) => new Date(b.fecha_entrada) - new Date(a.fecha_entrada))
-    .slice(0, 5);
-  const recentLoans = [...filteredCarritoLogs]
-    .sort((a, b) => new Date(b.fecha_entrada) - new Date(a.fecha_entrada))
-    .slice(0, 5);
-  const recentCondoUsers = [...condoUsers].slice(0, 5);
-
-  const estacionamientos = getTable("estacionamientos");
-  const estacionamientosCondo = estacionamientos
-    .filter((e) => aptosIds.includes(e.id_apartamento))
-    .map((e) => {
-      const apto = aptosCondo.find((a) => a.id === e.id_apartamento);
-      return { ...e, aptoNumero: apto?.numero };
-    });
-  const recentEstacionamientos = [...estacionamientosCondo].slice(0, 5);
-
-  const getRoleName = (roleId) => {
-    const role = roles.find((r) => r.id === roleId);
-    return role ? role.nombre : "N/A";
-  };
+  const quickLinks = [
+    { label: "Infraestructura", sub: `${torres.length} torres, ${allPisos.length} pisos`, icon: GitBranch, color: "accent", path: "/admin-condominio/infraestructura" },
+    { label: "Usuarios", sub: `${condoUsers.length} registrados`, icon: Users, color: "success", path: "/admin-condominio/usuarios" },
+    { label: "Apartamentos", sub: `${aptosCondo.length} unidades`, icon: Home, color: "info", path: "/admin-condominio/apartamentos" },
+    { label: "Estacionamientos", sub: `${ocupados}/${totalEstacionamientos} ocupados`, icon: Car, color: "warning", path: "/admin-condominio/estacionamientos" },
+    { label: "Carritos", sub: `${activeCarLoans} en uso`, icon: ShoppingCart, color: "danger", path: "/admin-condominio/carritos" },
+    { label: "Mi Condominio", sub: "Configuración", icon: Building2, color: "info", path: "/admin-condominio/mi-condominio" },
+  ];
 
   return (
     <AnimatedPage>
       <div className="page-container">
-        <DashboardHeader
-          icon={FaBuilding}
-          title={condominio?.nombre || "Panel de Administración"}
-          badgeText="Admin Condominio"
-          welcomeText={`Bienvenido, ${authUser?.nombre || "Admin"}. Gestión operativa y usuarios.`}
-        ></DashboardHeader>
-
-        <div className="row g-4 mb-5">
-          <StatCard
-            icon={FaHome}
-            label="Apartamentos"
-            value={totalAptos}
-            colorClass="primary-theme"
-          />
-          <StatCard
-            icon={FaUserFriends}
-            label="Propietarios"
-            value={totalPropietarios}
-            colorClass="primary-theme"
-          />
-          <StatCard
-            icon={FaCar}
-            label="Vehículos Hoy"
-            value={activeVehicles}
-            colorClass="primary-theme"
-          />
-          <StatCard
-            icon={FaShoppingCart}
-            label="Carritos en Uso"
-            value={activeCarLoans}
-            colorClass="primary-theme"
-          />
+        <div className="greeting-banner">
+          <h1>{condominio.nombre}</h1>
+          <p>Bienvenido, {authUser?.nombre || "Admin"}. Gestión operativa de tu condominio.</p>
         </div>
 
-        <div className="row g-4">
-          <DashboardTable
-            title="Accesos Vehiculares"
-            buttonText="Historial"
-            onButtonClick={() => navigate("/admin-condominio/historial?tab=estacionamiento")}
-            headers={["Vehículo", "Ocupante", "Ingreso", "Estado"]}
-          >
-            {recentAccess.length > 0 ? (
-              recentAccess.map((log) => (
-                <tr key={log.id} className="border-bottom border-light">
-                  <td className="px-4 py-3">
-                    <div className="fw-bold text-primary-theme">{log.placa}</div>
-                    <div className="x-small text-muted">{log.metodo}</div>
-                  </td>
-                  <td className="py-3">
-                    <div className="small fw-medium text-dark">
-                      {log.tipo_ocupante}
-                    </div>
-                    <div className="x-small text-muted">
-                      {log.datos_inquilino || "Propietario"}
-                    </div>
-                  </td>
-                  <td className="py-3">
-                    <div className="small fw-medium text-dark">
-                      {new Date(log.fecha_entrada).toLocaleDateString()}
-                    </div>
-                    <div className="x-small text-muted">
-                      <FaClock className="me-1" />
-                      {new Date(log.fecha_entrada).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-end">
-                    {log.fecha_salida ? (
-                      <span className="badge bg-light text-muted fw-normal px-3 py-2 rounded-pill">
-                        Salió
-                      </span>
-                    ) : (
-                      <span className="badge badge-status-active">
-                        En recinto
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <EmptyState
-                colSpan={4}
-                message="No hay actividad vehicular reciente."
-                icon={FaCar}
-              />
-            )}
-          </DashboardTable>
+        <div className="grid grid-4 gap-4 mb-5">
+          <div className="stat-card">
+            <div className="stat-icon accent"><Home size={20} /></div>
+            <div className="stat-content">
+              <div className="stat-label">Apartamentos</div>
+              <div className="stat-value">{aptosCondo.length}</div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon success"><Users size={20} /></div>
+            <div className="stat-content">
+              <div className="stat-label">Propietarios</div>
+              <div className="stat-value">{totalPropietarios}</div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon warning"><Car size={20} /></div>
+            <div className="stat-content">
+              <div className="stat-label">Vehículos en Recinto</div>
+              <div className="stat-value">{activeVehicles}</div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon info"><ShoppingCart size={20} /></div>
+            <div className="stat-content">
+              <div className="stat-label">Carritos en Uso</div>
+              <div className="stat-value">{activeCarLoans}</div>
+            </div>
+          </div>
+        </div>
 
-          <DashboardTable
-            title="Préstamos de Carritos"
-            buttonText="Historial"
-            onButtonClick={() => navigate("/admin-condominio/historial?tab=carritos")}
-            headers={["Carrito / Usuario", "Apartamento", "Solicitud", "Estado"]}
-          >
-            {recentLoans.length > 0 ? (
-              recentLoans.map((loan) => (
-                <tr key={loan.id} className="border-bottom border-light">
-                  <td className="px-4 py-3">
-                    <div className="fw-bold text-dark">
-                      Carrito #{loan.id_carrito}
-                    </div>
-                    <div className="x-small text-muted">
-                      <FaUser className="me-1 x-small" /> {loan.solicitante}
-                    </div>
-                  </td>
-                  <td className="py-3">
-                    <div className="small fw-medium text-dark">
-                      Apto: {loan.id_apartamento}
-                    </div>
-                  </td>
-                  <td className="py-3">
-                    <div className="small fw-medium text-dark">
-                      {new Date(loan.fecha_entrada).toLocaleDateString()}
-                    </div>
-                    <div className="x-small text-muted">
-                      <FaClock className="me-1" />
-                      {new Date(loan.fecha_entrada).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-end">
-                    {loan.fecha_salida ? (
-                      <span className="badge bg-light text-muted fw-normal px-3 py-2 rounded-pill">
-                        Finalizado
-                      </span>
-                    ) : (
-                      <span className="badge badge-status-inactive">
-                        En uso
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <EmptyState
-                colSpan={4}
-                message="No hay préstamos de carritos recientes."
-                icon={FaShoppingCart}
-              />
-            )}
-          </DashboardTable>
+        <div className="dashboard-grid-2">
+          <div className="widget-card">
+            <div className="widget-header">
+              <span className="widget-title"><GitBranch size={16} /> Infraestructura</span>
+              <button className="btn btn-ghost btn-sm" onClick={() => navigate("/admin-condominio/infraestructura")}>
+                Gestionar <ArrowRight size={14} />
+              </button>
+            </div>
+            <div className="widget-body">
+              <div className="summary-grid">
+                <div className="summary-item">
+                  <div className="summary-value">{torres.length}</div>
+                  <div className="summary-label">Torres</div>
+                </div>
+                <div className="summary-item">
+                  <div className="summary-value">{allPisos.length}</div>
+                  <div className="summary-label">Pisos</div>
+                </div>
+                <div className="summary-item">
+                  <div className="summary-value">{aptosCondo.length}</div>
+                  <div className="summary-label">Apartamentos</div>
+                </div>
+                <div className="summary-item">
+                  <div className="summary-value">{totalEstacionamientos}</div>
+                  <div className="summary-label">Estacionamientos</div>
+                </div>
+              </div>
 
-          <DashboardTable
-            title="Gestión de Estacionamientos"
-            buttonText="Gestionar Espacios"
-            onButtonClick={() => navigate("/admin-condominio/estacionamientos")}
-            headers={["Nro. Espacio", "Unidad", "Estado", "Capacidad"]}
-          >
-            {recentEstacionamientos.length > 0 ? (
-              recentEstacionamientos.map((est) => {
-                const isFull =
-                  est.cantidad_vehiculos > 0 &&
-                  ((est.tipo_vehiculo === "Auto" &&
-                    est.cantidad_vehiculos >= (config?.max_autos || 0)) ||
-                    (est.tipo_vehiculo === "Moto" &&
-                      est.cantidad_vehiculos >= (config?.max_motos || 0)));
+              <div style={{ marginTop: 14 }}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs fw-semibold text-secondary">Ocupación de Estacionamientos</span>
+                  <span className="text-xs fw-bold">{pctOcupacion}%</span>
+                </div>
+                <div className="progress-bar">
+                  <div
+                    className={`progress-bar-fill ${pctOcupacion > 80 ? "danger" : pctOcupacion > 50 ? "warning" : "success"}`}
+                    style={{ width: `${pctOcupacion}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
 
-                return (
-                  <tr key={est.id} className="border-bottom border-light">
-                    <td className="px-4 py-3">
-                      <div className="fw-bold text-dark">{est.numero}</div>
-                      <div className="x-small text-muted">
-                        {est.cantidad_vehiculos > 0
-                          ? est.tipo_vehiculo
-                          : "Sin vehículos"}
-                      </div>
-                    </td>
-                    <td className="py-3">
-                      <Badge
-                        bg="light"
-                        className="text-primary-theme border border-primary border-opacity-10 rounded-pill px-3 fw-medium x-small"
-                      >
-                        Apto {est.aptoNumero}
-                      </Badge>
-                    </td>
-                    <td className="py-3">
-                      <div className="d-flex align-items-center gap-2">
-                        <FaCircle
-                          className={isFull ? "text-danger" : "text-success"}
-                          style={{ fontSize: "8px" }}
-                        />
-                        <span className="small text-muted fw-medium">
-                          {isFull ? "Lleno" : "Disponible"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-end">
-                      <div className="fw-bold text-dark small">
-                        {est.cantidad_vehiculos} /{" "}
-                        {est.tipo_vehiculo === "Auto"
-                          ? config?.max_autos || "-"
-                          : config?.max_motos || "-"}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
-              <EmptyState
-                colSpan={4}
-                message="No hay estacionamientos registrados."
-                icon={FaCar}
-              />
-            )}
-          </DashboardTable>
+          <div className="widget-card">
+            <div className="widget-header">
+              <span className="widget-title"><Activity size={16} /> Accesos Recientes</span>
+              <button className="btn btn-ghost btn-sm" onClick={() => navigate("/admin-condominio/historial?tab=estacionamiento")}>
+                Historial <ArrowRight size={14} />
+              </button>
+            </div>
+            <div className="widget-body">
+              {recentAccess.length > 0 ? (
+                recentAccess.map((log) => (
+                  <div key={log.id} className="feed-item">
+                    <div className={`feed-dot ${log.fecha_salida ? "inactive" : "active"}`} />
+                    <div className="feed-content">
+                      <div className="feed-title">{log.placa}</div>
+                      <div className="feed-sub">{log.tipo_ocupante} {log.datos_inquilino ? `• ${log.datos_inquilino}` : ""}</div>
+                    </div>
+                    <div className="feed-meta">
+                      {new Date(log.fecha_entrada).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="empty-feed">Sin accesos vehiculares recientes.</div>
+              )}
+            </div>
+          </div>
 
-          <DashboardTable
-            title="Personal y Residentes del Condominio"
-            buttonText="Gestionar Usuarios"
-            onButtonClick={() => navigate("/admin-condominio/usuarios")}
-            headers={[
-              "Nombre del Usuario",
-              "Contacto",
-              "Rol en Condominio",
-              "Estado",
-            ]}
-          >
-            {recentCondoUsers.length > 0 ? (
-              recentCondoUsers.map((u) => (
-                <tr key={u.id} className="border-bottom border-light">
-                  <td className="px-4 py-3">
-                    <div className="fw-bold text-dark">{u.nombre}</div>
-                    <div className="x-small text-muted">
-                      ID: {u.id.toString().padStart(3, "0")}
+          <div className="widget-card">
+            <div className="widget-header">
+              <span className="widget-title"><ShoppingCart size={16} /> Préstamos de Carritos</span>
+              <button className="btn btn-ghost btn-sm" onClick={() => navigate("/admin-condominio/historial?tab=carritos")}>
+                Historial <ArrowRight size={14} />
+              </button>
+            </div>
+            <div className="widget-body">
+              {recentLoans.length > 0 ? (
+                recentLoans.map((loan) => (
+                  <div key={loan.id} className="feed-item">
+                    <div className={`feed-dot ${loan.fecha_salida ? "inactive" : "warning"}`} />
+                    <div className="feed-content">
+                      <div className="feed-title">Carrito #{loan.id_carrito}</div>
+                      <div className="feed-sub">Por: {loan.solicitante}</div>
                     </div>
-                  </td>
-                  <td className="py-3">
-                    <div className="small text-dark d-flex align-items-center gap-2">
-                      <FaEnvelope className="text-muted x-small" /> {u.email}
+                    <div className="feed-meta">
+                      {new Date(loan.fecha_entrada).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </div>
-                  </td>
-                  <td className="py-3">
-                    <span className="small fw-semibold text-secondary">
-                      {getRoleName(u.id_rol)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-end">
-                    <div className="d-flex align-items-center justify-content-end gap-2">
-                      <FaCircle
-                        className={u.activo ? "text-success" : "text-danger"}
-                        style={{ fontSize: "8px" }}
-                      />
-                      <span className="small text-muted fw-medium">
-                        {u.activo ? "Activo" : "Inactivo"}
-                      </span>
+                  </div>
+                ))
+              ) : (
+                <div className="empty-feed">Sin préstamos de carritos activos.</div>
+              )}
+            </div>
+          </div>
+
+          <div className="widget-card">
+            <div className="widget-header">
+              <span className="widget-title"><Settings size={16} /> Configuración</span>
+              <button className="btn btn-ghost btn-sm" onClick={() => navigate("/admin-condominio/mi-condominio")}>
+                Ir <ArrowRight size={14} />
+              </button>
+            </div>
+            <div className="widget-body">
+              {config ? (
+                <>
+                  <div className="summary-grid">
+                    <div className="summary-item">
+                      <div className="summary-value">{config.max_autos}</div>
+                      <div className="summary-label">Máx. Autos</div>
                     </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <EmptyState
-                colSpan={4}
-                message="No hay personal registrado en este condominio."
-                icon={FaUserFriends}
-              />
-            )}
-          </DashboardTable>
+                    <div className="summary-item">
+                      <div className="summary-value">{config.max_motos}</div>
+                      <div className="summary-label">Máx. Motos</div>
+                    </div>
+                    <div className="summary-item">
+                      <div className="summary-value">{config.tiempo_max_prestamo_min}</div>
+                      <div className="summary-label">Tiempo Préstamo</div>
+                    </div>
+                    <div className="summary-item">
+                      <div className="summary-value">S/ {config.penalizacion_por_minuto.toFixed(2)}</div>
+                      <div className="summary-label">Penalización/min</div>
+                    </div>
+                  </div>
+                  <div className="status-banner success mt-3">
+                    <Settings size={16} />
+                    Sistema configurado y operativo
+                  </div>
+                </>
+              ) : (
+                <div className="status-banner warning">
+                  <AlertTriangle size={16} />
+                  Sin configuración activa. Algunas funciones pueden no estar disponibles.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 20 }}>
+          <h3 className="widget-title mb-4">Acceso Rápido</h3>
+          <div className="dashboard-grid-3">
+            {quickLinks.map((link) => (
+              <div key={link.label} className="quick-link-card" onClick={() => navigate(link.path)}>
+                <div className={`quick-link-icon ${link.color}`}>
+                  <link.icon size={20} />
+                </div>
+                <div>
+                  <div className="quick-link-title">{link.label}</div>
+                  <div className="quick-link-sub">{link.sub}</div>
+                </div>
+                <ArrowRight size={16} className="quick-link-arrow" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </AnimatedPage>

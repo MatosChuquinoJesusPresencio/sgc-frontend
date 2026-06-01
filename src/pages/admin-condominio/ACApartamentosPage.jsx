@@ -1,18 +1,18 @@
 import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 
-import { Button, Col, Row, Table, Badge, Modal, Form } from "react-bootstrap";
 import {
-  FaHome,
-  FaUser,
-  FaUsers,
-  FaPlus,
-  FaTrash,
-  FaInfoCircle,
-  FaBuilding,
-  FaCheckCircle,
-  FaExclamationTriangle,
-} from "react-icons/fa";
+  Home,
+  User,
+  Users,
+  Plus,
+  Trash2,
+  Info,
+  Building2,
+  CheckCircle,
+  X,
+  Save,
+} from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
 import { useData } from "../../hooks/useData";
@@ -22,7 +22,8 @@ import StatCard from "../../components/dashboard/StatCard";
 import AnimatedPage from "../../components/animations/AnimatedPage";
 import FormInput from "../../components/form/FormInput";
 import SearchBar from "../../components/ui/SearchBar";
-import MainTable from "../../components/ui/MainTable";
+import DataTable from "../../components/ui/DataTable";
+import ConfirmDialog from "../../components/modals/ConfirmDialog";
 import NoCondoWarning from "../../components/ui/NoCondoWarning";
 import { usePagination } from "../../hooks/usePagination";
 
@@ -30,26 +31,14 @@ const ACApartamentosPage = () => {
   const { authUser } = useAuth();
   const { getTable, updateTable } = useData();
 
-  const apartamentos = getTable("apartamentos");
-  const pisos = getTable("pisos");
-  const torres = getTable("torres");
-  const condominio = getTable("condominios").find(
-    (c) => c.id === authUser?.id_condominio,
-  );
-
-  if (!condominio) return <NoCondoWarning />;
-
   const [searchTerm, setSearchTerm] = useState("");
   const [towerFilter, setTowerFilter] = useState("all");
 
   const [showResidentModal, setShowResidentModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteWarning, setShowDeleteWarning] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedAptoId, setSelectedAptoId] = useState(null);
   const [residentToDelete, setResidentToDelete] = useState(null);
-
-  const usuarios = getTable("usuarios");
-  const inquilinosTemporales = getTable("inquilinos_temporales");
-  const vehiculos = getTable("vehiculos");
 
   const {
     register,
@@ -57,6 +46,16 @@ const ACApartamentosPage = () => {
     reset,
     formState: { errors },
   } = useForm();
+
+  const apartamentos = getTable("apartamentos");
+  const pisos = getTable("pisos");
+  const torres = getTable("torres");
+  const usuarios = getTable("usuarios");
+  const inquilinosTemporales = getTable("inquilinos_temporales");
+  const vehiculos = getTable("vehiculos");
+  const condominio = getTable("condominios").find(
+    (c) => c.id === authUser?.id_condominio,
+  );
 
   const torresCondo = useMemo(() => {
     if (!authUser?.id_condominio) return [];
@@ -123,6 +122,8 @@ const ACApartamentosPage = () => {
 
   const { currentPage, setCurrentPage, totalPages, paginatedData: paginatedAptos, itemsPerPage } = usePagination(filteredAptos);
 
+  if (!condominio) return <NoCondoWarning />;
+
   const handleManageResidents = (aptoId) => {
     setSelectedAptoId(aptoId);
     setShowResidentModal(true);
@@ -149,14 +150,29 @@ const ACApartamentosPage = () => {
 
   const handleRemoveResident = (resident) => {
     setResidentToDelete(resident);
-    setShowDeleteModal(true);
+    const hasVehicles = vehiculos.some((v) => v.id_inquilino_temporal === resident.id);
+    if (hasVehicles) {
+      setShowDeleteWarning(true);
+    } else {
+      setShowDeleteConfirm(true);
+    }
   };
 
   const confirmDelete = () => {
     if (!residentToDelete) return;
     const updated = inquilinosTemporales.filter((i) => i.id !== residentToDelete.id);
     updateTable("inquilinos_temporales", updated);
-    setShowDeleteModal(false);
+    setShowDeleteConfirm(false);
+    setResidentToDelete(null);
+  };
+
+  const handleCloseWarning = () => {
+    setShowDeleteWarning(false);
+    setResidentToDelete(null);
+  };
+
+  const handleCloseConfirm = () => {
+    setShowDeleteConfirm(false);
     setResidentToDelete(null);
   };
 
@@ -164,40 +180,40 @@ const ACApartamentosPage = () => {
     <AnimatedPage>
       <div className="page-container">
         <DashboardHeader
-          icon={FaHome}
+          icon={Home}
           title="Control de Apartamentos"
           badgeText={condominio?.nombre || "Condominio"}
           welcomeText="Visualiza y gestiona los propietarios e inquilinos de cada unidad habitacional."
         />
 
-        <Row className="g-4 mb-5">
+        <div className="grid grid-4 gap-4 mb-5">
           <StatCard
-            icon={FaBuilding}
+            icon={Building2}
             label="Total Unidades"
             value={stats.total}
             colorClass="primary-theme"
           />
           <StatCard
-            icon={FaCheckCircle}
+            icon={CheckCircle}
             label="Ocupados"
             value={stats.ocupados}
             colorClass="primary-theme"
           />
           <StatCard
-            icon={FaInfoCircle}
+            icon={Info}
             label="Sin Propietario"
             value={stats.sinPropietario}
             colorClass="primary-theme"
           />
           <StatCard
-            icon={FaUsers}
+            icon={Users}
             label="Población Estimada"
             value={stats.totalResidentes}
             colorClass="primary-theme"
           />
-        </Row>
+        </div>
 
-        <MainTable
+        <DataTable
           headers={[
             "#",
             "Unidad",
@@ -208,7 +224,7 @@ const ACApartamentosPage = () => {
           ]}
           isEmpty={paginatedAptos.length === 0}
           emptyMessage="No se encontraron unidades con los filtros aplicados."
-          emptyIcon={FaHome}
+          emptyIcon={Home}
           searchBar={
             <SearchBar
               searchTerm={searchTerm}
@@ -237,263 +253,217 @@ const ACApartamentosPage = () => {
           {paginatedAptos.map((apto, index) => {
             const actualIndex = (currentPage - 1) * itemsPerPage + index + 1;
             return (
-              <tr key={apto.id} className="border-bottom border-light">
+              <tr key={apto.id}>
                 <td className="px-4 py-3 text-center">
                   <span className="text-secondary fw-bold">
                     {actualIndex.toString().padStart(2, "0")}
                   </span>
                 </td>
                 <td className="py-3">
-                  <div className="d-flex align-items-center gap-3">
-                    <div className="apto-badge">{apto.numero}</div>
+                  <div className="flex items-center gap-3">
+                    <div className="fw-bold">
+                      Apto {apto.numero}
+                    </div>
                     <div>
-                      <div className="fw-bold text-dark">
-                        Apto {apto.numero}
-                      </div>
-                      <div className="x-small text-muted">
+                      <div className="text-xs text-muted">
                         {apto.metraje} m²
                       </div>
                     </div>
                   </div>
                 </td>
                 <td className="py-3">
-                  <div className="small fw-medium text-secondary">
+                  <div className="text-sm fw-medium text-secondary">
                     {apto.torreNombre} • Piso {apto.pisoNumero}
                   </div>
                 </td>
                 <td className="py-3">
-                  <div className="d-flex align-items-center gap-2">
-                    <FaUser className="text-muted x-small" />
+                  <div className="flex items-center gap-2">
+                    <User size={10} className="text-muted" />
                     <span
-                      className={`small ${apto.id_usuario ? "text-dark fw-semibold" : "text-danger italic"}`}
+                      className={`text-sm ${apto.id_usuario ? "fw-semibold" : "text-danger"}`}
                     >
                       {apto.ownerName}
                     </span>
                   </div>
                 </td>
                 <td className="py-3">
-                  <div className="d-flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-1">
                     {apto.residents.length > 0 ? (
                       apto.residents.map((r) => (
-                        <Badge
+                        <span
                           key={r.id}
-                          bg="light"
-                          className="text-primary border border-primary border-opacity-10 fw-normal"
+                          className="badge badge-info"
                         >
                           {r.nombre.split(" ")[0]}
-                        </Badge>
+                        </span>
                       ))
                     ) : (
-                      <span className="x-small text-muted">Sin residentes</span>
+                      <span className="text-xs text-muted">Sin residentes</span>
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-end">
-                  <Button
-                    variant="outline-primary"
-                    className="btn btn-sm btn-primary-theme btn-action-sm"
+                <td className="px-4 py-3 text-right">
+                  <button
+                    className="btn btn-outline btn-sm"
                     onClick={() => handleManageResidents(apto.id)}
                   >
                     Gestionar
-                  </Button>
+                  </button>
                 </td>
               </tr>
             );
           })}
-        </MainTable>
+        </DataTable>
       </div>
 
-      <Modal
-        show={showResidentModal}
-        onHide={() => setShowResidentModal(false)}
-        centered
-        size="lg"
-      >
-        <Modal.Header closeButton className="border-0 p-4 pb-0">
-          <Modal.Title className="fw-bold text-primary-theme">
-            Residentes - Unidad {currentApto?.numero}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="p-4">
-          <div className="mb-4">
-            <h6 className="fw-bold text-secondary mb-3">Residentes Actuales</h6>
-            <div className="bg-light rounded-4 p-3">
-              {currentApto?.residents.length > 0 ? (
-                <Table borderless hover size="sm" className="mb-0">
-                  <thead>
-                    <tr className="small text-muted">
-                      <th>Nombre</th>
-                      <th>DNI</th>
-                      <th className="text-end">Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {currentApto.residents.map((r) => (
-                      <tr
-                        key={r.id}
-                        className="align-middle border-bottom border-white"
-                      >
-                        <td className="py-2 fw-medium">{r.nombre}</td>
-                        <td className="py-2 text-muted small">{r.dni}</td>
-                        <td className="py-2 text-end">
-                          <Button
-                            variant="link"
-                            className="text-danger p-0"
-                            onClick={() => handleRemoveResident(r)}
-                          >
-                            <FaTrash size={12} />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              ) : (
-                <div className="text-center py-3 text-muted small italic">
-                  No hay inquilinos registrados para esta unidad.
+      {showResidentModal && (
+        <div className="modal-overlay" onClick={() => setShowResidentModal(false)}>
+          <div className="modal-content lg" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title">
+                Residentes - Unidad {currentApto?.numero}
+              </div>
+              <button className="modal-close" onClick={() => setShowResidentModal(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="mb-4">
+                <h6 className="fw-bold text-secondary mb-3">Residentes Actuales</h6>
+                <div className="p-3">
+                  {currentApto?.residents.length > 0 ? (
+                    <table className="data-table">
+                      <thead>
+                        <tr className="text-sm text-muted">
+                          <th className="text-start">Nombre</th>
+                          <th className="text-start">DNI</th>
+                          <th className="text-right">Acción</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {currentApto.residents.map((r) => (
+                          <tr key={r.id}>
+                            <td className="py-2 fw-medium">{r.nombre}</td>
+                            <td className="py-2 text-muted text-sm">{r.dni}</td>
+                            <td className="py-2 text-right">
+                              <button
+                                className="btn btn-ghost btn-sm text-danger"
+                                onClick={() => handleRemoveResident(r)}
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div className="text-center py-3 text-muted text-sm">
+                      No hay inquilinos registrados para esta unidad.
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
+
+              <hr className="my-4" />
+
+              <div>
+                <h6 className="fw-bold text-secondary mb-3">
+                  Agregar Nuevo Inquilino / Residente
+                </h6>
+                <form onSubmit={handleSubmit(handleAddResident)}>
+                  <div className="grid-2 gap-3">
+                    <div>
+                      <FormInput
+                        label="Nombre del Inquilino"
+                        name="nombre"
+                        register={register}
+                        validation={{ required: "Requerido" }}
+                        error={errors.nombre}
+                        placeholder="Ej: Sofía Pérez"
+                      />
+                    </div>
+                    <div>
+                      <FormInput
+                        label="DNI / Identificación"
+                        name="dni"
+                        register={register}
+                        validation={{ required: "Requerido" }}
+                        error={errors.dni}
+                        placeholder="Número de documento"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end mt-3">
+                    <button
+                      type="submit"
+                      className="btn btn-primary btn-sm"
+                    >
+                      <Plus size={14} /> Agregar Residente
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn btn-outline"
+                onClick={() => setShowResidentModal(false)}
+              >
+                Cerrar
+              </button>
             </div>
           </div>
+        </div>
+      )}
 
-          <hr className="my-4 opacity-10" />
-
-          <div>
-            <h6 className="fw-bold text-secondary mb-3">
-              Agregar Nuevo Inquilino / Residente
-            </h6>
-            <Form onSubmit={handleSubmit(handleAddResident)}>
-              <Row className="g-3">
-                <Col md={6}>
-                  <FormInput
-                    label="Nombre del Inquilino"
-                    name="nombre"
-                    register={register}
-                    validation={{ required: "Requerido" }}
-                    error={errors.nombre}
-                    placeholder="Ej: Sofía Pérez"
-                  />
-                </Col>
-                <Col md={6}>
-                  <FormInput
-                    label="DNI / Identificación"
-                    name="dni"
-                    register={register}
-                    validation={{ required: "Requerido" }}
-                    error={errors.dni}
-                    placeholder="Número de documento"
-                  />
-                </Col>
-              </Row>
-              <div className="d-flex justify-content-end mt-3">
-                <Button
-                  type="submit"
-                  className="btn-primary-theme rounded-pill px-4 btn-sm"
-                >
-                  <FaPlus className="me-2" /> Agregar Residente
-                </Button>
+      {showDeleteWarning && (
+        <div className="modal-overlay" onClick={handleCloseWarning}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title text-warning">
+                Acción Bloqueada
               </div>
-            </Form>
-          </div>
-        </Modal.Body>
-        <Modal.Footer className="border-0 p-4 pt-0">
-          <Button
-            variant="light"
-            onClick={() => setShowResidentModal(false)}
-            className="rounded-pill px-4 fw-bold text-secondary"
-          >
-            Cerrar
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* DELETE CONFIRMATION MODAL */}
-      <Modal
-        show={showDeleteModal}
-        onHide={() => {
-          setShowDeleteModal(false);
-          setResidentToDelete(null);
-        }}
-        centered
-        className="modal-custom"
-      >
-        <Modal.Header closeButton className="border-0 p-4 pb-0">
-          <Modal.Title
-            className={`fw-bold ${vehiculos.some((v) => v.id_inquilino_temporal === residentToDelete?.id) ? "text-warning" : "text-danger"}`}
-          >
-            {vehiculos.some(
-              (v) => v.id_inquilino_temporal === residentToDelete?.id,
-            )
-              ? "Acción Bloqueada"
-              : "Confirmar Eliminación"}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="p-4">
-          {residentToDelete && (
-            <div className="text-center py-3">
-              {vehiculos.some(
-                (v) => v.id_inquilino_temporal === residentToDelete.id,
-              ) ? (
-                <>
-                  <div className="p-4 bg-warning bg-opacity-10 rounded-circle d-inline-block mb-3 text-warning">
-                    <FaInfoCircle size={40} />
+              <button className="modal-close" onClick={handleCloseWarning}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className="modal-body">
+              {residentToDelete && (
+                <div className="text-center py-3">
+                  <div className="auth-success-icon warning d-inline-block mb-3">
+                    <Info size={40} />
                   </div>
-                  <h5 className="fw-bold text-dark">No se puede eliminar</h5>
-                  <Alert
-                    variant="warning"
-                    className="border-0 rounded-4 small text-start mt-3"
-                  >
+                  <h5 className="fw-bold">No se puede eliminar</h5>
+                  <div className="alert alert-warning text-sm text-start mt-3">
                     El residente <strong>{residentToDelete.nombre}</strong>{" "}
                     tiene vehículos registrados en el sistema. Por seguridad,
                     debes eliminar sus vehículos antes de poder dar de baja al
                     residente.
-                  </Alert>
-                </>
-              ) : (
-                <>
-                  <div className="p-4 bg-danger bg-opacity-10 rounded-circle d-inline-block mb-3 text-danger">
-                    <FaTrash size={40} />
                   </div>
-                  <h5 className="fw-bold text-dark">
-                    ¿Eliminar a {residentToDelete.nombre}?
-                  </h5>
-                  <p className="text-secondary small">
-                    Esta acción es irreversible. El residente perderá el acceso
-                    a los servicios del condominio.
-                  </p>
-                </>
+                </div>
               )}
             </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer className="border-0 p-4 pt-0 d-flex gap-2">
-          <Button
-            variant="light"
-            onClick={() => {
-              setShowDeleteModal(false);
-              setResidentToDelete(null);
-            }}
-            className="rounded-pill px-4 flex-grow-1"
-          >
-            {vehiculos.some(
-              (v) => v.id_inquilino_temporal === residentToDelete?.id,
-            )
-              ? "Entendido"
-              : "Cancelar"}
-          </Button>
-          {!vehiculos.some(
-            (v) => v.id_inquilino_temporal === residentToDelete?.id,
-          ) && (
-              <Button
-                variant="danger"
-                onClick={confirmDelete}
-                className="rounded-pill px-4 flex-grow-1"
+            <div className="modal-footer flex gap-2">
+              <button
+                className="btn btn-outline"
+                onClick={handleCloseWarning}
               >
-                Confirmar Eliminación
-              </Button>
-            )}
-        </Modal.Footer>
-      </Modal>
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ConfirmDialog
+        show={showDeleteConfirm}
+        onHide={handleCloseConfirm}
+        onConfirm={confirmDelete}
+        title={`¿Eliminar a ${residentToDelete?.nombre}?`}
+        message="Esta acción es irreversible. El residente perderá el acceso a los servicios del condominio."
+        confirmText="Confirmar Eliminación"
+      />
     </AnimatedPage>
   );
 };

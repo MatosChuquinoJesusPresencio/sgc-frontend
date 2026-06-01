@@ -1,15 +1,16 @@
 import { useState, useMemo, useEffect } from "react";
-import { Button, Col, Row, Badge, Card, Modal, Alert } from "react-bootstrap";
 import {
-  FaShoppingCart,
-  FaClock,
-  FaUser,
-  FaCheckCircle,
-  FaExclamationTriangle,
-  FaArrowCircleRight,
-  FaHistory,
-  FaArrowCircleLeft,
-} from "react-icons/fa";
+  ShoppingCart,
+  Clock,
+  User,
+  CheckCircle,
+  AlertTriangle,
+  ArrowRight,
+  History,
+  ArrowLeft,
+  Info,
+  X,
+} from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
 import { useData } from "../../hooks/useData";
@@ -18,8 +19,9 @@ import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
 import AnimatedPage from "../../components/animations/AnimatedPage";
 import SearchBar from "../../components/ui/SearchBar";
-import MainTable from "../../components/ui/MainTable";
+import DataTable from "../../components/ui/DataTable";
 import { usePagination } from "../../hooks/usePagination";
+import { useHistoryMappings } from "../../hooks/useHistoryMappings";
 import NoCondoWarning from "../../components/ui/NoCondoWarning";
 
 const PRCarritosPage = () => {
@@ -34,6 +36,7 @@ const PRCarritosPage = () => {
   const inquilinos = getTable("inquilinos_temporales");
   const pisos = getTable("pisos");
   const torres = getTable("torres");
+  const condominios = getTable("condominios");
 
   const myApartments = useMemo(() => {
     return apartamentos
@@ -44,10 +47,7 @@ const PRCarritosPage = () => {
         return { ...a, id_condominio: torre?.id_condominio };
       });
   }, [apartamentos, pisos, torres, authUser]);
-  const myApartmentIds = useMemo(
-    () => myApartments.map((a) => a.id),
-    [myApartments],
-  );
+  const miApto = myApartments[0];
 
   const config = useMemo(
     () =>
@@ -56,6 +56,23 @@ const PRCarritosPage = () => {
       ),
     [configuraciones, myApartments],
   );
+
+  const { mappedCarritos: recentCarritoLogs } = useHistoryMappings({
+    logsCarrito: logsPrestamos,
+    logsEstacionamiento: [],
+    apartamentos,
+    estacionamientos: [],
+    carritos,
+    usuarios,
+    inquilinosTemporales: inquilinos,
+    torres,
+    pisos,
+    condominios,
+    configuraciones,
+    config,
+    now,
+    idApartamentoFilter: miApto?.id,
+  });
 
   if (!authUser) return <div className="p-5 text-center">Cargando...</div>;
   if (myApartments.length === 0) return <NoCondoWarning />;
@@ -83,7 +100,6 @@ const PRCarritosPage = () => {
         );
 
         let currentUser = null;
-        let fine = 0;
 
         if (activeLoan) {
           const user = usuarios.find((u) => u.id === activeLoan.id_usuario);
@@ -91,6 +107,7 @@ const PRCarritosPage = () => {
             (a) => a.id === activeLoan.id_apartamento,
           );
 
+          let fine = 0;
           if (config) {
             const startDate = new Date(activeLoan.fecha_entrada);
             const diffMs = now - startDate;
@@ -117,7 +134,7 @@ const PRCarritosPage = () => {
         return {
           ...c,
           currentUser,
-          fine,
+          fine: currentUser?.fine || 0,
         };
       });
   }, [
@@ -229,31 +246,22 @@ const PRCarritosPage = () => {
   const getStatusBadge = (carrito) => {
     if (carrito.estado === "Disponible") {
       return (
-        <Badge
-          bg="success"
-          className="bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 fw-normal"
-        >
+        <span className="badge badge-success">
           Disponible
-        </Badge>
+        </span>
       );
     }
     if (carrito.currentUser?.isMe) {
       return (
-        <Badge
-          bg="primary"
-          className="bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3 fw-normal"
-        >
+        <span className="badge badge-info">
           En mi poder
-        </Badge>
+        </span>
       );
     }
     return (
-      <Badge
-        bg="warning"
-        className="bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-pill px-3 fw-normal"
-      >
+      <span className="badge badge-warning">
         Ocupado
-      </Badge>
+      </span>
     );
   };
 
@@ -261,39 +269,49 @@ const PRCarritosPage = () => {
     <AnimatedPage>
       <div className="page-container">
         <DashboardHeader
-          icon={FaShoppingCart}
+          icon={ShoppingCart}
           title="Servicio de Carritos"
           badgeText="Residente"
           welcomeText="Consulta disponibilidad y solicita carritos de carga para tus mudanzas o compras."
         />
 
-        <Row className="g-4 mb-5">
+        <div className="grid grid-3 gap-4 mb-5">
           <StatCard
-            icon={FaShoppingCart}
+            icon={ShoppingCart}
             label="Total Flota"
             value={stats.total}
             colorClass="primary-theme"
           />
           <StatCard
-            icon={FaCheckCircle}
+            icon={CheckCircle}
             label="Disponibles Ahora"
             value={stats.disponibles}
             colorClass="primary-theme"
           />
           <StatCard
-            icon={FaUser}
+            icon={User}
             label="En mi Posesión"
             value={stats.miUso}
             colorClass="primary-theme"
           />
-        </Row>
+        </div>
 
-        <Card className="card-custom border-0 shadow-sm mb-5">
-          <Card.Header className="bg-white border-0 pt-4 px-4 pb-0">
-            <div className="d-flex justify-content-between align-items-center">
-              <h5 className="fw-bold text-dark m-0 d-flex align-items-center gap-2">
-                <div className="p-2 rounded-3 bg-primary bg-opacity-10 text-primary">
-                  <FaShoppingCart />
+        <DataTable
+          headers={[
+            "#",
+            "Código",
+            "Estado",
+            "Información de Uso",
+            "Acción",
+          ]}
+          isEmpty={paginatedData.length === 0}
+          emptyMessage="No hay carritos registrados para tu condominio."
+          emptyIcon={ShoppingCart}
+          searchBar={
+            <div className="flex items-center justify-between">
+              <h5 className="fw-bold flex items-center gap-2">
+                <div className="cell-icon primary">
+                  <ShoppingCart size={14} />
                 </div>
                 Carritos Disponibles
               </h5>
@@ -302,315 +320,260 @@ const PRCarritosPage = () => {
                   searchTerm={searchTerm}
                   onSearchChange={setSearchTerm}
                   placeholder="Buscar por código..."
-                  colSize={{ search: 12, filter: 0 }}
                 />
               </div>
             </div>
-          </Card.Header>
-          <Card.Body className="p-4">
-            <MainTable
-              headers={[
-                "#",
-                "Código",
-                "Estado",
-                "Información de Uso",
-                "Acción",
-              ]}
-              isEmpty={paginatedData.length === 0}
-              emptyMessage="No hay carritos registrados para tu condominio."
-              emptyIcon={FaShoppingCart}
-              paginationProps={{
-                currentPage: currentPage,
-                totalPages: totalPages,
-                onPageChange: setCurrentPage,
-                totalItems: filteredCarritos.length,
-                itemsShowing: paginatedData.length,
-              }}
-            >
-              {paginatedData.map((carrito, index) => {
-                const actualIndex =
-                  (currentPage - 1) * itemsPerPage + index + 1;
-                const isMine = carrito.currentUser?.isMe;
-                const isAvailable = carrito.estado === "Disponible";
+          }
+          paginationProps={{
+            currentPage: currentPage,
+            totalPages: totalPages,
+            onPageChange: setCurrentPage,
+            totalItems: filteredCarritos.length,
+            itemsShowing: paginatedData.length,
+          }}
+        >
+          {paginatedData.map((carrito, index) => {
+            const actualIndex =
+              (currentPage - 1) * itemsPerPage + index + 1;
+            const isMine = carrito.currentUser?.isMe;
+            const isAvailable = carrito.estado === "Disponible";
 
-                return (
-                  <tr key={carrito.id} className="border-bottom border-light">
-                    <td className="px-4 py-3 text-center">
-                      <span className="text-secondary fw-bold">
-                        {actualIndex.toString().padStart(2, "0")}
+            return (
+              <tr key={carrito.id}>
+                <td className="text-center">
+                  <span className="text-secondary fw-bold">
+                    {actualIndex.toString().padStart(2, "0")}
+                  </span>
+                </td>
+                <td>
+                  <div className="fw-bold">{carrito.codigo}</div>
+                </td>
+                <td>{getStatusBadge(carrito)}</td>
+                <td>
+                  {carrito.currentUser ? (
+                    <div className="flex flex-col">
+                      <span className="text-sm text-muted">
+                        {isMine
+                          ? "Tú lo tienes"
+                          : `Apto ${carrito.currentUser.aptoNumero}`}
                       </span>
-                    </td>
-                    <td className="py-3">
-                      <div className="fw-bold text-dark">{carrito.codigo}</div>
-                    </td>
-                    <td className="py-3">{getStatusBadge(carrito)}</td>
-                    <td className="py-3">
-                      {carrito.currentUser ? (
-                        <div className="d-flex flex-column">
-                          <span className="small fw-medium text-secondary">
-                            {isMine
-                              ? "Tú lo tienes"
-                              : `Apto ${carrito.currentUser.aptoNumero}`}
-                          </span>
-                          {carrito.fine > 0 && (
-                            <span className="x-small text-danger fw-bold">
-                              Multa: S/. {carrito.fine.toFixed(2)}
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-muted small italic">
-                          Libre para solicitar
+                      {carrito.fine > 0 && (
+                        <span className="text-xs text-danger fw-bold">
+                          Multa: S/. {carrito.fine.toFixed(2)}
                         </span>
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-end">
-                      {isAvailable ? (
-                        <Button
-                          variant="primary"
-                          className="btn-primary-theme btn-sm rounded-pill px-4"
-                          onClick={() => handleRequest(carrito)}
-                        >
-                          <FaArrowCircleRight className="me-2" /> Solicitar
-                        </Button>
-                      ) : isMine ? (
-                        <Button
-                          variant="outline-primary"
-                          className="btn-sm rounded-pill px-4"
-                          onClick={() => handleReturn(carrito)}
-                        >
-                          <FaArrowCircleLeft className="me-2" /> Devolver
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="light"
-                          className="btn-sm rounded-pill px-4 text-muted border-0"
-                          disabled
-                        >
-                          No disponible
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </MainTable>
-          </Card.Body>
-        </Card>
+                    </div>
+                  ) : (
+                    <span className="text-muted text-sm">
+                      Libre para solicitar
+                    </span>
+                  )}
+                </td>
+                <td>
+                  {isAvailable ? (
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => handleRequest(carrito)}
+                    >
+                      <ArrowRight size={14} /> Solicitar
+                    </button>
+                  ) : isMine ? (
+                    <button
+                      className="btn btn-outline btn-sm"
+                      onClick={() => handleReturn(carrito)}
+                    >
+                      <ArrowLeft size={14} /> Devolver
+                    </button>
+                  ) : (
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      disabled
+                    >
+                      No disponible
+                    </button>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </DataTable>
 
-        {/* RECENT LOANS FOR MY APARTMENTS */}
         <section className="mb-5">
-          <h5 className="fw-bold text-dark mb-4 d-flex align-items-center gap-2">
-            <div className="p-2 rounded-3 bg-warning bg-opacity-10 text-warning">
-              <FaHistory />
+          <h5 className="fw-bold mb-4 flex items-center gap-2">
+            <div className="cell-icon warning">
+              <History size={14} />
             </div>
             Uso Reciente de mi Apartamento
           </h5>
-          <Card className="card-custom border-0 shadow-sm overflow-hidden">
-            <Card.Body className="p-0">
-              <MainTable
-                headers={[
-                  "Carrito",
-                  "Usuario",
-                  "Solicitante",
-                  "Salida",
-                  "Retorno",
-                  "Estado",
-                ]}
-                isEmpty={false}
-                searchBar={null}
-              >
-                {[...logsPrestamos]
-                  .filter((log) => myApartmentIds.includes(log.id_apartamento))
-                  .sort(
-                    (a, b) =>
-                      new Date(b.fecha_entrada) - new Date(a.fecha_entrada),
-                  )
-                  .slice(0, 5)
-                  .map((log) => {
-                    const carrito = carritos.find(
-                      (c) => c.id === log.id_carrito,
-                    );
-                    const user = log.id_usuario
-                      ? usuarios.find((u) => u.id === log.id_usuario)
-                      : null;
-                    const inquilino = log.id_inquilino_temporal
-                      ? inquilinos.find((i) => i.id === log.id_inquilino_temporal)
-                      : null;
-                    const isReturned = !!log.fecha_salida;
+          <DataTable
+            headers={[
+              "Carrito",
+              "Usuario",
+              "Solicitante",
+              "Salida",
+              "Retorno",
+              "Estado",
+            ]}
+            isEmpty={recentCarritoLogs.length === 0}
+            emptyMessage="No hay préstamos recientes en tu apartamento."
+            emptyIcon={History}
+            searchBar={null}
+          >
+            {recentCarritoLogs.slice(0, 5).map((log) => {
+              const isReturned = !!log.fecha_salida;
 
-                    return (
-                      <tr key={log.id} className="border-bottom border-light">
-                        <td className="px-4 py-3">
-                          <span className="fw-bold text-dark">
-                            {carrito?.codigo || `C-${log.id_carrito}`}
-                          </span>
-                        </td>
-                        <td className="py-3">
-                          <span className="small text-secondary">
-                            {user?.nombre || inquilino?.nombre || "Cargando..."}
-                          </span>
-                        </td>
-                        <td className="py-3">
-                          <Badge
-                            bg="light"
-                            className="text-dark border rounded-pill px-2 small"
-                          >
-                            {log.solicitante}
-                          </Badge>
-                        </td>
-                        <td className="py-3">
-                          <div className="x-small text-muted">
-                            {new Date(log.fecha_entrada).toLocaleString()}
-                          </div>
-                        </td>
-                        <td className="py-3">
-                          <div className="x-small text-muted">
-                            {isReturned
-                              ? new Date(log.fecha_salida).toLocaleString()
-                              : "---"}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-end">
-                          <Badge
-                            bg={isReturned ? "success" : "warning"}
-                            className="bg-opacity-10 text-dark border-0 rounded-pill px-3"
-                          >
-                            {isReturned ? "Devuelto" : "En uso"}
-                          </Badge>
-                        </td>
-                      </tr>
-                    );
-                  })}
-              </MainTable>
-            </Card.Body>
-          </Card>
+              return (
+                <tr key={log.id}>
+                  <td>
+                    <span className="fw-bold">
+                      {log.carritoNombre || `Carrito #${log.id_carrito}`}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="text-sm text-muted">
+                      {log.usuarioNombre || "Cargando..."}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="badge badge-neutral">
+                      {log.solicitante}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="text-xs text-muted">
+                      {new Date(log.fecha_entrada).toLocaleString()}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="text-xs text-muted">
+                      {isReturned
+                        ? new Date(log.fecha_salida).toLocaleString()
+                        : "---"}
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`badge ${isReturned ? "badge-success" : "badge-warning"}`}>
+                      {isReturned ? "Devuelto" : "En uso"}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </DataTable>
         </section>
       </div>
 
-      {/* REQUEST MODAL */}
-      <Modal
-        show={showRequestModal}
-        onHide={() => setShowRequestModal(false)}
-        centered
-      >
-        <Modal.Header closeButton className="border-0 p-4 pb-0">
-          <Modal.Title className="fw-bold text-primary-theme">
-            Solicitar Carrito
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="p-4">
-          <Alert variant="info" className="rounded-4 border-0 small mb-4">
-            <FaInfoCircle className="me-2" />
-            Recuerda que tienes un tiempo máximo de{" "}
-            <strong>{config?.tiempo_max_prestamo_min} minutos</strong>. Pasado
-            este tiempo se aplicará una multa automática.
-          </Alert>
-
-          <div className="mb-4 text-center p-3 bg-light rounded-4">
-            <div className="text-muted small mb-1">Carrito seleccionado</div>
-            <div className="h4 fw-bold text-dark mb-0">
-              {selectedCarrito?.codigo}
+      {showRequestModal && (
+        <div className="modal-overlay" onClick={() => setShowRequestModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title">Solicitar Carrito</div>
+              <button className="modal-close" onClick={() => setShowRequestModal(false)}>
+                <X size={16} />
+              </button>
             </div>
-          </div>
+            <div className="modal-body">
+              <div className="alert alert-info flex items-center gap-2">
+                <Info size={16} />
+                <span>Recuerda que tienes un tiempo máximo de <strong>{config?.tiempo_max_prestamo_min} minutos</strong>. Pasado este tiempo se aplicará una multa automática.</span>
+              </div>
 
-          <Form.Group className="mb-3">
-            <Form.Label className="fw-bold small text-secondary">
-              ¿Para qué apartamento?
-            </Form.Label>
-            <Form.Select
-              value={selectedApto}
-              onChange={(e) => setSelectedApto(e.target.value)}
-              className="rounded-pill border-light py-2 px-3"
-            >
-              <option value="">Seleccionar apartamento...</option>
-              {myApartments.map((a) => (
-                <option key={a.id} value={a.id}>
-                  Apto {a.numero}
-                </option>
-              ))}
-            </Form.Select>
-          </Form.Group>
-        </Modal.Body>
-        <Modal.Footer className="border-0 p-4 pt-0">
-          <Button
-            variant="light"
-            onClick={() => setShowRequestModal(false)}
-            className="rounded-pill px-4"
-          >
-            Cancelar
-          </Button>
-          <Button
-            variant="primary"
-            onClick={confirmRequest}
-            disabled={!selectedApto}
-            className="btn-primary-theme rounded-pill px-4"
-          >
-            Confirmar Pedido
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* RETURN MODAL */}
-      <Modal
-        show={showReturnModal}
-        onHide={() => setShowReturnModal(false)}
-        centered
-      >
-        <Modal.Header closeButton className="border-0 p-4 pb-0">
-          <Modal.Title className="fw-bold text-primary-theme">
-            Devolver Carrito
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="p-4">
-          <div className="text-center py-3">
-            <div className="p-4 bg-light rounded-circle d-inline-block mb-3 text-primary">
-              <FaShoppingCart size={40} />
-            </div>
-            <h5 className="fw-bold text-dark">
-              ¿Has terminado de usar el carrito {selectedCarrito?.codigo}?
-            </h5>
-            <p className="text-secondary small">
-              Al confirmar, el carrito quedará disponible para otros residentes.
-            </p>
-
-            {selectedCarrito?.fine > 0 && (
-              <div className="alert alert-danger rounded-4 border-0 d-flex align-items-center gap-3">
-                <FaExclamationTriangle size={24} />
-                <div className="text-start">
-                  <div className="fw-bold">Multa por exceso de tiempo</div>
-                  <div className="small">
-                    Se ha generado un cargo de{" "}
-                    <strong>S/. {selectedCarrito.fine.toFixed(2)}</strong>
-                  </div>
+              <div className="text-center p-3 mb-4">
+                <div className="text-muted text-sm mb-1">Carrito seleccionado</div>
+                <div className="h4 fw-bold mb-0">
+                  {selectedCarrito?.codigo}
                 </div>
               </div>
-            )}
+
+              <div className="form-group mb-3">
+                <label className="form-label fw-bold text-sm text-muted">
+                  ¿Para qué apartamento?
+                </label>
+                <select
+                  className="form-select"
+                  value={selectedApto}
+                  onChange={(e) => setSelectedApto(e.target.value)}
+                >
+                  <option value="">Seleccionar apartamento...</option>
+                  {myApartments.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      Apto {a.numero}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn btn-outline"
+                onClick={() => setShowRequestModal(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={confirmRequest}
+                disabled={!selectedApto}
+              >
+                Confirmar Pedido
+              </button>
+            </div>
           </div>
-        </Modal.Body>
-        <Modal.Footer className="border-0 p-4 pt-0 d-flex gap-2">
-          <Button
-            variant="light"
-            onClick={() => setShowReturnModal(false)}
-            className="rounded-pill px-4 flex-grow-1"
-          >
-            Cancelar
-          </Button>
-          <Button
-            variant="primary"
-            onClick={confirmReturn}
-            className="btn-primary-theme rounded-pill px-4 flex-grow-1"
-          >
-            Confirmar Devolución
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        </div>
+      )}
+
+      {showReturnModal && (
+        <div className="modal-overlay" onClick={() => setShowReturnModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title">Devolver Carrito</div>
+              <button className="modal-close" onClick={() => setShowReturnModal(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className="modal-body text-center py-3">
+              <div className="cell-icon primary" style={{ width: 80, height: 80, margin: "0 auto 1rem" }}>
+                <ShoppingCart size={40} />
+              </div>
+              <h5 className="fw-bold">
+                ¿Has terminado de usar el carrito {selectedCarrito?.codigo}?
+              </h5>
+              <p className="text-muted text-sm">
+                Al confirmar, el carrito quedará disponible para otros residentes.
+              </p>
+
+              {selectedCarrito?.fine > 0 && (
+                <div className="alert alert-danger flex items-center gap-3">
+                  <AlertTriangle size={24} />
+                  <div className="text-left">
+                    <div className="fw-bold">Multa por exceso de tiempo</div>
+                    <div className="text-sm">
+                      Se ha generado un cargo de{" "}
+                      <strong>S/. {selectedCarrito.fine.toFixed(2)}</strong>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn btn-outline"
+                onClick={() => setShowReturnModal(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={confirmReturn}
+              >
+                Confirmar Devolución
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AnimatedPage>
   );
 };
-
-// Internal imports missing for the copy
-import { Form } from "react-bootstrap";
-import { FaInfoCircle } from "react-icons/fa";
 
 export default PRCarritosPage;

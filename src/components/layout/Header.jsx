@@ -1,70 +1,37 @@
-import { Link, useNavigate } from "react-router-dom";
-import { FaSignOutAlt } from "react-icons/fa";
-
+import { LogOut, Menu } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 
-import logo from "../../assets/logo.svg";
-
-const Header = () => {
-    const navigate = useNavigate();
-    const { logout, authLoading } = useAuth();
+const Header = ({ onMenuClick }) => {
+    const { logout, authLoading, authUser } = useAuth();
 
     const handleLogout = async () => {
-
         const result = await logout();
         if (result.success) {
-            navigate("/login");
+            window.location.href = "/login";
         }
     };
 
+    const initials = authUser?.nombre
+        ? authUser.nombre.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase()
+        : "?";
+
     return (
-        <div>
-            <header className="bg-main d-flex justify-content-between align-items-center px-3 px-md-4 py-2 shadow-sm">
-
-                <div className="d-flex align-items-center gap-2">
-
-                    <button
-                        className="btn btn-outline-light"
-                        type="button"
-                        data-bs-toggle="offcanvas"
-                        data-bs-target="#sidebarMenu"
-                    >
-                        ☰
-                    </button>
-
-                    <Link to="/" className="d-flex align-items-center gap-2 text-decoration-none">
-
-                        <img src={logo} alt="Logo" className="header-logo" />
-
-                        <span className="text-main fw-bold fs-4 d-none d-md-inline">
-                            Gestión de Condominios
-                        </span>
-
-                    </Link>
-                </div>
-
-                <button
-                    onClick={handleLogout}
-                    disabled={authLoading}
-                    className="btn btn-outline-light d-flex align-items-center justify-content-center header-icon-btn"
-                >
-                    {authLoading ? (
-                        <>
-                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                            <span className="d-none d-md-inline ms-2">Cerrando sesión...</span>
-                        </>
-                    ) : (
-                        <>
-                            <FaSignOutAlt />
-                            <span className="d-none d-md-inline ms-2">
-                                Cerrar sesión
-                            </span>
-                        </>
-                    )}
-                </button>
-
-            </header>
-        </div>
+        <header className="header">
+            <button className="header-btn" onClick={onMenuClick}>
+                <Menu size={18} />
+            </button>
+            <div className="header-spacer" />
+            <button className="header-user" onClick={handleLogout} disabled={authLoading}>
+                {authLoading ? (
+                    <span className="spinner" />
+                ) : (
+                    <>
+                        <LogOut size={14} />
+                        <span className="text-sm">Cerrar sesión</span>
+                    </>
+                )}
+            </button>
+        </header>
     );
 };
 

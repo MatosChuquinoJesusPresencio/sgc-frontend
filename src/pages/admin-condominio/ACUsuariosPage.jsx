@@ -1,14 +1,13 @@
 import { useState, useMemo } from "react";
-import { Button, Row, Badge } from "react-bootstrap";
 import {
-  FaUsers,
-  FaUserPlus,
-  FaEdit,
-  FaTrash,
-  FaUserShield,
-  FaCheckCircle,
-  FaHome,
-} from "react-icons/fa";
+  Users,
+  UserPlus,
+  Edit3,
+  Trash2,
+  Shield,
+  CheckCircle,
+  Home,
+} from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
 import { useData } from "../../hooks/useData";
@@ -16,10 +15,10 @@ import { useData } from "../../hooks/useData";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
 import AnimatedPage from "../../components/animations/AnimatedPage";
-import MainTable from "../../components/ui/MainTable";
+import DataTable from "../../components/ui/DataTable";
 import SearchBar from "../../components/ui/SearchBar";
-import ResidentFormModal from "../../components/modals/ResidentFormModal";
-import ResidentDeleteModal from "../../components/modals/ResidentDeleteModal";
+import UserFormModal from "../../components/modals/UserFormModal";
+import ConfirmDialog from "../../components/modals/ConfirmDialog";
 import { usePagination } from "../../hooks/usePagination";
 import RoleBadge from "../../components/ui/RoleBadge";
 import NoCondoWarning from "../../components/ui/NoCondoWarning";
@@ -27,14 +26,6 @@ import NoCondoWarning from "../../components/ui/NoCondoWarning";
 const ACUsuariosPage = () => {
   const { authUser } = useAuth();
   const { getTable, updateTable } = useData();
-
-  const usuarios = getTable("usuarios");
-  const apartamentos = getTable("apartamentos");
-  const condominio = getTable("condominios").find(
-    (c) => c.id === authUser?.id_condominio,
-  );
-
-  if (!condominio) return <NoCondoWarning />;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -44,6 +35,12 @@ const ACUsuariosPage = () => {
 
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+
+  const usuarios = getTable("usuarios");
+  const apartamentos = getTable("apartamentos");
+  const condominio = getTable("condominios").find(
+    (c) => c.id === authUser?.id_condominio,
+  );
 
   const residentes = useMemo(() => {
     if (!authUser?.id_condominio) return [];
@@ -79,6 +76,8 @@ const ACUsuariosPage = () => {
     paginatedData: paginatedResidentes,
     itemsPerPage,
   } = usePagination(filteredResidentes);
+
+  if (!condominio) return <NoCondoWarning />;
 
   const handleShowModal = (user = null) => {
     setEditingUser(user);
@@ -160,48 +159,48 @@ const ACUsuariosPage = () => {
     <AnimatedPage>
       <div className="page-container">
         <DashboardHeader
-          icon={FaUsers}
+          icon={Users}
           title="Gestión de Usuarios"
           badgeText={condominio?.nombre || "Condominio"}
           welcomeText="Administra a los propietarios, residentes y personal de seguridad de tu condominio."
         >
-          <Button
-            className="btn-primary-theme btn-action"
+          <button
+            className="btn btn-primary btn-sm"
             onClick={() => handleShowModal()}
           >
-            <FaUserPlus />
+            <UserPlus size={14} />
             <span>Nuevo Usuario</span>
-          </Button>
+          </button>
         </DashboardHeader>
 
-        <Row className="g-4 mb-5">
+        <div className="grid grid-4 gap-4 mb-5">
           <StatCard
-            icon={FaUsers}
+            icon={Users}
             label="Total Usuarios"
             value={stats.total}
             colorClass="primary-theme"
           />
           <StatCard
-            icon={FaHome}
+            icon={Home}
             label="Propietarios"
             value={stats.propietarios}
             colorClass="primary-theme"
           />
           <StatCard
-            icon={FaUserShield}
+            icon={Shield}
             label="Seguridad"
             value={stats.seguridad}
             colorClass="primary-theme"
           />
           <StatCard
-            icon={FaCheckCircle}
+            icon={CheckCircle}
             label="Activos"
             value={stats.activos}
             colorClass="primary-theme"
           />
-        </Row>
+        </div>
 
-        <MainTable
+        <DataTable
           headers={[
             "#",
             "Residente",
@@ -212,7 +211,7 @@ const ACUsuariosPage = () => {
           ]}
           isEmpty={paginatedResidentes.length === 0}
           emptyMessage="No se encontraron residentes en este condominio."
-          emptyIcon={FaUsers}
+          emptyIcon={Users}
           searchBar={
             <SearchBar
               searchTerm={searchTerm}
@@ -246,77 +245,73 @@ const ACUsuariosPage = () => {
           {paginatedResidentes.map((user, index) => {
             const actualIndex = (currentPage - 1) * itemsPerPage + index + 1;
             return (
-              <tr key={user.id} className="border-bottom border-light">
-                <td className="px-4 py-3 text-center">
+              <tr key={user.id}>
+                <td className="text-center">
                   <span className="text-secondary fw-bold">
                     {actualIndex.toString().padStart(2, "0")}
                   </span>
                 </td>
-                <td className="py-3">
-                  <div className="d-flex align-items-center gap-3">
+                <td>
+                  <div className="flex items-center gap-3">
                     <div>
-                      <div className="fw-bold text-dark">{user.nombre}</div>
-                      <div className="x-small text-muted">{user.email}</div>
+                      <div className="fw-bold">{user.nombre}</div>
+                      <div className="text-xs text-muted">{user.email}</div>
                     </div>
                   </div>
                 </td>
-                <td className="py-3">
+                <td>
                   <RoleBadge roleId={user.id_rol} />
                 </td>
-                <td className="py-3">
-                  <div className="small fw-medium text-secondary">
+                <td>
+                  <div className="text-sm text-muted">
                     {getAptosString(user.id)}
                   </div>
                 </td>
-                <td className="py-3 text-center">
+                <td className="text-center">
                   {user.activo ? (
-                    <Badge className="badge-status-active rounded-pill px-3 py-1 border-0">
-                      Activo
-                    </Badge>
+                    <span className="badge badge-success">Activo</span>
                   ) : (
-                    <Badge className="badge-status-inactive rounded-pill px-3 py-1 border-0">
-                      Inactivo
-                    </Badge>
+                    <span className="badge badge-neutral">Inactivo</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-end">
-                  <div className="d-flex justify-content-end gap-2">
-                    <Button
-                      variant="light"
-                      className="btn btn-sm btn-primary-theme btn-action-sm"
+                <td>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      className="btn btn-outline btn-sm"
                       onClick={() => handleShowModal(user)}
                     >
-                      <FaEdit /> <span>Editar</span>
-                    </Button>
-                    <Button
-                      variant="light"
-                      className="btn btn-sm btn-primary-theme btn-action-sm"
+                      <Edit3 size={14} /> <span>Editar</span>
+                    </button>
+                    <button
+                      className="btn btn-outline btn-sm"
                       onClick={() => handleDeleteClick(user)}
                     >
-                      <FaTrash /> <span>Eliminar</span>
-                    </Button>
+                      <Trash2 size={14} /> <span>Eliminar</span>
+                    </button>
                   </div>
                 </td>
               </tr>
             );
           })}
-        </MainTable>
+        </DataTable>
       </div>
 
-      <ResidentFormModal
+      <UserFormModal
+        scope="condo-admin"
+        condominio={condominio}
         show={showModal}
         onHide={handleCloseModal}
         onSubmit={onSubmit}
         editingUser={editingUser}
-        condominio={condominio}
         authUser={authUser}
       />
 
-      <ResidentDeleteModal
+      <ConfirmDialog
         show={showConfirmDelete}
         onHide={() => setShowConfirmDelete(false)}
         onConfirm={handleConfirmDelete}
-        userToDelete={userToDelete}
+        title="Eliminar Residente"
+        message={`¿Estás seguro de eliminar a ${userToDelete?.nombre}?`}
       />
     </AnimatedPage>
   );

@@ -1,13 +1,4 @@
-import { Table, Badge } from "react-bootstrap";
-import {
-  FaShoppingCart,
-  FaCar,
-  FaClock,
-  FaCalendarAlt,
-  FaUser,
-  FaHome,
-  FaBuilding,
-} from "react-icons/fa";
+import { ShoppingCart, Car, Clock, User, Home, Building2, CalendarDays } from "lucide-react";
 import EmptyState from "../ui/EmptyState";
 
 const ActivityTable = ({ data, type = "carritos", showCondo = false }) => {
@@ -25,146 +16,121 @@ const ActivityTable = ({ data, type = "carritos", showCondo = false }) => {
 
   if (type === "carritos") {
     return (
-      <div className="table-responsive">
-        <Table hover className="align-middle mb-0 custom-table">
-          <thead className="bg-light text-muted small text-uppercase">
+      <div className="data-table-scroll">
+        <table className="data-table">
+          <thead>
             <tr>
-              {showCondo && <th className="px-4 py-3 border-0">Condominio</th>}
-              <th
-                className={showCondo ? "py-3 border-0" : "px-4 py-3 border-0"}
-              >
-                Unidad
-              </th>
-              <th className="py-3 border-0">Carrito</th>
-              <th className="py-3 border-0">Solicitante</th>
-              <th className="py-3 border-0">Entrada</th>
-              <th className="px-4 py-3 border-0 text-center">Estado</th>
+              {showCondo && <th>Condominio</th>}
+              <th>Unidad</th>
+              <th>Carrito</th>
+              <th>Solicitante</th>
+              <th>Entrada</th>
+              <th className="text-center">Estado</th>
             </tr>
           </thead>
           <tbody>
             {data.length > 0 ? (
               data.map((log) => (
-                <tr key={log.id} className="border-bottom border-light">
+                <tr key={log.id}>
                   {showCondo && (
-                    <td className="px-4 py-3">
-                      <div className="fw-bold text-dark small">
-                        {log.condoNombre || "N/A"}
-                      </div>
+                    <td>
+                      <span className="fw-medium">{log.condoNombre || "N/A"}</span>
                     </td>
                   )}
-                  <td className={showCondo ? "py-3" : "px-4 py-3"}>
-                    <div className="small">
-                      <FaHome className="me-1 text-muted" />{" "}
+                  <td>
+                    <div className="flex items-center gap-1 text-sm">
+                      <Home size={13} className="text-muted" />
                       {log.aptoNumero || log.id_apartamento}
                     </div>
                   </td>
-                  <td className="py-3">
-                    <div className="small fw-medium">
-                      {log.carritoNombre || `Carrito ${log.id_carrito}`}
-                    </div>
+                  <td>
+                    <span className="fw-medium">{log.carritoNombre || `Carrito ${log.id_carrito}`}</span>
                   </td>
-                  <td className="py-3">
-                    <div className="small text-muted">
-                      <FaUser className="me-1" />{" "}
-                      {log.usuarioNombre || log.solicitante}
-                    </div>
+                  <td>
+                    <span className="text-secondary flex items-center gap-1">
+                      <User size={12} /> {log.usuarioNombre || log.solicitante}
+                    </span>
                   </td>
-                  <td className="py-3">
-                    <div className="x-small">
-                      <FaClock className="me-1 text-muted" />{" "}
-                      {formatDateTime(log.fecha_entrada)}
-                    </div>
+                  <td>
+                    <span className="text-xs text-muted flex items-center gap-1">
+                      <Clock size={12} /> {formatDateTime(log.fecha_entrada)}
+                    </span>
                   </td>
-                  <td className="px-4 py-3 text-center">
-                    <Badge
-                      bg={log.fecha_salida ? "success" : "warning"}
-                      className="rounded-pill px-3 py-1"
-                    >
+                  <td className="text-center">
+                    <span className={`badge ${log.fecha_salida ? "badge-success" : "badge-warning"}`}>
                       {log.fecha_salida ? "Devuelto" : "En uso"}
-                    </Badge>
+                    </span>
                   </td>
                 </tr>
               ))
             ) : (
-              <EmptyState
-                colSpan={showCondo ? 6 : 5}
-                message="No hay registros de carritos."
-                icon={FaShoppingCart}
-              />
+              <tr>
+                <td colSpan={showCondo ? 6 : 5}>
+                  <EmptyState message="No hay registros de carritos." icon={ShoppingCart} />
+                </td>
+              </tr>
             )}
           </tbody>
-        </Table>
+        </table>
       </div>
     );
   }
 
   return (
-    <div className="table-responsive">
-      <Table hover className="align-middle mb-0 custom-table">
-        <thead className="bg-light text-muted small text-uppercase">
+    <div className="data-table-scroll">
+      <table className="data-table">
+        <thead>
           <tr>
-            {showCondo && <th className="px-4 py-3 border-0">Condominio</th>}
-            <th className={showCondo ? "py-3 border-0" : "px-4 py-3 border-0"}>
-              Vehículo / Placa
-            </th>
-            <th className="py-3 border-0 text-center">Espacio</th>
-            <th className="py-3 border-0">Entrada</th>
-            <th className="py-3 border-0">Salida</th>
-            <th className="px-4 py-3 border-0 text-center">Estado</th>
+            {showCondo && <th>Condominio</th>}
+            <th>Vehículo / Placa</th>
+            <th className="text-center">Espacio</th>
+            <th>Entrada</th>
+            <th>Salida</th>
+            <th className="text-center">Estado</th>
           </tr>
         </thead>
         <tbody>
           {data.length > 0 ? (
             data.map((log) => (
-              <tr key={log.id} className="border-bottom border-light">
+              <tr key={log.id}>
                 {showCondo && (
-                  <td className="px-4 py-3">
-                    <div className="fw-bold text-dark small">
-                      {log.condoNombre || "N/A"}
-                    </div>
+                  <td>
+                    <span className="fw-medium">{log.condoNombre || "N/A"}</span>
                   </td>
                 )}
-                <td className={showCondo ? "py-3" : "px-4 py-3"}>
-                  <div className="fw-bold small">{log.placa}</div>
-                  <div className="x-small text-muted">{log.vehiculoInfo}</div>
+                <td>
+                  <div className="fw-medium">{log.placa}</div>
+                  <div className="cell-sub">{log.vehiculoInfo}</div>
                 </td>
-                <td className="py-3 text-center">
-                  <Badge bg="dark" className="rounded-2">
-                    {log.estacionamientoNumero || log.id_estacionamiento}
-                  </Badge>
+                <td className="text-center">
+                  <span className="badge badge-neutral">{log.estacionamientoNumero || log.id_estacionamiento}</span>
                 </td>
-                <td className="py-3">
-                  <div className="x-small">
-                    <FaCalendarAlt className="me-1 text-muted" />{" "}
-                    {formatDateTime(log.fecha_entrada)}
-                  </div>
+                <td>
+                  <span className="text-xs text-muted flex items-center gap-1">
+                    <CalendarDays size={12} /> {formatDateTime(log.fecha_entrada)}
+                  </span>
                 </td>
-                <td className="py-3">
-                  <div className="x-small">
-                    {log.fecha_salida
-                      ? formatDateTime(log.fecha_salida)
-                      : "---"}
-                  </div>
+                <td>
+                  <span className="text-xs text-muted">
+                    {log.fecha_salida ? formatDateTime(log.fecha_salida) : "---"}
+                  </span>
                 </td>
-                <td className="px-4 py-3 text-center">
-                  <Badge
-                    bg={log.fecha_salida ? "secondary" : "info"}
-                    className="rounded-pill px-3 py-1"
-                  >
+                <td className="text-center">
+                  <span className={`badge ${log.fecha_salida ? "badge-neutral" : "badge-info"}`}>
                     {log.fecha_salida ? "Fuera" : "En recinto"}
-                  </Badge>
+                  </span>
                 </td>
               </tr>
             ))
           ) : (
-            <EmptyState
-              colSpan={showCondo ? 6 : 5}
-              message="No hay registros de acceso vehicular."
-              icon={FaCar}
-            />
+            <tr>
+              <td colSpan={showCondo ? 6 : 5}>
+                <EmptyState message="No hay registros de acceso vehicular." icon={Car} />
+              </td>
+            </tr>
           )}
         </tbody>
-      </Table>
+      </table>
     </div>
   );
 };
