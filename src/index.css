@@ -123,8 +123,19 @@ img { max-width: 100%; display: block; }
   flex-shrink: 0;
 }
 
+.sidebar-logo-wrapper {
+  width: 36px;
+  height: 36px;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .sidebar-logo {
-  height: 32px;
+  height: 35px;
   width: auto;
 }
 

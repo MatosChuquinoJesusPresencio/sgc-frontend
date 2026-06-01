@@ -17,7 +17,9 @@ const Sidebar = ({ menuItems, isOpen, onClose }) => {
             <div className={`sidebar-overlay ${isOpen ? "open" : ""}`} onClick={onClose} />
             <aside className={`sidebar ${isOpen ? "open" : ""}`}>
                 <div className="sidebar-header">
-                    <img src={logoSinFondo} alt="Logo" className="sidebar-logo" />
+                    <div className="sidebar-logo-wrapper">
+                        <img src={logoSinFondo} alt="Logo" className="sidebar-logo" />
+                    </div>
                     <span className="sidebar-brand">Gestión Condominios</span>
                     <button className="sidebar-close" onClick={onClose}>
                         <X size={18} />
