@@ -85,9 +85,9 @@ const ForgotPasswordPage = () => {
                             <p className="auth-success-msg">
                                 Si el correo está registrado, recibirás las instrucciones de recuperación.
                             </p>
-                            <p className="text-xs text-muted">
-                                Revisa la consola del navegador para ver el enlace simulado.
-                            </p>
+                    <p className="text-xs text-muted">
+                        Si no lo encuentras, revisa tu bandeja de spam.
+                    </p>
                         </div>
                     )}
 

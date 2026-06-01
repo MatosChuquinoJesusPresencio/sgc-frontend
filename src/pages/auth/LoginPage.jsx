@@ -68,14 +68,7 @@ const LoginPage = () => {
                             error={errors.password}
                         />
 
-                        <div className="flex items-center justify-between mb-4">
-                            <label className="form-check">
-                                <input
-                                    type="checkbox"
-                                    {...register("rememberMe")}
-                                />
-                                <label>Recuérdame</label>
-                            </label>
+                        <div className="flex items-center justify-end mb-4">
                             <Link to="/forgot-password" className="forgot-link">
                                 ¿Olvidaste tu contraseña?
                             </Link>

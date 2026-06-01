@@ -5,8 +5,8 @@ import { MENU_BY_ROLE } from "../../constants/menus";
 import RoleBadge from "../ui/RoleBadge";
 
 const ROLE_TO_ID = {
-    SUPER_ADMIN: 1,
-    ADMIN_CONDOMINIO: 2,
+    SUPER_ADMINISTRADOR: 1,
+    ADMINISTRADOR_CONDOMINIO: 2,
     PROPIETARIO: 3,
     AGENTE_SEGURIDAD: 4,
 };

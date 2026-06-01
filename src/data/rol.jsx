@@ -1,12 +1,12 @@
 export const roles = [
   {
     id: 1,
-    nombre: "SUPER_ADMIN",
+    nombre: "SUPER_ADMINISTRADOR",
     descripcion: "Control total del sistema y gestión de condominios.",
   },
   {
     id: 2,
-    nombre: "ADMIN_CONDOMINIO",
+    nombre: "ADMINISTRADOR_CONDOMINIO",
     descripcion: "Gestión específica de un condominio asignado.",
   },
   {

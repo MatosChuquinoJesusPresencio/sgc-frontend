@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { Lock, Save, Shield, Info, AlertTriangle, CheckCircle } from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
-import { useData } from "../../hooks/useData";
 
 import AnimatedPage from "../../components/animations/AnimatedPage";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
@@ -12,10 +11,8 @@ import FormInput from "../../components/form/FormInput";
 
 const ChangePasswordPage = () => {
   const navigate = useNavigate();
-  const { authUser } = useAuth();
-  const { getTable, updateTable } = useData();
+  const { changePassword, authLoading } = useAuth();
 
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
@@ -31,38 +28,13 @@ const ChangePasswordPage = () => {
 
   const onSubmit = async (data) => {
     setError(null);
-    setLoading(true);
 
-    try {
-      const usuarios = getTable("usuarios");
-      const userIndex = usuarios.findIndex((u) => u.id === authUser.id);
+    const result = await changePassword(data.currentPassword, data.newPassword);
 
-      if (userIndex === -1) {
-        throw new Error("Usuario no encontrado en la base de datos.");
-      }
-
-      if (usuarios[userIndex].contraseña !== data.currentPassword) {
-        throw new Error("La contraseña actual es incorrecta.");
-      }
-
-      const updatedUsuarios = [...usuarios];
-      updatedUsuarios[userIndex] = {
-        ...updatedUsuarios[userIndex],
-        contraseña: data.newPassword,
-      };
-
-      updateTable("usuarios", updatedUsuarios);
-
+    if (result.success) {
       setSuccess(true);
       reset();
-
-      setTimeout(() => {
-        navigate("/");
-      }, 3000);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      setTimeout(() => navigate("/"), 3000);
     }
   };
 
@@ -141,9 +113,9 @@ const ChangePasswordPage = () => {
                 <button
                   type="submit"
                   className="btn btn-primary w-full mt-4"
-                  disabled={loading}
+                  disabled={authLoading}
                 >
-                  {loading ? (
+                  {authLoading ? (
                     <><span className="spinner" /> Actualizando...</>
                   ) : (
                     <><Save size={16} /> Actualizar Contraseña</>
