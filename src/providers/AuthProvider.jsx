@@ -1,13 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AuthContext } from "../contexts/AuthContext";
-import { useData } from "../hooks/useData";
+import { fetchApi } from "../services/api";
 
-import { VALID_ROLES, ROLES_MAP } from "../constants/roles";
-import { RESET_TOKEN_KEY, RESET_TOKEN_TTL } from "../constants/resetToken";
+import { VALID_ROLES, ROLES } from "../constants/roles";
 
 export const AuthProvider = ({ children }) => {
-  const { getTable, updateTable } = useData();
-
   const [authLoading, setAuthLoading] = useState(false);
   const [authUser, setAuthUser] = useState(() => {
     const storedUser = localStorage.getItem("authUser") || sessionStorage.getItem("authUser");
@@ -15,51 +12,42 @@ export const AuthProvider = ({ children }) => {
   });
   const [authError, setAuthError] = useState(null);
 
-  const usuariosData = getTable("usuarios");
-
-  useEffect(() => {
-    if (authUser) {
-      const currentUser = usuariosData.find(u => u.id === authUser.id);
-
-      if (!currentUser || !currentUser.activo) {
-        logout();
-      }
-    }
-  }, [usuariosData, authUser]);
-
   const isAuthenticated = !!authUser;
 
   const login = async (userData) => {
     try {
       setAuthLoading(true);
       setAuthError(null);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      const usuarios = getTable("usuarios");
-      const foundUser = usuarios.find(
-        (u) => u.email === userData.email && u.contraseña === userData.password
-      );
+      const response = await fetchApi('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: userData.email,
+          password: userData.password,
+          rememberMe: userData.rememberMe || false
+        })
+      });
 
-      if (!foundUser) {
-        setAuthError("Credenciales incorrectas");
-        return { success: false };
-      }
+      // El backend retorna la información del usuario en la respuesta exitosa
+      const foundUser = response;
+      
+      // Mapeamos el rol del backend al rol del frontend
+      const backendRole = foundUser.rol;
+      let roleName = ROLES.SUPER_ADMIN; // Valor por defecto
+      if (backendRole === "SUPER_ADMINISTRADOR") roleName = ROLES.SUPER_ADMIN;
+      else if (backendRole === "ADMINISTRADOR_CONDOMINIO") roleName = ROLES.ADMIN_CONDOMINIO;
+      else if (backendRole === "PROPIETARIO") roleName = ROLES.PROPIETARIO;
+      else if (backendRole === "AGENTE_SEGURIDAD") roleName = ROLES.AGENTE_SEGURIDAD;
 
-      const roleName = ROLES_MAP[foundUser.id_rol];
       if (!VALID_ROLES.includes(roleName)) {
         setAuthError("Rol no permitido en el sistema");
         return { success: false };
       }
 
-      if (!foundUser.activo) {
-        setAuthError("Tu cuenta ha sido desactivada.");
-        return { success: false };
-      }
-
+      // Creamos la sesión para guardar en el estado global
       const sessionUser = {
         id: foundUser.id,
-        nombre: foundUser.nombre,
-        id_condominio: foundUser.id_condominio,
+        nombre: foundUser.nombres + " " + foundUser.apellidos,
         role: roleName,
       };
 
@@ -73,8 +61,12 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true };
     } catch (e) {
-      setAuthError(`Error inesperado al iniciar sesión: ${e.message}`);
-      return { success: false, error: e.message };
+      let errorMessage = e.message || "Error al conectar con el servidor.";
+      if (e.status === 401 || e.status === 403) {
+          errorMessage = "Credenciales incorrectas.";
+      }
+      setAuthError(errorMessage);
+      return { success: false, error: errorMessage };
     } finally {
       setAuthLoading(false);
     }
@@ -84,7 +76,12 @@ export const AuthProvider = ({ children }) => {
     try {
       setAuthLoading(true);
       setAuthError(null);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      
+      try {
+        await fetchApi('/auth/logout', { method: 'POST' });
+      } catch (e) {
+        console.warn("Logout request failed, but we will clear local session anyway.", e);
+      }
 
       setAuthUser(null);
       localStorage.removeItem("authUser");
@@ -102,33 +99,15 @@ export const AuthProvider = ({ children }) => {
     try {
       setAuthLoading(true);
       setAuthError(null);
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-
-      const usuarios = getTable("usuarios");
-      const userExists = usuarios.find(
-        (u) => u.email.toLowerCase() === email.toLowerCase()
-      );
-
-      if (userExists) {
-        const token = crypto.randomUUID();
-        const payload = {
-          token,
-          email: userExists.email,
-          expiresAt: Date.now() + RESET_TOKEN_TTL,
-        };
-        localStorage.setItem(RESET_TOKEN_KEY, JSON.stringify(payload));
-
-        const baseUrl = window.location.origin;
-
-        console.info(
-          `[SIMULACIÓN] Enlace de recuperación:\n` +
-          `${baseUrl}/reset-password?token=${token}`
-        );
-      }
+      
+      await fetchApi('/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email })
+      });
 
       return { success: true };
     } catch (e) {
-      setAuthError(`Error inesperado: ${e.message}`);
+      setAuthError(e.message || "Error al solicitar la recuperación.");
       return { success: false };
     } finally {
       setAuthLoading(false);
@@ -137,26 +116,8 @@ export const AuthProvider = ({ children }) => {
 
   const validateResetToken = (token) => {
     if (!token) return { valid: false, reason: "No se proporcionó un token." };
-
-    const raw = localStorage.getItem(RESET_TOKEN_KEY);
-    if (!raw) return { valid: false, reason: "El enlace no es válido o ya fue utilizado." };
-
-    try {
-      const payload = JSON.parse(raw);
-
-      if (payload.token !== token) {
-        return { valid: false, reason: "El token no coincide." };
-      }
-
-      if (Date.now() > payload.expiresAt) {
-        localStorage.removeItem(RESET_TOKEN_KEY);
-        return { valid: false, reason: "El enlace ha expirado. Solicita uno nuevo." };
-      }
-
-      return { valid: true, email: payload.email };
-    } catch {
-      return { valid: false, reason: "Token malformado." };
-    }
+    // La validación real se hará en el backend al momento de enviar la nueva contraseña.
+    return { valid: true };
   };
 
   const resetPassword = async (token, newPassword) => {
@@ -164,27 +125,14 @@ export const AuthProvider = ({ children }) => {
       setAuthLoading(true);
       setAuthError(null);
 
-      const { valid, reason, email } = validateResetToken(token);
-      if (!valid) {
-        setAuthError(reason);
-        return { success: false };
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-
-      const usuarios = getTable("usuarios");
-      const updatedUsuarios = usuarios.map((u) =>
-        u.email === email ? { ...u, contraseña: newPassword } : u
-      );
-      updateTable("usuarios", updatedUsuarios);
-
-      localStorage.removeItem(RESET_TOKEN_KEY);
-
-      console.info(`[SIMULACIÓN] Contraseña actualizada para: ${email}`);
+      await fetchApi('/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({ token, password: newPassword })
+      });
 
       return { success: true };
     } catch (e) {
-      setAuthError(`Error inesperado: ${e.message}`);
+      setAuthError(e.message || "Error al restablecer la contraseña.");
       return { success: false };
     } finally {
       setAuthLoading(false);
