@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 import { fetchApi } from "../services/api";
 
@@ -11,6 +11,49 @@ export const AuthProvider = ({ children }) => {
     return storedUser ? JSON.parse(storedUser) : null;
   });
   const [authError, setAuthError] = useState(null);
+
+  // Verificar la sesión real con el backend cuando carga la aplicación
+  useEffect(() => {
+    let mounted = true;
+    const verifySession = async () => {
+      if (authUser) {
+        try {
+          const response = await fetchApi('/auth/me');
+          if (mounted && response) {
+            const backendRole = response.rol;
+            let roleName = ROLES.SUPER_ADMIN; 
+            if (backendRole === "SUPER_ADMINISTRADOR") roleName = ROLES.SUPER_ADMIN;
+            else if (backendRole === "ADMINISTRADOR_CONDOMINIO") roleName = ROLES.ADMIN_CONDOMINIO;
+            else if (backendRole === "PROPIETARIO") roleName = ROLES.PROPIETARIO;
+            else if (backendRole === "AGENTE_SEGURIDAD") roleName = ROLES.AGENTE_SEGURIDAD;
+
+            const sessionUser = {
+              id: response.id,
+              nombre: response.nombres + " " + response.apellidos,
+              role: roleName,
+            };
+            
+            setAuthUser(sessionUser);
+            if (localStorage.getItem("authUser")) {
+              localStorage.setItem("authUser", JSON.stringify(sessionUser));
+            } else if (sessionStorage.getItem("authUser")) {
+              sessionStorage.setItem("authUser", JSON.stringify(sessionUser));
+            }
+          }
+        } catch (error) {
+          // Si el token expira y falla el refresh, el backend devolverá 401
+          if (mounted && error?.response?.status === 401) {
+            setAuthUser(null);
+            localStorage.removeItem("authUser");
+            sessionStorage.removeItem("authUser");
+          }
+        }
+      }
+    };
+    
+    verifySession();
+    return () => { mounted = false; };
+  }, []); // Solo al montar
 
   const isAuthenticated = !!authUser;
 
