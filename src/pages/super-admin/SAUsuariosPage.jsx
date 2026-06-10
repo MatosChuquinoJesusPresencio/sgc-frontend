@@ -176,20 +176,6 @@ const SAUsuariosPage = () => {
     );
   }
 
-  if (error && usuarios.length === 0) {
-    return (
-      <AnimatedPage>
-        <div className="page-container flex items-center justify-center" style={{ minHeight: 300 }}>
-          <div className="flex flex-col items-center gap-3">
-            <AlertTriangle size={32} className="text-danger" />
-            <p className="text-danger">{error}</p>
-            <button className="btn btn-primary" onClick={loadData}>Reintentar</button>
-          </div>
-        </div>
-      </AnimatedPage>
-    );
-  }
-
   const condoMap = {};
   condominios.forEach((c) => { condoMap[c.id] = c.nombre; });
 
@@ -237,6 +223,8 @@ const SAUsuariosPage = () => {
             </div>
           }
           paginationProps={{ currentPage, totalPages, onPageChange: setCurrentPage, totalItems: filteredUsers.length, itemsShowing: paginatedUsers.length }}
+          error={error}
+          onErrorDismiss={() => setError(null)}
         >
           {paginatedUsers.map((user, index) => {
             const actualIndex = (currentPage - 1) * itemsPerPage + index + 1;

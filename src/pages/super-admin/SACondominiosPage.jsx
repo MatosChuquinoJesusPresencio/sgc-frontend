@@ -11,6 +11,7 @@ import {
   Trash2,
   AlertTriangle,
   Loader2,
+  Info,
 } from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
@@ -49,6 +50,8 @@ const SACondominiosPage = () => {
   const [selectedCondo, setSelectedCondo] = useState(null);
   const [selectedCondoAdmin, setSelectedCondoAdmin] = useState(null);
   const [selectedCondoStats, setSelectedCondoStats] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [detailsError, setDetailsError] = useState(null);
   const [showRelationsModal, setShowRelationsModal] = useState(false);
   const [condoToDelete, setCondoToDelete] = useState(null);
   const [relations, setRelations] = useState([]);
@@ -102,6 +105,10 @@ const SACondominiosPage = () => {
         ? { nombre: `${admin.nombres} ${admin.apellidos}`, email: admin.correo }
         : null,
     );
+    setSelectedCondoStats(null);
+    setDetailsError(null);
+    setDetailsLoading(true);
+    setShowDetailModal(true);
     try {
       const rels = await getCondominioRelations(condo.id);
       setSelectedCondoStats({
@@ -113,10 +120,10 @@ const SACondominiosPage = () => {
         config: rels.config || null,
       });
     } catch {
-      setSelectedCondoStats({ torres: 0, pisos: 0, apartamentos: 0, usuarios: 0, carritos: 0, config: null });
-
+      setDetailsError("Error al cargar los detalles. Intente nuevamente.");
+    } finally {
+      setDetailsLoading(false);
     }
-    setShowDetailModal(true);
   };
 
   const handleDeleteClick = async (condo) => {
@@ -207,20 +214,6 @@ const SACondominiosPage = () => {
     );
   }
 
-  if (error && condominios.length === 0) {
-    return (
-      <AnimatedPage>
-        <div className="page-container flex items-center justify-center" style={{ minHeight: 300 }}>
-          <div className="flex flex-col items-center gap-3">
-            <AlertTriangle size={32} className="text-danger" />
-            <p className="text-danger">{error}</p>
-            <button className="btn btn-primary" onClick={loadData}>Reintentar</button>
-          </div>
-        </div>
-      </AnimatedPage>
-    );
-  }
-
   const handleEditClick = (condo) => {
     const admin = usuarios.find((u) => u.condominioId === condo.id && u.rol === "ADMINISTRADOR_CONDOMINIO");
     setEditingCondo({ ...condo, id_administrador: admin?.id?.toString() || "" });
@@ -259,6 +252,8 @@ const SACondominiosPage = () => {
             </div>
           }
           paginationProps={{ currentPage, totalPages, onPageChange: setCurrentPage, totalItems: filteredCondominios.length, itemsShowing: currentItems.length }}
+          error={error}
+          onErrorDismiss={() => setError(null)}
         >
           {currentItems.map((condo, index) => {
             const actualIndex = (currentPage - 1) * itemsPerPage + index + 1;
@@ -315,10 +310,12 @@ const SACondominiosPage = () => {
 
       <CondoDetailModal
         show={showDetailModal}
-        onHide={() => { setShowDetailModal(false); setSelectedCondo(null); setSelectedCondoAdmin(null); setSelectedCondoStats(null); }}
+        onHide={() => { setShowDetailModal(false); setSelectedCondo(null); setSelectedCondoAdmin(null); setSelectedCondoStats(null); setDetailsError(null); }}
         condo={selectedCondo}
         admin={selectedCondoAdmin}
         stats={selectedCondoStats}
+        loading={detailsLoading}
+        error={detailsError}
       />
       <CondoFormModal show={showModal} onHide={() => { setShowModal(false); setEditingCondo(null); }} onSubmit={onSubmit} editingCondo={editingCondo} adminUsers={adminUsers} actionLoading={actionLoading} />
       <CondoRelationsModal show={showRelationsModal} onHide={() => { setShowRelationsModal(false); setCondoToDelete(null); setRelations([]); }} condoName={condoToDelete?.nombre} relations={relations} />

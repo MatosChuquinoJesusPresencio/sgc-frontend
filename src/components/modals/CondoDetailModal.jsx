@@ -1,6 +1,6 @@
-import { X, Building2, UserCog, Settings, MapPin, Calendar, Info, AlertTriangle, PlusCircle } from "lucide-react";
+import { X, Building2, UserCog, Settings, MapPin, Calendar, Info, AlertTriangle, PlusCircle, Loader2 } from "lucide-react";
 
-const CondoDetailModal = ({ show, onHide, condo, admin, stats }) => {
+const CondoDetailModal = ({ show, onHide, condo, admin, stats, loading, error }) => {
   if (!condo || !show) return null;
 
   return (
@@ -18,6 +18,22 @@ const CondoDetailModal = ({ show, onHide, condo, admin, stats }) => {
           </button>
         </div>
         <div className="modal-body">
+          {loading ? (
+            <div className="flex items-center justify-center" style={{ minHeight: 200 }}>
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 size={32} className="text-accent" style={{ animation: "spin 1s linear infinite" }} />
+                <p className="text-muted">Cargando detalles...</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center" style={{ minHeight: 200 }}>
+              <div className="flex flex-col items-center gap-3">
+                <AlertTriangle size={32} className="text-danger" />
+                <p className="text-danger fw-bold">{error}</p>
+                <button className="btn btn-outline btn-sm" onClick={onHide}>Cerrar</button>
+              </div>
+            </div>
+          ) : (
           <div className="grid-2" style={{ marginBottom: 16 }}>
             <div className="card" style={{ padding: 20, background: "var(--bg)" }}>
               <h6 className="text-xs fw-bold text-muted mb-3" style={{ textTransform: "uppercase", letterSpacing: 1 }}>
@@ -120,6 +136,7 @@ const CondoDetailModal = ({ show, onHide, condo, admin, stats }) => {
               </div>
             </div>
           )}
+        )}
         </div>
       </div>
     </div>
