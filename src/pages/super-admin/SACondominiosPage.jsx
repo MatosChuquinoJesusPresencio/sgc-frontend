@@ -158,12 +158,6 @@ const SACondominiosPage = () => {
   const onSubmit = async (data) => {
     const { id_administrador, ...condoData } = data;
 
-    if (!condoData.nombre?.trim() || !condoData.pais?.trim() ||
-        !condoData.ciudad?.trim() || !condoData.direccion?.trim()) {
-      setError("Todos los campos del condominio son obligatorios.");
-      return;
-    }
-
     try {
       setActionLoading(true);
       let savedCondo;

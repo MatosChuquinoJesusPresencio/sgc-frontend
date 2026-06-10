@@ -12,8 +12,6 @@ const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers }) =>
     formState: { errors },
   } = useForm({
     defaultValues: { nombre: "", pais: "", ciudad: "", direccion: "", id_administrador: "" },
-    mode: "onSubmit",
-    reValidateMode: "onSubmit",
   });
 
   useEffect(() => {
@@ -21,17 +19,24 @@ const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers }) =>
       clearErrors();
       if (editingCondo) {
         reset({
-          nombre: editingCondo.nombre,
-          pais: editingCondo.pais,
-          ciudad: editingCondo.ciudad,
-          direccion: editingCondo.direccion,
-          id_administrador: editingCondo.id_administrador || "",
+          nombre: editingCondo.nombre || "",
+          pais: editingCondo.pais || "",
+          ciudad: editingCondo.ciudad || "",
+          direccion: editingCondo.direccion || "",
+          id_administrador: editingCondo.id_administrador?.toString() || "",
         });
       } else {
         reset({ nombre: "", pais: "", ciudad: "", direccion: "", id_administrador: "" });
       }
     }
   }, [show, editingCondo, reset, clearErrors]);
+
+  const handleFormSubmit = (data) => {
+    onSubmit({
+      ...data,
+      id_administrador: data.id_administrador || "",
+    });
+  };
 
   if (!show) return null;
 
@@ -41,7 +46,7 @@ const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers }) =>
         <div className="modal-header">
           <div className="modal-title">
             <div className="cell-icon primary">
-              {editingCondo ? <Building2 size={16} /> : <Building2 size={16} />}
+              <Building2 size={16} />
             </div>
             {editingCondo ? "Editar Condominio" : "Nuevo Condominio"}
           </div>
@@ -50,13 +55,16 @@ const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers }) =>
           </button>
         </div>
         <div className="modal-body">
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form onSubmit={handleSubmit(handleFormSubmit)}>
             <div className="grid-2">
               <FormInput
                 label="Nombre del Condominio"
                 name="nombre"
                 register={register}
-                validation={{ required: "El nombre es requerido" }}
+                validation={{
+                  required: "El nombre es requerido",
+                  validate: (v) => v.trim() !== "" || "El nombre no puede estar vacío",
+                }}
                 error={errors.nombre}
                 placeholder="Ej: Condominio Las Palmas"
               />
@@ -64,7 +72,10 @@ const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers }) =>
                 label="País"
                 name="pais"
                 register={register}
-                validation={{ required: "El país es requerido" }}
+                validation={{
+                  required: "El país es requerido",
+                  validate: (v) => v.trim() !== "" || "El país no puede estar vacío",
+                }}
                 error={errors.pais}
                 placeholder="Ej: Perú"
               />
@@ -72,7 +83,10 @@ const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers }) =>
                 label="Ciudad"
                 name="ciudad"
                 register={register}
-                validation={{ required: "La ciudad es requerida" }}
+                validation={{
+                  required: "La ciudad es requerida",
+                  validate: (v) => v.trim() !== "" || "La ciudad no puede estar vacía",
+                }}
                 error={errors.ciudad}
                 placeholder="Ej: Lima"
               />
@@ -80,7 +94,10 @@ const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers }) =>
                 label="Dirección"
                 name="direccion"
                 register={register}
-                validation={{ required: "La dirección es requerida" }}
+                validation={{
+                  required: "La dirección es requerida",
+                  validate: (v) => v.trim() !== "" || "La dirección no puede estar vacía",
+                }}
                 error={errors.direccion}
                 placeholder="Ej: Av. Principal 123"
               />
