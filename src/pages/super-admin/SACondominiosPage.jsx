@@ -179,15 +179,37 @@ const SACondominiosPage = () => {
         toast.success("Condominio creado correctamente.");
       }
 
-      if (id_administrador) {
-        const condoId = savedCondo.id;
-        const prevAdmin = usuarios.find(
-          (u) => u.condominioId === condoId && u.rol === "ADMINISTRADOR_CONDOMINIO" && u.id !== Number(id_administrador),
-        );
-        if (prevAdmin) {
-          await updateUsuario(prevAdmin.id, { condominioId: null });
+      const condoId = savedCondo.id;
+      const targetAdminId = id_administrador ? Number(id_administrador) : null;
+
+      // Buscar si actualmente hay un administrador asignado a este condominio
+      const prevAdmin = usuarios.find(
+        (u) => u.condominioId === condoId && u.rol === "ADMINISTRADOR_CONDOMINIO"
+      );
+
+      // Si había un administrador previo y es diferente al seleccionado, se desasigna pasándole sus datos obligatorios
+      if (prevAdmin && prevAdmin.id !== targetAdminId) {
+        await updateUsuario(prevAdmin.id, {
+          nombres: prevAdmin.nombres,
+          apellidos: prevAdmin.apellidos,
+          telefono: prevAdmin.telefono || null,
+          rol: prevAdmin.rol,
+          condominioId: null,
+        });
+      }
+
+      // Si se seleccionó un administrador y no es el que ya estaba asignado, se le asigna pasándole sus datos obligatorios
+      if (targetAdminId && (!prevAdmin || prevAdmin.id !== targetAdminId)) {
+        const targetAdmin = usuarios.find((u) => u.id === targetAdminId);
+        if (targetAdmin) {
+          await updateUsuario(targetAdmin.id, {
+            nombres: targetAdmin.nombres,
+            apellidos: targetAdmin.apellidos,
+            telefono: targetAdmin.telefono || null,
+            rol: targetAdmin.rol,
+            condominioId: condoId,
+          });
         }
-        await updateUsuario(Number(id_administrador), { condominioId: condoId });
       }
 
       setShowModal(false);
