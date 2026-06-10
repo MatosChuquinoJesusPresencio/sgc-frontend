@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import Sidebar from "../components/layout/Sidebar";
@@ -22,6 +23,7 @@ const PrivateLayout = () => {
 
     return (
         <div className="app-layout">
+            <Toaster position="bottom-right" toastOptions={{ duration: 3000 }} />
             <Sidebar
                 menuItems={menuItems}
                 isOpen={sidebarOpen}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import {
   Building2,
   Eye,
@@ -146,11 +147,12 @@ const SACondominiosPage = () => {
     try {
       setActionLoading(true);
       await deleteCondominio(condoToDelete.id);
+      toast.success("Condominio eliminado correctamente.");
       setCondominios((prev) => prev.filter((c) => c.id !== condoToDelete.id));
       setShowConfirmDelete(false);
       setCondoToDelete(null);
     } catch (err) {
-      setError("Error al eliminar el condominio.");
+      toast.error("Error al eliminar el condominio.");
     } finally {
       setActionLoading(false);
     }
@@ -164,9 +166,11 @@ const SACondominiosPage = () => {
       let savedCondo;
       if (editingCondo) {
         await updateCondominio(editingCondo.id, condoData);
+        toast.success("Condominio actualizado correctamente.");
         savedCondo = editingCondo;
       } else {
         savedCondo = await createCondominio(condoData);
+        toast.success("Condominio creado correctamente.");
       }
 
       if (id_administrador) {
@@ -184,7 +188,7 @@ const SACondominiosPage = () => {
       setEditingCondo(null);
       await loadData();
     } catch (err) {
-      setError(err?.message || "Error al guardar el condominio.");
+      toast.error(err?.message || "Error al guardar el condominio.");
     } finally {
       setActionLoading(false);
     }
@@ -229,7 +233,7 @@ const SACondominiosPage = () => {
         <DashboardHeader
           icon={Building2}
           title="Gestión de Condominios"
-          badgeText="Super Admin"
+          badgeText="Super Administrador"
           welcomeText={`Bienvenido, ${authUser?.nombre || "Administrador"}. Aquí puedes gestionar todos los condominios del sistema.`}
         >
           <button className="btn btn-primary" onClick={() => { setEditingCondo(null); setShowModal(true); }}>

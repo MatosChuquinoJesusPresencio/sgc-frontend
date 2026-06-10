@@ -149,82 +149,88 @@ const UserFormModal = ({
               )}
             </div>
 
-            <div className="grid-2">
-              <div className="form-group">
-                <label className="form-label">
-                  {scope === "condo-admin" ? "Tipo de Usuario" : "Rol en el Sistema"}
-                </label>
-                <select
-                  className={`form-select ${errors.id_rol || errors.rol ? "error" : ""}`}
-                  {...register(useApiFields ? "rol" : "id_rol", { required: "Selecciona un rol" })}
-                >
-                  {useApiFields ? (
-                    scope === "condo-admin" ? (
+            {editingUser?.rol === "SUPER_ADMINISTRADOR" ? (
+              <div className="alert alert-info" style={{ fontSize: 13, padding: "12px 16px" }}>
+                Los super administradores no tienen rol ni condominio asignado.
+              </div>
+            ) : (
+              <div className="grid-2">
+                <div className="form-group">
+                  <label className="form-label">
+                    {scope === "condo-admin" ? "Tipo de Usuario" : "Rol en el Sistema"}
+                  </label>
+                  <select
+                    className={`form-select ${errors.id_rol || errors.rol ? "error" : ""}`}
+                    {...register(useApiFields ? "rol" : "id_rol", { required: "Selecciona un rol" })}
+                  >
+                    {useApiFields ? (
+                      scope === "condo-admin" ? (
+                        <>
+                          <option value="ADMINISTRADOR_CONDOMINIO">Administrador Condominio</option>
+                          <option value="PROPIETARIO">Propietario</option>
+                          <option value="AGENTE_SEGURIDAD">Agente de Seguridad</option>
+                        </>
+                      ) : (
+                        <>
+                          <option value="ADMINISTRADOR_CONDOMINIO">Administrador Condominio</option>
+                          <option value="PROPIETARIO">Propietario</option>
+                          <option value="AGENTE_SEGURIDAD">Agente de Seguridad</option>
+                        </>
+                      )
+                    ) : scope === "condo-admin" ? (
                       <>
-                        <option value="ADMINISTRADOR_CONDOMINIO">Administrador Condominio</option>
-                        <option value="PROPIETARIO">Propietario</option>
-                        <option value="AGENTE_SEGURIDAD">Agente de Seguridad</option>
+                        <option value="3">Propietario</option>
+                        <option value="4">Agente de Seguridad</option>
                       </>
                     ) : (
                       <>
-                        <option value="ADMINISTRADOR_CONDOMINIO">Administrador Condominio</option>
-                        <option value="PROPIETARIO">Propietario</option>
-                        <option value="AGENTE_SEGURIDAD">Agente de Seguridad</option>
+                        <option value="1">Super Administrador</option>
+                        <option value="2">Administrador Condominio</option>
+                        <option value="3">Propietario</option>
+                        <option value="4">Agente de Seguridad</option>
                       </>
-                    )
-                  ) : scope === "condo-admin" ? (
-                    <>
-                      <option value="3">Propietario</option>
-                      <option value="4">Agente de Seguridad</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="1">Super Administrador</option>
-                      <option value="2">Administrador Condominio</option>
-                      <option value="3">Propietario</option>
-                      <option value="4">Agente de Seguridad</option>
-                    </>
-                  )}
-                </select>
-                {useApiFields
-                  ? errors.rol && <div className="form-error">{errors.rol.message}</div>
-                  : errors.id_rol && <div className="form-error">{errors.id_rol.message}</div>
-                }
-              </div>
-
-              {scope === "condo-admin" ? (
-                <div className="form-group">
-                  <label className="form-label">Condominio</label>
-                  <input
-                    className="form-input"
-                    value={condominio?.nombre || ""}
-                    disabled
-                    style={{ background: "var(--bg)" }}
-                  />
-                  <div className="text-xs text-muted mt-1">
-                    El usuario se registrará automáticamente en este condominio.
-                  </div>
-                </div>
-              ) : (
-                <div className="form-group">
-                  <label className="form-label">Condominio Asignado</label>
-                  <select
-                    className="form-select"
-                    {...register("id_condominio")}
-                  >
-                    <option value="">Ninguno</option>
-                    {condominios.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.nombre}
-                      </option>
-                    ))}
+                    )}
                   </select>
-                  <div className="text-xs text-muted mt-1">
-                    Obligatorio para Admins de Condo y Residentes.
-                  </div>
+                  {useApiFields
+                    ? errors.rol && <div className="form-error">{errors.rol.message}</div>
+                    : errors.id_rol && <div className="form-error">{errors.id_rol.message}</div>
+                  }
                 </div>
-              )}
-            </div>
+
+                {scope === "condo-admin" ? (
+                  <div className="form-group">
+                    <label className="form-label">Condominio</label>
+                    <input
+                      className="form-input"
+                      value={condominio?.nombre || ""}
+                      disabled
+                      style={{ background: "var(--bg)" }}
+                    />
+                    <div className="text-xs text-muted mt-1">
+                      El usuario se registrará automáticamente en este condominio.
+                    </div>
+                  </div>
+                ) : (
+                  <div className="form-group">
+                    <label className="form-label">Condominio Asignado</label>
+                    <select
+                      className="form-select"
+                      {...register("id_condominio")}
+                    >
+                      <option value="">Ninguno</option>
+                      {condominios.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.nombre}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="text-xs text-muted mt-1">
+                      Obligatorio para Admins de Condo y Residentes.
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="switch-group mb-4">
               <div>

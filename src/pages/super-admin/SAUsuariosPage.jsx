@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import toast from "react-hot-toast";
 import {
   Users,
   UserPlus,
@@ -131,11 +132,12 @@ const SAUsuariosPage = () => {
           })(),
         });
       }
+      toast.success(editingUser ? "Usuario actualizado correctamente." : "Usuario creado correctamente.");
       setShowModal(false);
       setEditingUser(null);
       await loadData();
     } catch {
-      setError("Error al guardar el usuario.");
+      toast.error("Error al guardar el usuario.");
     } finally {
       setActionLoading(false);
     }
@@ -150,11 +152,12 @@ const SAUsuariosPage = () => {
     try {
       setActionLoading(true);
       await deleteUsuario(userToDelete.id);
+      toast.success("Usuario eliminado correctamente.");
       setUsuarios((prev) => prev.filter((u) => u.id !== userToDelete.id));
       setShowConfirmDelete(false);
       setUserToDelete(null);
     } catch {
-      setError("Error al eliminar el usuario.");
+      toast.error("Error al eliminar el usuario.");
     } finally {
       setActionLoading(false);
     }

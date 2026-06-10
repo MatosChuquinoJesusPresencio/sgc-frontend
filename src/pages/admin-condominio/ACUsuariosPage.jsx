@@ -21,6 +21,7 @@ import UserFormModal from "../../components/modals/UserFormModal";
 import ConfirmDialog from "../../components/modals/ConfirmDialog";
 import { usePagination } from "../../hooks/usePagination";
 import RoleBadge from "../../components/ui/RoleBadge";
+import { ROLES_MAP } from "../../constants/roles";
 import NoCondoWarning from "../../components/ui/NoCondoWarning";
 
 const ACUsuariosPage = () => {
@@ -260,7 +261,7 @@ const ACUsuariosPage = () => {
                   </div>
                 </td>
                 <td>
-                  <RoleBadge roleId={user.id_rol} />
+                  <RoleBadge rol={ROLES_MAP[user.id_rol]} />
                 </td>
                 <td>
                   <div className="text-sm text-muted">

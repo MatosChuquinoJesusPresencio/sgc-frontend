@@ -4,13 +4,6 @@ import { useAuth } from "../../hooks/useAuth";
 import { MENU_BY_ROLE } from "../../constants/menus";
 import RoleBadge from "../ui/RoleBadge";
 
-const ROLE_TO_ID = {
-    SUPER_ADMINISTRADOR: 1,
-    ADMINISTRADOR_CONDOMINIO: 2,
-    PROPIETARIO: 3,
-    AGENTE_SEGURIDAD: 4,
-};
-
 const Header = ({ onMenuClick }) => {
     const { logout, authLoading, authUser } = useAuth();
     const location = useLocation();
@@ -51,7 +44,7 @@ const Header = ({ onMenuClick }) => {
                 <div className="header-avatar">{initials}</div>
                 <div className="header-user-details">
                     <span className="header-user-name">{authUser?.nombre || "Usuario"}</span>
-                    <RoleBadge roleId={ROLE_TO_ID[authUser?.role]} />
+                    <RoleBadge rol={authUser?.role} />
                 </div>
             </div>
 
