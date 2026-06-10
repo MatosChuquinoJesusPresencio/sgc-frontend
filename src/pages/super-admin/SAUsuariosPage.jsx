@@ -123,7 +123,12 @@ const SAUsuariosPage = () => {
           telefono: "",
           rol: data.rol,
           condominioId: data.id_condominio ? Number(data.id_condominio) : null,
-          contrasena: "123123",
+          contrasena: (() => {
+            const raw = (data.nombres + data.apellidos).toLowerCase();
+            const sinAcentos = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const soloLetras = sinAcentos.replace(/[^a-z0-9]/g, "");
+            return soloLetras + "123";
+          })(),
         });
       }
       setShowModal(false);

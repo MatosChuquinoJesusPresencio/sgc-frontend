@@ -152,16 +152,15 @@ const UserFormModal = ({
                   {useApiFields ? (
                     scope === "condo-admin" ? (
                       <>
-                        <option value="PROPIETARIO">Propietario / Residente</option>
-                        <option value="AGENTE_SEGURIDAD">Agente de Seguridad</option>
-                        <option value="ADMIN_CONDOMINIO">Administrador</option>
+                        <option value="PROPIETARIO">PROPIETARIO</option>
+                        <option value="AGENTE_SEGURIDAD">AGENTE_SEGURIDAD</option>
+                        <option value="ADMIN_CONDOMINIO">ADMIN_CONDOMINIO</option>
                       </>
                     ) : (
                       <>
-                        <option value="SUPER_ADMINISTRADOR">Super Admin</option>
-                        <option value="ADMIN_CONDOMINIO">Admin Condominio</option>
-                        <option value="PROPIETARIO">Propietario</option>
-                        <option value="AGENTE_SEGURIDAD">Seguridad</option>
+                        <option value="ADMIN_CONDOMINIO">ADMIN_CONDOMINIO</option>
+                        <option value="PROPIETARIO">PROPIETARIO</option>
+                        <option value="AGENTE_SEGURIDAD">AGENTE_SEGURIDAD</option>
                       </>
                     )
                   ) : scope === "condo-admin" ? (
