@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Building2,
@@ -9,56 +9,100 @@ import {
   TrendingUp,
   Activity,
 } from "lucide-react";
-import { useData } from "../../hooks/useData";
 import { useAuth } from "../../hooks/useAuth";
+import { getSuperAdminDashboard } from "../../services/dashboardService";
 import AnimatedPage from "../../components/animations/AnimatedPage";
 
 const SADashboardPage = () => {
   const navigate = useNavigate();
-  const { getTable } = useData();
   const { authUser } = useAuth();
 
-  const condominios = getTable("condominios");
-  const usuarios = getTable("usuarios");
-  const logsVehicular = getTable("logs_acceso_vehicular");
-  const logsCarrito = getTable("logs_prestamo_carrito");
-  const torres = getTable("torres");
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const totalCondominios = condominios.length;
-  const totalUsuarios = usuarios.length;
-  const totalTorres = torres.length;
-  const totalPrestamos = logsCarrito.length;
-  const totalAccesos = logsVehicular.length;
+  const fetchDashboard = () => {
+    setLoading(true);
+    setError(null);
+    getSuperAdminDashboard()
+      .then(setDashboardData)
+      .catch(setError)
+      .finally(() => setLoading(false));
+  };
 
-  const activeUsers = usuarios.filter((u) => u.activo).length;
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
 
-  const recentCondos = useMemo(
-    () => [...condominios].sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion)).slice(0, 4),
-    [condominios]
-  );
+  if (loading) {
+    return (
+      <AnimatedPage>
+        <div className="page-container">
+          <div className="greeting-banner">
+            <h1>Panel de Control Global</h1>
+            <p>Bienvenido, {authUser?.nombre || "Administrador"}. Cargando datos...</p>
+          </div>
+          <div className="grid grid-4 gap-4 mb-5">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="stat-card">
+                <div className="stat-content">
+                  <div className="skeleton" style={{ height: 32, width: 80 }} />
+                  <div className="skeleton" style={{ height: 16, width: 120, marginTop: 8 }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </AnimatedPage>
+    );
+  }
 
-  const actividadPorCondominio = useMemo(() => {
-    return condominios.map((condo) => {
-      const torresCondo = torres.filter((t) => t.id_condominio === condo.id);
-      const torreIds = torresCondo.map((t) => t.id);
-      const pisosCondo = getTable("pisos").filter((p) => torreIds.includes(p.id_torre));
-      const pisoIds = pisosCondo.map((p) => p.id);
-      const aptosCondo = getTable("apartamentos").filter((a) => pisoIds.includes(a.id_piso));
-      const aptoIds = aptosCondo.map((a) => a.id);
+  if (error) {
+    return (
+      <AnimatedPage>
+        <div className="page-container">
+          <div className="greeting-banner">
+            <h1>Panel de Control Global</h1>
+            <p>Error al cargar el dashboard.</p>
+          </div>
+          <div className="alert alert-danger">
+            <span>{error.message || "Error de conexión con el servidor."}</span>
+            <button className="btn btn-primary mt-3" onClick={fetchDashboard}>
+              Reintentar
+            </button>
+          </div>
+        </div>
+      </AnimatedPage>
+    );
+  }
 
-      const carritoOps = logsCarrito.filter((l) => aptoIds.includes(l.id_apartamento)).length;
-      const accesoOps = logsVehicular.filter((l) => {
-        const est = getTable("estacionamientos").find((e) => e.id === l.id_estacionamiento);
-        return est && aptoIds.includes(est.id_apartamento);
-      }).length;
+  if (!dashboardData) {
+    return (
+      <AnimatedPage>
+        <div className="page-container">
+          <div className="greeting-banner">
+            <h1>Panel de Control Global</h1>
+            <p>No hay datos disponibles.</p>
+          </div>
+        </div>
+      </AnimatedPage>
+    );
+  }
 
-      return { ...condo, carritoOps, accesoOps, totalOps: carritoOps + accesoOps };
-    }).sort((a, b) => b.totalOps - a.totalOps).slice(0, 5);
-  }, [condominios, torres, logsCarrito, logsVehicular]);
+  const {
+    totalCondominios,
+    totalUsuarios,
+    totalTorres,
+    totalPrestamos,
+    totalAccesos,
+    usuariosActivos,
+    condominiosRecientes,
+    actividadPorCondominio,
+  } = dashboardData;
 
   const quickLinks = [
     { label: "Condominios", sub: `${totalCondominios} registrados`, icon: Building2, color: "accent", path: "/super-admin/condominios" },
-    { label: "Usuarios", sub: `${activeUsers} activos de ${totalUsuarios}`, icon: Users, color: "success", path: "/super-admin/usuarios" },
+    { label: "Usuarios", sub: `${usuariosActivos} activos de ${totalUsuarios}`, icon: Users, color: "success", path: "/super-admin/usuarios" },
   ];
 
   return (
@@ -81,7 +125,7 @@ const SADashboardPage = () => {
             <div className="stat-icon success"><Users size={20} /></div>
             <div className="stat-content">
               <div className="stat-label">Usuarios Activos</div>
-              <div className="stat-value">{activeUsers}</div>
+              <div className="stat-value">{usuariosActivos}</div>
             </div>
           </div>
           <div className="stat-card">
@@ -109,15 +153,15 @@ const SADashboardPage = () => {
               </button>
             </div>
             <div className="widget-body">
-              {recentCondos.length > 0 ? (
-                recentCondos.map((c) => (
+              {condominiosRecientes?.length > 0 ? (
+                condominiosRecientes.map((c) => (
                   <div key={c.id} className="feed-item">
                     <div className="feed-dot accent" />
                     <div className="feed-content">
                       <div className="feed-title">{c.nombre}</div>
                       <div className="feed-sub">{c.ciudad}, {c.pais}</div>
                     </div>
-                    <div className="feed-meta">{new Date(c.fecha_creacion).toLocaleDateString()}</div>
+                    <div className="feed-meta">{new Date(c.fechaCreacion).toLocaleDateString()}</div>
                   </div>
                 ))
               ) : (
@@ -131,7 +175,7 @@ const SADashboardPage = () => {
               <span className="widget-title"><Activity size={16} /> Actividad por Condominio</span>
             </div>
             <div className="widget-body">
-              {actividadPorCondominio.length > 0 ? (
+              {actividadPorCondominio?.length > 0 ? (
                 actividadPorCondominio.map((c) => (
                   <div key={c.id} className="feed-item">
                     <div className="feed-dot info" />

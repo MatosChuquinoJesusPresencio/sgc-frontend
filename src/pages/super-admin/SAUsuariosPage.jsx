@@ -8,11 +8,20 @@ import {
   ShieldCheck,
   Building2,
   CheckCircle,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
-import { useData } from "../../hooks/useData";
 import { usePagination } from "../../hooks/usePagination";
+
+import {
+  getUsuarios,
+  createUsuario,
+  updateUsuario,
+  deleteUsuario,
+} from "../../services/usuarioService";
+import { getCondominios } from "../../services/condominioService";
 
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
@@ -23,63 +32,158 @@ import UserFormModal from "../../components/modals/UserFormModal";
 import ConfirmDialog from "../../components/modals/ConfirmDialog";
 import RoleBadge from "../../components/ui/RoleBadge";
 
+const ROL_ENUM_TO_LABEL = {
+  SUPER_ADMINISTRADOR: "Super Admin",
+  ADMIN_CONDOMINIO: "Admin Condominio",
+  PROPIETARIO: "Propietario",
+  AGENTE_SEGURIDAD: "Seguridad",
+};
+
 const SAUsuariosPage = () => {
   const { authUser } = useAuth();
-  const { getTable, updateTable } = useData();
   const [searchParams] = useSearchParams();
 
-  const usuarios = getTable("usuarios");
-  const condominios = getTable("condominios");
+  const [usuarios, setUsuarios] = useState([]);
+  const [condominios, setCondominios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const initialSearch = searchParams.get("search") || "";
-  const [searchTerm, setSearchTerm] = useState(initialSearch);
-
-  useEffect(() => {
-    const search = searchParams.get("search");
-    if (search) setSearchTerm(search);
-  }, [searchParams]);
-
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [roleFilter, setRoleFilter] = useState("all");
   const [condoFilter, setCondoFilter] = useState("all");
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  useEffect(() => {
+    const search = searchParams.get("search");
+    if (search) setSearchTerm(search);
+  }, [searchParams]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [userRes, condoRes] = await Promise.all([
+        getUsuarios({ size: 999 }),
+        getCondominios({ page: 0, size: 999 }),
+      ]);
+      setUsuarios(userRes.content || []);
+      setCondominios(condoRes.content || []);
+    } catch {
+      setError("Error al cargar los datos. Intente nuevamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const stats = useMemo(() => ({
     total: usuarios.length,
-    admins: usuarios.filter((u) => u.id_rol === 2).length,
-    propietarios: usuarios.filter((u) => u.id_rol === 3).length,
+    admins: usuarios.filter((u) => u.rol === "ADMIN_CONDOMINIO").length,
+    propietarios: usuarios.filter((u) => u.rol === "PROPIETARIO").length,
     activos: usuarios.filter((u) => u.activo).length,
   }), [usuarios]);
 
   const filteredUsers = useMemo(() => {
     return usuarios.filter((user) => {
-      const matchesSearch = user.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesRole = roleFilter === "all" || user.id_rol.toString() === roleFilter;
+      const fullName = `${user.nombres} ${user.apellidos}`.toLowerCase();
+      const matchesSearch = fullName.includes(searchTerm.toLowerCase()) ||
+        user.correo.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesRole = roleFilter === "all" || user.rol === roleFilter;
       const matchesCondo = condoFilter === "all" ||
-        (condoFilter === "none" ? user.id_condominio === null : user.id_condominio?.toString() === condoFilter);
+        (condoFilter === "none" ? user.condominioId === null : user.condominioId?.toString() === condoFilter);
       return matchesSearch && matchesRole && matchesCondo;
     });
   }, [usuarios, searchTerm, roleFilter, condoFilter]);
 
   const { currentPage, setCurrentPage, totalPages, paginatedData: paginatedUsers, itemsPerPage } = usePagination(filteredUsers);
 
-  const onSubmit = (data) => {
-    if (editingUser) {
-      updateTable("usuarios", usuarios.map((u) =>
-        u.id === editingUser.id
-          ? { ...u, ...data, id_rol: parseInt(data.id_rol), id_condominio: data.id_condominio ? parseInt(data.id_condominio) : null }
-          : u,
-      ));
-    } else {
-      const newId = usuarios.length > 0 ? Math.max(...usuarios.map((u) => u.id)) + 1 : 1;
-      updateTable("usuarios", [...usuarios, { id: newId, ...data, id_rol: parseInt(data.id_rol), id_condominio: data.id_condominio ? parseInt(data.id_condominio) : null, contraseña: "123123" }]);
+  const onSubmit = async (data) => {
+    try {
+      setActionLoading(true);
+      if (editingUser) {
+        await updateUsuario(editingUser.id, {
+          nombres: data.nombres,
+          apellidos: data.apellidos,
+          telefono: editingUser.telefono || "",
+          rol: data.rol,
+          condominioId: data.id_condominio ? Number(data.id_condominio) : null,
+        });
+      } else {
+        await createUsuario({
+          nombres: data.nombres,
+          apellidos: data.apellidos,
+          correo: data.correo,
+          telefono: "",
+          rol: data.rol,
+          condominioId: data.id_condominio ? Number(data.id_condominio) : null,
+          contrasena: "123123",
+        });
+      }
+      setShowModal(false);
+      setEditingUser(null);
+      await loadData();
+    } catch {
+      setError("Error al guardar el usuario.");
+    } finally {
+      setActionLoading(false);
     }
-    setShowModal(false);
-    setEditingUser(null);
   };
+
+  const handleEditClick = (user) => {
+    setEditingUser(user);
+    setShowModal(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      setActionLoading(true);
+      await deleteUsuario(userToDelete.id);
+      setUsuarios((prev) => prev.filter((u) => u.id !== userToDelete.id));
+      setShowConfirmDelete(false);
+      setUserToDelete(null);
+    } catch {
+      setError("Error al eliminar el usuario.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <AnimatedPage>
+        <div className="page-container flex items-center justify-center" style={{ minHeight: 300 }}>
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 size={32} className="text-accent" style={{ animation: "spin 1s linear infinite" }} />
+            <p className="text-muted">Cargando usuarios...</p>
+          </div>
+        </div>
+      </AnimatedPage>
+    );
+  }
+
+  if (error && usuarios.length === 0) {
+    return (
+      <AnimatedPage>
+        <div className="page-container flex items-center justify-center" style={{ minHeight: 300 }}>
+          <div className="flex flex-col items-center gap-3">
+            <AlertTriangle size={32} className="text-danger" />
+            <p className="text-danger">{error}</p>
+            <button className="btn btn-primary" onClick={loadData}>Reintentar</button>
+          </div>
+        </div>
+      </AnimatedPage>
+    );
+  }
+
+  const condoMap = {};
+  condominios.forEach((c) => { condoMap[c.id] = c.nombre; });
 
   return (
     <AnimatedPage>
@@ -110,10 +214,9 @@ const SAUsuariosPage = () => {
               <div style={{ flex: 3 }}>
                 <select className="form-select" value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}>
                   <option value="all">Todos los Roles</option>
-                  <option value="1">Super Admin</option>
-                  <option value="2">Admin Condo</option>
-                  <option value="3">Propietario</option>
-                  <option value="4">Seguridad</option>
+                  {Object.entries(ROL_ENUM_TO_LABEL).map(([enumVal, label]) => (
+                    <option key={enumVal} value={enumVal}>{label}</option>
+                  ))}
                 </select>
               </div>
               <div style={{ flex: 3 }}>
@@ -133,13 +236,13 @@ const SAUsuariosPage = () => {
               <tr key={user.id}>
                 <td className="px-4 py-3 text-center"><span className="text-secondary fw-bold">{actualIndex.toString().padStart(2, "0")}</span></td>
                 <td className="py-3">
-                  <div className="fw-bold">{user.nombre}</div>
-                  <div className="text-xs text-muted">{user.email}</div>
+                  <div className="fw-bold">{user.nombres} {user.apellidos}</div>
+                  <div className="text-xs text-muted">{user.correo}</div>
                 </td>
-                <td className="py-3"><RoleBadge roleId={user.id_rol} /></td>
+                <td className="py-3"><RoleBadge rol={user.rol} /></td>
                 <td className="py-3">
                   <div className="text-sm fw-medium text-secondary">
-                    {user.id_condominio ? condominios.find((c) => c.id === user.id_condominio)?.nombre : "Plataforma Global"}
+                    {user.condominioId ? condoMap[user.condominioId] || "Desconocido" : "Plataforma Global"}
                   </div>
                 </td>
                 <td className="py-3 text-center">
@@ -151,10 +254,10 @@ const SAUsuariosPage = () => {
                 </td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex justify-end gap-2">
-                    <button className="btn btn-outline btn-sm" onClick={() => { setEditingUser(user); setShowModal(true); }}>
+                    <button className="btn btn-outline btn-sm" onClick={() => handleEditClick(user)}>
                       <Edit3 size={14} /> <span>Editar</span>
                     </button>
-                    <button className="btn btn-outline btn-sm" onClick={() => { setUserToDelete(user); setShowConfirmDelete(true); }}>
+                    <button className="btn btn-outline btn-sm" onClick={() => { setUserToDelete(user); setShowConfirmDelete(true); }} disabled={actionLoading}>
                       <Trash2 size={14} /> <span>Eliminar</span>
                     </button>
                   </div>
@@ -165,13 +268,21 @@ const SAUsuariosPage = () => {
         </DataTable>
       </div>
 
-      <UserFormModal show={showModal} onHide={() => { setShowModal(false); setEditingUser(null); }} onSubmit={onSubmit} editingUser={editingUser} condominios={condominios} authUser={authUser} />
+      <UserFormModal
+        show={showModal}
+        onHide={() => { setShowModal(false); setEditingUser(null); }}
+        onSubmit={onSubmit}
+        editingUser={editingUser}
+        condominios={condominios}
+        authUser={authUser}
+        useApiFields
+      />
       <ConfirmDialog
         show={showConfirmDelete}
         onHide={() => { setShowConfirmDelete(false); setUserToDelete(null); }}
-        onConfirm={() => { updateTable("usuarios", usuarios.filter((u) => u.id !== userToDelete.id)); setShowConfirmDelete(false); setUserToDelete(null); }}
+        onConfirm={confirmDelete}
         title="¿Eliminar usuario?"
-        message={`Esta acción borrará al usuario ${userToDelete?.nombre} permanentemente.`}
+        message={`Esta acción borrará al usuario ${userToDelete?.nombres} ${userToDelete?.apellidos} permanentemente.`}
       />
     </AnimatedPage>
   );

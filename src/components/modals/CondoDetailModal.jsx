@@ -1,43 +1,7 @@
 import { X, Building2, UserCog, Settings, MapPin, Calendar, Info, AlertTriangle, PlusCircle } from "lucide-react";
-import { useData } from "../../hooks/useData";
 
-const CondoDetailModal = ({ show, onHide, condo }) => {
-  const { getTable } = useData();
-
+const CondoDetailModal = ({ show, onHide, condo, admin, stats }) => {
   if (!condo || !show) return null;
-
-  const usuarios = getTable("usuarios");
-  const admin = usuarios.find(
-    (u) => u.id_condominio === condo.id && u.id_rol === 2,
-  );
-
-  const torres = getTable("torres").filter((t) => t.id_condominio === condo.id);
-  const torreIds = torres.map((t) => t.id);
-
-  const pisos = getTable("pisos").filter((p) => torreIds.includes(p.id_torre));
-  const pisoIds = pisos.map((p) => p.id);
-
-  const aptos = getTable("apartamentos").filter((a) =>
-    pisoIds.includes(a.id_piso),
-  );
-  const usersInCondo = getTable("usuarios").filter(
-    (u) => u.id_condominio === condo.id,
-  );
-  const carts = getTable("carritos_carga").filter(
-    (c) => c.id_condominio === condo.id,
-  );
-  const config = getTable("configuraciones").find(
-    (c) => c.id_condominio === condo.id,
-  );
-
-  const stats = {
-    torres: torres.length,
-    pisos: pisos.length,
-    apartamentos: aptos.length,
-    usuarios: usersInCondo.length,
-    carritos: carts.length,
-    config,
-  };
 
   return (
     <div className="modal-overlay" onClick={onHide}>
@@ -65,7 +29,7 @@ const CondoDetailModal = ({ show, onHide, condo }) => {
               </p>
               <div className="flex items-center gap-2 text-muted text-xs">
                 <Calendar size={13} /> Registrado el{" "}
-                {new Date(condo.fecha_creacion).toLocaleDateString("es-ES", {
+                {new Date(condo.fechaCreacion).toLocaleDateString("es-ES", {
                   day: "2-digit",
                   month: "long",
                   year: "numeric",
@@ -98,29 +62,29 @@ const CondoDetailModal = ({ show, onHide, condo }) => {
               <div className="grid-2" style={{ gap: 8 }}>
                 <div className="card" style={{ padding: 16, textAlign: "center" }}>
                   <div className="text-accent mb-1"><Building2 size={20} /></div>
-                  <div className="fw-800" style={{ fontSize: 20 }}>{stats.torres}</div>
+                  <div className="fw-800" style={{ fontSize: 20 }}>{stats?.torres ?? 0}</div>
                   <div className="text-xs text-muted fw-bold" style={{ textTransform: "uppercase", letterSpacing: 0.5 }}>Torres</div>
                 </div>
                 <div className="card" style={{ padding: 16, textAlign: "center" }}>
                   <div className="text-accent mb-1"><MapPin size={20} /></div>
-                  <div className="fw-800" style={{ fontSize: 20 }}>{stats.apartamentos}</div>
+                  <div className="fw-800" style={{ fontSize: 20 }}>{stats?.apartamentos ?? 0}</div>
                   <div className="text-xs text-muted fw-bold" style={{ textTransform: "uppercase", letterSpacing: 0.5 }}>Aptos.</div>
                 </div>
                 <div className="card" style={{ padding: 16, textAlign: "center" }}>
                   <div className="text-accent mb-1"><UserCog size={20} /></div>
-                  <div className="fw-800" style={{ fontSize: 20 }}>{stats.usuarios}</div>
+                  <div className="fw-800" style={{ fontSize: 20 }}>{stats?.usuarios ?? 0}</div>
                   <div className="text-xs text-muted fw-bold" style={{ textTransform: "uppercase", letterSpacing: 0.5 }}>Usuarios</div>
                 </div>
                 <div className="card" style={{ padding: 16, textAlign: "center" }}>
                   <div className="text-accent mb-1"><PlusCircle size={20} /></div>
-                  <div className="fw-800" style={{ fontSize: 20 }}>{stats.carritos}</div>
+                  <div className="fw-800" style={{ fontSize: 20 }}>{stats?.carritos ?? 0}</div>
                   <div className="text-xs text-muted fw-bold" style={{ textTransform: "uppercase", letterSpacing: 0.5 }}>Carritos</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {config ? (
+          {stats?.config ? (
             <div className="card" style={{ padding: 20, background: "var(--accent-light)" }}>
               <h6 className="flex items-center gap-2 text-xs fw-bold mb-3" style={{ color: "var(--accent)", textTransform: "uppercase", letterSpacing: 1 }}>
                 <Settings size={14} /> Configuración del Sistema
@@ -128,19 +92,19 @@ const CondoDetailModal = ({ show, onHide, condo }) => {
               <div className="grid-4">
                 <div>
                   <div className="text-xs text-muted fw-bold mb-1" style={{ textTransform: "uppercase" }}>Máx. Autos</div>
-                  <div className="fw-800" style={{ fontSize: 20 }}>{config.max_autos}</div>
+                  <div className="fw-800" style={{ fontSize: 20 }}>{stats.config.max_autos}</div>
                 </div>
                 <div>
                   <div className="text-xs text-muted fw-bold mb-1" style={{ textTransform: "uppercase" }}>Máx. Motos</div>
-                  <div className="fw-800" style={{ fontSize: 20 }}>{config.max_motos}</div>
+                  <div className="fw-800" style={{ fontSize: 20 }}>{stats.config.max_motos}</div>
                 </div>
                 <div>
                   <div className="text-xs text-muted fw-bold mb-1" style={{ textTransform: "uppercase" }}>Préstamo</div>
-                  <div className="fw-800" style={{ fontSize: 20 }}>{config.tiempo_max_prestamo_min} min.</div>
+                  <div className="fw-800" style={{ fontSize: 20 }}>{stats.config.tiempo_max_prestamo_min} min.</div>
                 </div>
                 <div>
                   <div className="text-xs text-muted fw-bold mb-1" style={{ textTransform: "uppercase" }}>Penalización</div>
-                  <div className="fw-800" style={{ fontSize: 20 }}>S/ {config.penalizacion_por_minuto.toFixed(2)}</div>
+                  <div className="fw-800" style={{ fontSize: 20 }}>S/ {stats.config.penalizacion_por_minuto.toFixed(2)}</div>
                 </div>
               </div>
             </div>
