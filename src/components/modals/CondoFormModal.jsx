@@ -32,6 +32,7 @@ const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers }) =>
   }, [show, editingCondo, reset, clearErrors]);
 
   const handleFormSubmit = (data) => {
+    console.log(data);
     onSubmit({
       ...data,
       id_administrador: data.id_administrador || "",
