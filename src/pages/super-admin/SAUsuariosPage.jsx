@@ -111,7 +111,7 @@ const SAUsuariosPage = () => {
         await updateUsuario(editingUser.id, {
           nombres: data.nombres,
           apellidos: data.apellidos,
-          telefono: editingUser.telefono || "",
+          telefono: data.telefono || null,
           rol: data.rol,
           condominioId: data.id_condominio ? Number(data.id_condominio) : null,
         });
@@ -120,7 +120,7 @@ const SAUsuariosPage = () => {
           nombres: data.nombres,
           apellidos: data.apellidos,
           correo: data.correo,
-          telefono: "",
+          telefono: data.telefono || null,
           rol: data.rol,
           condominioId: data.id_condominio ? Number(data.id_condominio) : null,
           contrasena: (() => {

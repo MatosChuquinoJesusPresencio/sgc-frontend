@@ -38,6 +38,7 @@ const UserFormModal = ({
             nombres: editingUser.nombres || "",
             apellidos: editingUser.apellidos || "",
             correo: editingUser.correo || editingUser.email || "",
+            telefono: editingUser.telefono || "",
             rol: editingUser.rol || editingUser.id_rol || "ADMINISTRADOR_CONDOMINIO",
             id_condominio: editingUser.condominioId ?? editingUser.id_condominio ?? "",
             activo: editingUser.activo ?? true,
@@ -138,6 +139,14 @@ const UserFormModal = ({
                 error={useApiFields ? errors.correo : errors.email}
                 placeholder="ejemplo@correo.com"
               />
+              {useApiFields && (
+                <FormInput
+                  label="Teléfono"
+                  name="telefono"
+                  register={register}
+                  placeholder="Ej: +58 412 123 4567"
+                />
+              )}
             </div>
 
             <div className="grid-2">
