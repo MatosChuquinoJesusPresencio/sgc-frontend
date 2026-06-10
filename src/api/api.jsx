@@ -8,10 +8,9 @@ const api = axios.create({
         'Content-Type': 'application/json',
         'Accept': 'application/json',
     },
-    withCredentials: true, // This is the equivalent of credentials: 'include'
+    withCredentials: true,
 });
 
-// Variables para manejar múltiples peticiones concurrentes mientras se refresca el token
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -31,16 +30,13 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        // Verificar si el error es 401 (No autorizado) y la petición no ha sido reintentada
-        // Evitamos interceptar si la petición original era para login o para el mismo refresh
         if (
-            error.response?.status === 401 && 
-            !originalRequest._retry && 
-            originalRequest.url !== '/auth/login' && 
+            error.response?.status === 401 &&
+            !originalRequest._retry &&
+            originalRequest.url !== '/auth/login' &&
             originalRequest.url !== '/auth/refresh'
         ) {
             if (isRefreshing) {
-                // Si ya estamos refrescando, ponemos la petición en cola
                 return new Promise(function(resolve, reject) {
                     failedQueue.push({ resolve, reject });
                 }).then(() => {
@@ -54,28 +50,24 @@ api.interceptors.response.use(
             isRefreshing = true;
 
             try {
-                // Llamamos al endpoint de refresh para obtener un nuevo Access Token (vía cookies)
                 await api.post('/auth/refresh');
-                
+
                 isRefreshing = false;
                 processQueue(null);
-                
-                // Reintentamos la petición original que había fallado
+
                 return api(originalRequest);
             } catch (refreshError) {
                 isRefreshing = false;
                 processQueue(refreshError, null);
-                
-                // Si el refresh falla (el Refresh Token expiró o es inválido), 
-                // forzamos el cierre de sesión en el frontend.
+
                 localStorage.removeItem("authUser");
                 sessionStorage.removeItem("authUser");
                 window.location.href = '/login';
-                
+
                 return Promise.reject(refreshError);
             }
         }
-        
+
         return Promise.reject(error);
     }
 );
@@ -91,19 +83,15 @@ export const fetchApi = async (endpoint, options = {}) => {
         return response.data;
     } catch (error) {
         if (error.response) {
-            // The request was made and the server responded with a status code
-            // that falls out of the range of 2xx
             throw {
                 status: error.response.status,
                 message: error.response.data?.message || 'Error en la petición',
                 data: error.response.data
             };
         } else if (error.request) {
-            // The request was made but no response was received
             console.error('Network Error:', error.request);
             throw { message: 'No se pudo conectar con el servidor. Verifica tu conexión o intenta más tarde.' };
         } else {
-            // Something happened in setting up the request that triggered an Error
             throw { message: error.message };
         }
     }

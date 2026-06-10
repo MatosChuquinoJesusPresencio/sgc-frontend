@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Lock, Save, Shield, Info, AlertTriangle, CheckCircle } from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
-import { fetchApi } from "../../services/api";
+import { changePassword } from "../../services/authService";
 
 import AnimatedPage from "../../components/animations/AnimatedPage";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
@@ -33,13 +33,7 @@ const ChangePasswordPage = () => {
     setLoading(true);
 
     try {
-      await fetchApi("/auth/change-password", {
-        method: "POST",
-        body: JSON.stringify({
-          currentPassword: data.currentPassword,
-          newPassword: data.newPassword,
-        }),
-      });
+      await changePassword(data.currentPassword, data.newPassword);
 
       setSuccess(true);
       reset();

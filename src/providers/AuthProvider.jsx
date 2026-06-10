@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AuthContext } from "../contexts/AuthContext";
-import { fetchApi } from "../services/api";
+import { loginUser, logoutUser, forgotPassword as forgotPasswordApi, resetPassword as resetPasswordApi, verifySession as verifySessionApi } from "../services/authService";
 
 import { VALID_ROLES, ROLES } from "../constants/roles";
 
@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
     const verifySession = async () => {
       if (authUser) {
         try {
-          const response = await fetchApi('/auth/me');
+          const response = await verifySessionApi();
           if (mounted && response) {
             const backendRole = response.rol;
             let roleName = ROLES.SUPER_ADMIN; 
@@ -62,14 +62,7 @@ export const AuthProvider = ({ children }) => {
       setAuthLoading(true);
       setAuthError(null);
 
-      const response = await fetchApi('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: userData.email,
-          password: userData.password,
-          rememberMe: userData.rememberMe || false
-        })
-      });
+      const response = await loginUser(userData.email, userData.password, userData.rememberMe || false);
 
       // El backend retorna la información del usuario en la respuesta exitosa
       const foundUser = response;
@@ -121,7 +114,7 @@ export const AuthProvider = ({ children }) => {
       setAuthError(null);
       
       try {
-        await fetchApi('/auth/logout', { method: 'POST' });
+        await logoutUser();
       } catch (e) {
         console.warn("Logout request failed, but we will clear local session anyway.", e);
       }
@@ -143,10 +136,7 @@ export const AuthProvider = ({ children }) => {
       setAuthLoading(true);
       setAuthError(null);
       
-      await fetchApi('/auth/forgot-password', {
-        method: 'POST',
-        body: JSON.stringify({ email })
-      });
+      await forgotPasswordApi(email);
 
       return { success: true };
     } catch (e) {
@@ -168,10 +158,7 @@ export const AuthProvider = ({ children }) => {
       setAuthLoading(true);
       setAuthError(null);
 
-      await fetchApi('/auth/reset-password', {
-        method: 'POST',
-        body: JSON.stringify({ token, password: newPassword })
-      });
+      await resetPasswordApi(token, newPassword);
 
       return { success: true };
     } catch (e) {
