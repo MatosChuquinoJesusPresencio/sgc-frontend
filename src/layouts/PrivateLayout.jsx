@@ -23,7 +23,27 @@ const PrivateLayout = () => {
 
     return (
         <div className="app-layout">
-            <Toaster position="bottom-right" toastOptions={{ duration: 3000 }} />
+            <Toaster
+              position="bottom-right"
+              toastOptions={{
+                duration: 3000,
+                style: {
+                  background: "var(--bg-card)",
+                  color: "var(--text)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-lg)",
+                  fontSize: 14,
+                  boxShadow: "var(--shadow-md)",
+                  padding: "12px 16px",
+                },
+                success: {
+                  iconTheme: { primary: "var(--accent)", secondary: "var(--bg-card)" },
+                },
+                error: {
+                  iconTheme: { primary: "var(--danger)", secondary: "var(--bg-card)" },
+                },
+              }}
+            />
             <Sidebar
                 menuItems={menuItems}
                 isOpen={sidebarOpen}

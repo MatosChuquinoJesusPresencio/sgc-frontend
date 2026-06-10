@@ -1,4 +1,4 @@
-import { X, UserPlus, Edit3, Save } from "lucide-react";
+import { X, UserPlus, Edit3, Save, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useEffect, useMemo } from "react";
 import FormInput from "../form/FormInput";
@@ -13,6 +13,7 @@ const UserFormModal = ({
   scope = "super-admin",
   condominio,
   useApiFields = false,
+  actionLoading,
 }) => {
   const defaultValues = useMemo(
     () => useApiFields
@@ -252,9 +253,10 @@ const UserFormModal = ({
             </div>
 
             <div className="modal-footer" style={{ padding: "16px 0 0", border: "none" }}>
-              <button type="button" className="btn btn-outline" onClick={onHide}>Cancelar</button>
-              <button type="submit" className="btn btn-primary">
-                <Save size={16} /> {editingUser ? "Actualizar Datos" : "Registrar Usuario"}
+              <button type="button" className="btn btn-outline" onClick={onHide} disabled={actionLoading}>Cancelar</button>
+              <button type="submit" className="btn btn-primary" disabled={actionLoading}>
+                {actionLoading ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={16} />}
+                {actionLoading ? "Guardando..." : (editingUser ? "Actualizar Datos" : "Registrar Usuario")}
               </button>
             </div>
           </form>

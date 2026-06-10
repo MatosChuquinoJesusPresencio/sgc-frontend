@@ -320,7 +320,7 @@ const SACondominiosPage = () => {
         admin={selectedCondoAdmin}
         stats={selectedCondoStats}
       />
-      <CondoFormModal show={showModal} onHide={() => { setShowModal(false); setEditingCondo(null); }} onSubmit={onSubmit} editingCondo={editingCondo} adminUsers={adminUsers} />
+      <CondoFormModal show={showModal} onHide={() => { setShowModal(false); setEditingCondo(null); }} onSubmit={onSubmit} editingCondo={editingCondo} adminUsers={adminUsers} actionLoading={actionLoading} />
       <CondoRelationsModal show={showRelationsModal} onHide={() => { setShowRelationsModal(false); setCondoToDelete(null); setRelations([]); }} condoName={condoToDelete?.nombre} relations={relations} />
       <ConfirmDialog
         show={showConfirmDelete}
@@ -330,6 +330,7 @@ const SACondominiosPage = () => {
         message={`Estás a punto de eliminar el condominio ${condoToDelete?.nombre}. Esta acción no se puede deshacer.`}
         confirmText="Sí, Eliminar"
         Icon={AlertTriangle}
+        actionLoading={actionLoading}
       />
     </AnimatedPage>
   );

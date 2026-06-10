@@ -1,6 +1,6 @@
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, X, Loader2 } from "lucide-react";
 
-const ConfirmDialog = ({ show, onHide, onConfirm, title, message, confirmText = "Confirmar", Icon = AlertTriangle }) => {
+const ConfirmDialog = ({ show, onHide, onConfirm, title, message, confirmText = "Confirmar", Icon = AlertTriangle, actionLoading }) => {
   if (!show) return null;
 
   return (
@@ -21,8 +21,11 @@ const ConfirmDialog = ({ show, onHide, onConfirm, title, message, confirmText = 
           <p className="text-secondary" style={{ fontSize: 14 }}>{message}</p>
         </div>
         <div className="modal-footer">
-          <button className="btn btn-outline" onClick={onHide}>Cancelar</button>
-          <button className="btn btn-danger" onClick={onConfirm}>{confirmText}</button>
+          <button className="btn btn-outline" onClick={onHide} disabled={actionLoading}>Cancelar</button>
+          <button className="btn btn-danger" onClick={onConfirm} disabled={actionLoading}>
+            {actionLoading ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : null}
+            {actionLoading ? "Eliminando..." : confirmText}
+          </button>
         </div>
       </div>
     </div>

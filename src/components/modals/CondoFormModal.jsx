@@ -1,9 +1,9 @@
-import { X, Building2, Save, Info } from "lucide-react";
+import { X, Building2, Save, Info, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useEffect } from "react";
 import FormInput from "../form/FormInput";
 
-const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers = [] }) => {
+const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers = [], actionLoading }) => {
   const {
     register,
     handleSubmit,
@@ -125,9 +125,10 @@ const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers = [] 
             </div>
 
             <div className="modal-footer" style={{ padding: "16px 0 0", border: "none" }}>
-              <button type="button" className="btn btn-outline" onClick={onHide}>Cancelar</button>
-              <button type="submit" className="btn btn-primary">
-                <Save size={16} /> {editingCondo ? "Actualizar" : "Crear Condominio"}
+              <button type="button" className="btn btn-outline" onClick={onHide} disabled={actionLoading}>Cancelar</button>
+              <button type="submit" className="btn btn-primary" disabled={actionLoading}>
+                {actionLoading ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={16} />}
+                {actionLoading ? "Guardando..." : (editingCondo ? "Actualizar" : "Crear Condominio")}
               </button>
             </div>
           </form>

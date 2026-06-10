@@ -284,6 +284,7 @@ const SAUsuariosPage = () => {
         condominios={condominios}
         authUser={authUser}
         useApiFields
+        actionLoading={actionLoading}
       />
       <ConfirmDialog
         show={showConfirmDelete}
@@ -291,6 +292,7 @@ const SAUsuariosPage = () => {
         onConfirm={confirmDelete}
         title="¿Eliminar usuario?"
         message={`Esta acción borrará al usuario ${userToDelete?.nombres} ${userToDelete?.apellidos} permanentemente.`}
+        actionLoading={actionLoading}
       />
     </AnimatedPage>
   );
