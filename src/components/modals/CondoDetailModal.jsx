@@ -92,19 +92,20 @@ const CondoDetailModal = ({ show, onHide, condo, admin, stats }) => {
               <div className="grid-4">
                 <div>
                   <div className="text-xs text-muted fw-bold mb-1" style={{ textTransform: "uppercase" }}>Máx. Autos</div>
-                  <div className="fw-800" style={{ fontSize: 20 }}>{stats.config.max_autos}</div>
+                  <div className="fw-800" style={{ fontSize: 20 }}>{stats.config.maxAutos}</div>
+                  <div className="text-xs text-muted fw-bold mb-1" style={{ textTransform: "uppercase" }}>Máx. Autos</div>
                 </div>
                 <div>
                   <div className="text-xs text-muted fw-bold mb-1" style={{ textTransform: "uppercase" }}>Máx. Motos</div>
-                  <div className="fw-800" style={{ fontSize: 20 }}>{stats.config.max_motos}</div>
+                  <div className="fw-800" style={{ fontSize: 20 }}>{stats.config.maxMotos}</div>
                 </div>
                 <div>
                   <div className="text-xs text-muted fw-bold mb-1" style={{ textTransform: "uppercase" }}>Préstamo</div>
-                  <div className="fw-800" style={{ fontSize: 20 }}>{stats.config.tiempo_max_prestamo_min} min.</div>
+                  <div className="fw-800" style={{ fontSize: 20 }}>{stats.config.tiempoMaxPrestamoMin} min.</div>
                 </div>
                 <div>
                   <div className="text-xs text-muted fw-bold mb-1" style={{ textTransform: "uppercase" }}>Penalización</div>
-                  <div className="fw-800" style={{ fontSize: 20 }}>S/ {stats.config.penalizacion_por_minuto.toFixed(2)}</div>
+                  <div className="fw-800" style={{ fontSize: 20 }}>S/ {stats.config.penalizacionPorMinuto.toFixed(2)}</div>
                 </div>
               </div>
             </div>

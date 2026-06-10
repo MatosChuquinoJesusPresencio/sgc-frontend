@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { useEffect } from "react";
 import FormInput from "../form/FormInput";
 
-const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers }) => {
+const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers = [] }) => {
   const {
     register,
     handleSubmit,
@@ -32,7 +32,6 @@ const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers }) =>
   }, [show, editingCondo, reset, clearErrors]);
 
   const handleFormSubmit = (data) => {
-    console.log(data);
     onSubmit({
       ...data,
       id_administrador: data.id_administrador || "",

@@ -109,10 +109,11 @@ const SACondominiosPage = () => {
         apartamentos: 0,
         usuarios: rels.usuarios || 0,
         carritos: rels.carritos || 0,
-        config: null,
+        config: rels.config || null,
       });
     } catch {
       setSelectedCondoStats({ torres: 0, pisos: 0, apartamentos: 0, usuarios: 0, carritos: 0, config: null });
+
     }
     setShowDetailModal(true);
   };
