@@ -1,7 +1,7 @@
 import { LayoutDashboard, ShieldCheck, Building2, GitBranch, Users, ClipboardList, Car, History, Lock, ShoppingCart, Home } from "lucide-react";
 
 export const MENU_BY_ROLE = {
-    ADMIN_CONDOMINIO: [
+    ADMINISTRADOR_CONDOMINIO: [
         { path: "/admin-condominio", label: "Inicio", icon: <Building2 size={18} />, exact: true },
         { path: "/admin-condominio/mi-condominio", label: "Mi Condominio", icon: <Building2 size={18} /> },
         { path: "/admin-condominio/infraestructura", label: "Infraestructura", icon: <GitBranch size={18} /> },
@@ -13,7 +13,7 @@ export const MENU_BY_ROLE = {
         { path: "/perfil/cambiar-contraseña", label: "Contraseña", icon: <Lock size={18} /> },
     ],
 
-    SUPER_ADMIN: [
+    SUPER_ADMINISTRADOR: [
         { path: "/super-admin", label: "Inicio", icon: <ShieldCheck size={18} />, exact: true },
         { path: "/super-admin/condominios", label: "Condominios", icon: <Building2 size={18} /> },
         { path: "/super-admin/usuarios", label: "Usuarios", icon: <Users size={18} /> },

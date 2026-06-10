@@ -3,10 +3,10 @@ const ROLES = {
   2: { className: "badge-accent", label: "Admin Condo" },
   3: { className: "badge-success", label: "Propietario" },
   4: { className: "badge-neutral", label: "Seguridad" },
-  SUPER_ADMINISTRADOR: { className: "badge-warning", label: "Super Admin" },
-  ADMIN_CONDOMINIO: { className: "badge-accent", label: "Admin Condo" },
+  SUPER_ADMINISTRADOR: { className: "badge-warning", label: "Super Administrador" },
+  ADMINISTRADOR_CONDOMINIO: { className: "badge-accent", label: "Administrador Condominio" },
   PROPIETARIO: { className: "badge-success", label: "Propietario" },
-  AGENTE_SEGURIDAD: { className: "badge-neutral", label: "Seguridad" },
+  AGENTE_SEGURIDAD: { className: "badge-neutral", label: "Agente de Seguridad" },
 };
 
 const RoleBadge = ({ roleId, rol }) => {

@@ -34,7 +34,7 @@ import RoleBadge from "../../components/ui/RoleBadge";
 
 const ROL_ENUM_TO_LABEL = {
   SUPER_ADMINISTRADOR: "Super Administrador",
-  ADMIN_CONDOMINIO: "Administrador Condominio",
+  ADMINISTRADOR_CONDOMINIO: "Administrador Condominio",
   PROPIETARIO: "Propietario",
   AGENTE_SEGURIDAD: "Agente de Seguridad",
 };
@@ -85,7 +85,7 @@ const SAUsuariosPage = () => {
 
   const stats = useMemo(() => ({
     total: usuarios.length,
-    admins: usuarios.filter((u) => u.rol === "ADMIN_CONDOMINIO").length,
+    admins: usuarios.filter((u) => u.rol === "ADMINISTRADOR_CONDOMINIO").length,
     propietarios: usuarios.filter((u) => u.rol === "PROPIETARIO").length,
     activos: usuarios.filter((u) => u.activo).length,
   }), [usuarios]);

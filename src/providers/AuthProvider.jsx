@@ -25,7 +25,6 @@ export const AuthProvider = ({ children }) => {
             if (backendRole === "SUPER_ADMINISTRADOR") roleName = ROLES.SUPER_ADMIN;
             else if (backendRole === "ADMINISTRADOR_CONDOMINIO") roleName = ROLES.ADMIN_CONDOMINIO;
             else if (backendRole === "PROPIETARIO") roleName = ROLES.PROPIETARIO;
-            else if (backendRole === "AGENTE_SEGURIDAD") roleName = ROLES.AGENTE_SEGURIDAD;
 
             const sessionUser = {
               id: response.id,
@@ -73,7 +72,6 @@ export const AuthProvider = ({ children }) => {
       if (backendRole === "SUPER_ADMINISTRADOR") roleName = ROLES.SUPER_ADMIN;
       else if (backendRole === "ADMINISTRADOR_CONDOMINIO") roleName = ROLES.ADMIN_CONDOMINIO;
       else if (backendRole === "PROPIETARIO") roleName = ROLES.PROPIETARIO;
-      else if (backendRole === "AGENTE_SEGURIDAD") roleName = ROLES.AGENTE_SEGURIDAD;
 
       if (!VALID_ROLES.includes(roleName)) {
         setAuthError("Rol no permitido en el sistema");

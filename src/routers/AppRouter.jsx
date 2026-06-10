@@ -80,7 +80,7 @@ const AppRouter = () => {
 
           <Route
             path="/super-admin"
-            element={<RoleRoute allowedRoles={["SUPER_ADMIN"]} />}
+            element={<RoleRoute allowedRoles={["SUPER_ADMINISTRADOR"]} />}
           >
             <Route index element={<SADashboardPage />} />
             <Route path="condominios" element={<SACondominiosPage />} />
@@ -89,7 +89,7 @@ const AppRouter = () => {
 
           <Route
             path="/admin-condominio"
-            element={<RoleRoute allowedRoles={["ADMIN_CONDOMINIO"]} />}
+            element={<RoleRoute allowedRoles={["ADMINISTRADOR_CONDOMINIO"]} />}
           >
             <Route index element={<ACDashboardPage />} />
             <Route path="mi-condominio" element={<ACMiCondominioPage />} />

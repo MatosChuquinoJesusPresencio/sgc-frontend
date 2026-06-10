@@ -76,7 +76,7 @@ const SACondominiosPage = () => {
   }, []);
 
   const adminUsers = usuarios
-    .filter((u) => u.rol === "ADMIN_CONDOMINIO")
+    .filter((u) => u.rol === "ADMINISTRADOR_CONDOMINIO")
     .map((u) => ({
       id: u.id,
       nombre: `${u.nombres} ${u.apellidos}`,
@@ -95,7 +95,7 @@ const SACondominiosPage = () => {
 
   const handleDetailClick = async (condo) => {
     setSelectedCondo(condo);
-    const admin = usuarios.find((u) => u.condominioId === condo.id && u.rol === "ADMIN_CONDOMINIO");
+    const admin = usuarios.find((u) => u.condominioId === condo.id && u.rol === "ADMINISTRADOR_CONDOMINIO");
     setSelectedCondoAdmin(
       admin
         ? { nombre: `${admin.nombres} ${admin.apellidos}`, email: admin.correo }
@@ -170,7 +170,7 @@ const SACondominiosPage = () => {
       if (id_administrador) {
         const condoId = savedCondo.id;
         const prevAdmin = usuarios.find(
-          (u) => u.condominioId === condoId && u.rol === "ADMIN_CONDOMINIO" && u.id !== Number(id_administrador),
+          (u) => u.condominioId === condoId && u.rol === "ADMINISTRADOR_CONDOMINIO" && u.id !== Number(id_administrador),
         );
         if (prevAdmin) {
           await updateUsuario(prevAdmin.id, { condominioId: null });
@@ -216,7 +216,7 @@ const SACondominiosPage = () => {
   }
 
   const handleEditClick = (condo) => {
-    const admin = usuarios.find((u) => u.condominioId === condo.id && u.rol === "ADMIN_CONDOMINIO");
+    const admin = usuarios.find((u) => u.condominioId === condo.id && u.rol === "ADMINISTRADOR_CONDOMINIO");
     setEditingCondo({ ...condo, id_administrador: admin?.id?.toString() || "" });
     setShowModal(true);
   };

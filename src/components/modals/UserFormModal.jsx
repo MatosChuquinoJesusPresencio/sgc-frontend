@@ -16,7 +16,7 @@ const UserFormModal = ({
 }) => {
   const defaultValues = useMemo(
     () => useApiFields
-      ? { nombres: "", apellidos: "", correo: "", activo: true, rol: "ADMIN_CONDOMINIO", id_condominio: "" }
+      ? { nombres: "", apellidos: "", correo: "", activo: true, rol: "ADMINISTRADOR_CONDOMINIO", id_condominio: "" }
       : { nombre: "", email: "", activo: true, id_rol: 2, id_condominio: "" },
     [useApiFields]
   );
@@ -38,7 +38,7 @@ const UserFormModal = ({
             nombres: editingUser.nombres || "",
             apellidos: editingUser.apellidos || "",
             correo: editingUser.correo || editingUser.email || "",
-            rol: editingUser.rol || editingUser.id_rol || "ADMIN_CONDOMINIO",
+            rol: editingUser.rol || editingUser.id_rol || "ADMINISTRADOR_CONDOMINIO",
             id_condominio: editingUser.condominioId ?? editingUser.id_condominio ?? "",
             activo: editingUser.activo ?? true,
           });
@@ -61,7 +61,7 @@ const UserFormModal = ({
     if (useApiFields) {
       const rolNumerico = {
         SUPER_ADMINISTRADOR: 1,
-        ADMIN_CONDOMINIO: 2,
+        ADMINISTRADOR_CONDOMINIO: 2,
         PROPIETARIO: 3,
         AGENTE_SEGURIDAD: 4,
       }[data.rol] || 2;
@@ -152,13 +152,13 @@ const UserFormModal = ({
                   {useApiFields ? (
                     scope === "condo-admin" ? (
                       <>
-                        <option value="ADMIN_CONDOMINIO">Administrador Condominio</option>
+                        <option value="ADMINISTRADOR_CONDOMINIO">Administrador Condominio</option>
                         <option value="PROPIETARIO">Propietario</option>
                         <option value="AGENTE_SEGURIDAD">Agente de Seguridad</option>
                       </>
                     ) : (
                       <>
-                        <option value="ADMIN_CONDOMINIO">Administrador Condominio</option>
+                        <option value="ADMINISTRADOR_CONDOMINIO">Administrador Condominio</option>
                         <option value="PROPIETARIO">Propietario</option>
                         <option value="AGENTE_SEGURIDAD">Agente de Seguridad</option>
                       </>
