@@ -70,11 +70,7 @@ const AppRouter = () => {
         />
         <Route
           path="/verificar-email"
-          element={
-            <PublicRoute>
-              <VerificarEmailPage />
-            </PublicRoute>
-          }
+          element={<VerificarEmailPage />}
         />
 
         <Route
