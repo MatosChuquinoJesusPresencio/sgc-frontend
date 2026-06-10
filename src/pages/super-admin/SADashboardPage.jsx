@@ -8,6 +8,8 @@ import {
   ArrowRight,
   TrendingUp,
   Activity,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { getSuperAdminDashboard } from "../../services/dashboardService";
@@ -37,20 +39,10 @@ const SADashboardPage = () => {
   if (loading) {
     return (
       <AnimatedPage>
-        <div className="page-container">
-          <div className="greeting-banner">
-            <h1>Panel de Control Global</h1>
-            <p>Bienvenido, {authUser?.nombre || "Administrador"}. Cargando datos...</p>
-          </div>
-          <div className="grid grid-4 gap-4 mb-5">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="stat-card">
-                <div className="stat-content">
-                  <div className="skeleton" style={{ height: 32, width: 80 }} />
-                  <div className="skeleton" style={{ height: 16, width: 120, marginTop: 8 }} />
-                </div>
-              </div>
-            ))}
+        <div className="page-container flex items-center justify-center" style={{ minHeight: 300 }}>
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 size={32} className="text-accent" style={{ animation: "spin 1s linear infinite" }} />
+            <p className="text-muted">Cargando dashboard...</p>
           </div>
         </div>
       </AnimatedPage>
@@ -60,16 +52,11 @@ const SADashboardPage = () => {
   if (error) {
     return (
       <AnimatedPage>
-        <div className="page-container">
-          <div className="greeting-banner">
-            <h1>Panel de Control Global</h1>
-            <p>Error al cargar el dashboard.</p>
-          </div>
-          <div className="alert alert-danger">
-            <span>{error.message || "Error de conexión con el servidor."}</span>
-            <button className="btn btn-primary mt-3" onClick={fetchDashboard}>
-              Reintentar
-            </button>
+        <div className="page-container flex items-center justify-center" style={{ minHeight: 300 }}>
+          <div className="flex flex-col items-center gap-3">
+            <AlertTriangle size={32} className="text-danger" />
+            <p className="text-danger">{error.message || "Error de conexión con el servidor."}</p>
+            <button className="btn btn-primary" onClick={fetchDashboard}>Reintentar</button>
           </div>
         </div>
       </AnimatedPage>
@@ -79,10 +66,11 @@ const SADashboardPage = () => {
   if (!dashboardData) {
     return (
       <AnimatedPage>
-        <div className="page-container">
-          <div className="greeting-banner">
-            <h1>Panel de Control Global</h1>
-            <p>No hay datos disponibles.</p>
+        <div className="page-container flex items-center justify-center" style={{ minHeight: 300 }}>
+          <div className="flex flex-col items-center gap-3">
+            <AlertTriangle size={32} className="text-muted" />
+            <p className="text-muted">No hay datos disponibles.</p>
+            <button className="btn btn-primary" onClick={fetchDashboard}>Reintentar</button>
           </div>
         </div>
       </AnimatedPage>

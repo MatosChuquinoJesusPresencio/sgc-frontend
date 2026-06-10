@@ -247,7 +247,7 @@ const SAUsuariosPage = () => {
                 <td className="py-3"><RoleBadge rol={user.rol} /></td>
                 <td className="py-3">
                   <div className="text-sm fw-medium text-secondary">
-                    {user.condominioId ? condoMap[user.condominioId] || "Desconocido" : "Plataforma Global"}
+                    {user.condominioId ? condoMap[user.condominioId] || "Desconocido" : "Ninguno"}
                   </div>
                 </td>
                 <td className="py-3 text-center">
