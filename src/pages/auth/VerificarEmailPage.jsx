@@ -33,7 +33,7 @@ const VerificarEmailPage = () => {
   }, [token]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg">
+    <div className="flex items-center justify-center bg-bg" style={{ minHeight: '100vh', width: '100%' }}>
       <div className="card" style={{ maxWidth: 480, width: "100%", margin: "1rem", textAlign: "center" }}>
         <div className="card-body" style={{ padding: "3rem 2rem" }}>
           {status === "loading" && (
