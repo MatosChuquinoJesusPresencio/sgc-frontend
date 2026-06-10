@@ -14,6 +14,7 @@ const AnimatedPage = ({ children }) => {
       animate="animate"
       exit="exit"
       transition={{ duration: 0.4, ease: "easeInOut" }}
+      style={{ flex: 1, display: "flex", flexDirection: "column" }}
     >
       {children}
     </motion.div>

@@ -67,11 +67,11 @@ const SAUsuariosPage = () => {
       setLoading(true);
       setError(null);
       const [userRes, condoRes] = await Promise.all([
-        getUsuarios({ size: 999 }),
-        getCondominios({ page: 0, size: 999 }),
+        getUsuarios({ tamanio: 999 }),
+        getCondominios({ pagina: 0, tamanio: 999 }),
       ]);
-      setUsuarios(userRes.content || []);
-      setCondominios(condoRes.content || []);
+      setUsuarios(userRes.contenido || []);
+      setCondominios(condoRes.contenido || []);
     } catch {
       setError("Error al cargar los datos. Intente nuevamente.");
     } finally {
