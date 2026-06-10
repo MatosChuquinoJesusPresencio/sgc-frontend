@@ -164,6 +164,7 @@ const SACondominiosPage = () => {
         await updateCondominio(editingCondo.id, condoData);
         savedCondo = editingCondo;
       } else {
+        console.log("Creando condominio - payload:", JSON.stringify(condoData));
         savedCondo = await createCondominio(condoData);
       }
 
@@ -182,7 +183,8 @@ const SACondominiosPage = () => {
       setEditingCondo(null);
       await loadData();
     } catch (err) {
-      setError("Error al guardar el condominio.");
+      console.error("Error al crear/editar condominio:", err);
+      setError(err?.message || "Error al guardar el condominio.");
     } finally {
       setActionLoading(false);
     }
