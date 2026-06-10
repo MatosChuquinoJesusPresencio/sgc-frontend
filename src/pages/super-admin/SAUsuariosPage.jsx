@@ -33,10 +33,10 @@ import ConfirmDialog from "../../components/modals/ConfirmDialog";
 import RoleBadge from "../../components/ui/RoleBadge";
 
 const ROL_ENUM_TO_LABEL = {
-  SUPER_ADMINISTRADOR: "Super Admin",
-  ADMIN_CONDOMINIO: "Admin Condominio",
+  SUPER_ADMINISTRADOR: "Super Administrador",
+  ADMIN_CONDOMINIO: "Administrador Condominio",
   PROPIETARIO: "Propietario",
-  AGENTE_SEGURIDAD: "Seguridad",
+  AGENTE_SEGURIDAD: "Agente de Seguridad",
 };
 
 const SAUsuariosPage = () => {

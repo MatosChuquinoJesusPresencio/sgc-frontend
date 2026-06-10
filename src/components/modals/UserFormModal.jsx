@@ -152,29 +152,28 @@ const UserFormModal = ({
                   {useApiFields ? (
                     scope === "condo-admin" ? (
                       <>
-                        <option value="PROPIETARIO">PROPIETARIO</option>
-                        <option value="AGENTE_SEGURIDAD">AGENTE_SEGURIDAD</option>
-                        <option value="ADMIN_CONDOMINIO">ADMIN_CONDOMINIO</option>
+                        <option value="ADMIN_CONDOMINIO">Administrador Condominio</option>
+                        <option value="PROPIETARIO">Propietario</option>
+                        <option value="AGENTE_SEGURIDAD">Agente de Seguridad</option>
                       </>
                     ) : (
                       <>
-                        <option value="ADMIN_CONDOMINIO">ADMIN_CONDOMINIO</option>
-                        <option value="PROPIETARIO">PROPIETARIO</option>
-                        <option value="AGENTE_SEGURIDAD">AGENTE_SEGURIDAD</option>
+                        <option value="ADMIN_CONDOMINIO">Administrador Condominio</option>
+                        <option value="PROPIETARIO">Propietario</option>
+                        <option value="AGENTE_SEGURIDAD">Agente de Seguridad</option>
                       </>
                     )
                   ) : scope === "condo-admin" ? (
                     <>
-                      <option value="3">Propietario / Residente</option>
+                      <option value="3">Propietario</option>
                       <option value="4">Agente de Seguridad</option>
-                      <option value="2">Administrador</option>
                     </>
                   ) : (
                     <>
-                      <option value="1">Super Admin</option>
-                      <option value="2">Admin Condominio</option>
+                      <option value="1">Super Administrador</option>
+                      <option value="2">Administrador Condominio</option>
                       <option value="3">Propietario</option>
-                      <option value="4">Seguridad</option>
+                      <option value="4">Agente de Seguridad</option>
                     </>
                   )}
                 </select>
@@ -204,7 +203,7 @@ const UserFormModal = ({
                     className="form-select"
                     {...register("id_condominio")}
                   >
-                    <option value="">Ninguno (Acceso Global)</option>
+                    <option value="">Ninguno</option>
                     {condominios.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.nombre}
