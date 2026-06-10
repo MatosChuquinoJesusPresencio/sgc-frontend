@@ -6,7 +6,7 @@ export const MENU_BY_ROLE = {
         { path: "/admin-condominio/mi-condominio", label: "Mi Condominio", icon: <Building2 size={18} /> },
         { path: "/admin-condominio/infraestructura", label: "Infraestructura", icon: <GitBranch size={18} /> },
         { path: "/admin-condominio/usuarios", label: "Usuarios", icon: <Users size={18} /> },
-        { path: "/admin-condominio/apartamentos", label: "Apartamentos", icon: <Home size={18} /> },
+        { path: "/admin-condominio/apartamentos", label: "Inquilinos", icon: <Home size={18} /> },
         { path: "/admin-condominio/estacionamientos", label: "Estacionamientos", icon: <Car size={18} /> },
         { path: "/admin-condominio/carritos", label: "Carritos", icon: <ShoppingCart size={18} /> },
         { path: "/admin-condominio/historial", label: "Historial", icon: <ClipboardList size={18} /> },
@@ -16,10 +16,7 @@ export const MENU_BY_ROLE = {
     SUPER_ADMIN: [
         { path: "/super-admin", label: "Inicio", icon: <ShieldCheck size={18} />, exact: true },
         { path: "/super-admin/condominios", label: "Condominios", icon: <Building2 size={18} /> },
-        { path: "/super-admin/apartamentos", label: "Apartamentos", icon: <Home size={18} /> },
-        { path: "/super-admin/estacionamientos", label: "Estacionamientos", icon: <Car size={18} /> },
         { path: "/super-admin/usuarios", label: "Usuarios", icon: <Users size={18} /> },
-        { path: "/super-admin/historial", label: "Historial", icon: <ClipboardList size={18} /> },
         { path: "/perfil/cambiar-contraseña", label: "Contraseña", icon: <Lock size={18} /> },
     ],
 

@@ -181,9 +181,9 @@ const ACApartamentosPage = () => {
       <div className="page-container">
         <DashboardHeader
           icon={Home}
-          title="Control de Apartamentos"
+          title="Gestión de Inquilinos"
           badgeText={condominio?.nombre || "Condominio"}
-          welcomeText="Visualiza y gestiona los propietarios e inquilinos de cada unidad habitacional."
+          welcomeText="Administra los inquilinos y residentes registrados en cada unidad habitacional."
         />
 
         <div className="grid grid-4 gap-4 mb-5">

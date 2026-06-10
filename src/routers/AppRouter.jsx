@@ -20,9 +20,7 @@ import RedirectPage from "../pages/utility/RedirectPage";
 import SADashboardPage from "../pages/super-admin/SADashboardPage";
 import SACondominiosPage from "../pages/super-admin/SACondominiosPage";
 import SAUsuariosPage from "../pages/super-admin/SAUsuariosPage";
-import SAApartamentosPage from "../pages/super-admin/SAApartamentosPage";
-import SAHistorialPage from "../pages/super-admin/SAHistorialPage";
-import SAEstacionamientosPage from "../pages/super-admin/SAEstacionamientosPage";
+
 
 import ACDashboardPage from "../pages/admin-condominio/ACDashboardPage";
 import ACMiCondominioPage from "../pages/admin-condominio/ACMiCondominioPage";
@@ -87,9 +85,6 @@ const AppRouter = () => {
             <Route index element={<SADashboardPage />} />
             <Route path="condominios" element={<SACondominiosPage />} />
             <Route path="usuarios" element={<SAUsuariosPage />} />
-            <Route path="apartamentos" element={<SAApartamentosPage />} />
-            <Route path="estacionamientos" element={<SAEstacionamientosPage />} />
-            <Route path="historial" element={<SAHistorialPage />} />
           </Route>
 
           <Route
