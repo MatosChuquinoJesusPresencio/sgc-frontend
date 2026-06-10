@@ -1,6 +1,6 @@
 import { X, UserPlus, Edit3, Save } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import FormInput from "../form/FormInput";
 
 const UserFormModal = ({
@@ -14,9 +14,12 @@ const UserFormModal = ({
   condominio,
   useApiFields = false,
 }) => {
-  const defaultValues = useApiFields
-    ? { nombres: "", apellidos: "", correo: "", activo: true, rol: "ADMIN_CONDOMINIO", id_condominio: "" }
-    : { nombre: "", email: "", activo: true, id_rol: 2, id_condominio: "" };
+  const defaultValues = useMemo(
+    () => useApiFields
+      ? { nombres: "", apellidos: "", correo: "", activo: true, rol: "ADMIN_CONDOMINIO", id_condominio: "" }
+      : { nombre: "", email: "", activo: true, id_rol: 2, id_condominio: "" },
+    [useApiFields]
+  );
 
   const {
     register,
