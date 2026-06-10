@@ -32,10 +32,22 @@ const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers = [],
   }, [show, editingCondo, reset, clearErrors]);
 
   const handleFormSubmit = (data) => {
+    // Safety guard: never send empty fields to the API
+    if (!data.nombre?.trim() || !data.pais?.trim() || !data.ciudad?.trim() || !data.direccion?.trim()) {
+      console.warn("[CondoFormModal] handleFormSubmit called with empty fields — RHF validation bypassed", data);
+      return;
+    }
     onSubmit({
-      ...data,
+      nombre: data.nombre.trim(),
+      pais: data.pais.trim(),
+      ciudad: data.ciudad.trim(),
+      direccion: data.direccion.trim(),
       id_administrador: data.id_administrador || "",
     });
+  };
+
+  const handleValidationError = (errors) => {
+    console.log("[CondoFormModal] RHF validation errors:", errors);
   };
 
   if (!show) return null;
@@ -55,7 +67,7 @@ const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers = [],
           </button>
         </div>
         <div className="modal-body">
-          <form onSubmit={handleSubmit(handleFormSubmit)}>
+          <form onSubmit={handleSubmit(handleFormSubmit, handleValidationError)}>
             <div className="grid-2">
               <FormInput
                 label="Nombre del Condominio"
