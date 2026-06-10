@@ -12,6 +12,8 @@ const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers }) =>
     formState: { errors },
   } = useForm({
     defaultValues: { nombre: "", pais: "", ciudad: "", direccion: "", id_administrador: "" },
+    mode: "onSubmit",
+    reValidateMode: "onSubmit",
   });
 
   useEffect(() => {

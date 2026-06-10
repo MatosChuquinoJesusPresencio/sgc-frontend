@@ -157,6 +157,13 @@ const SACondominiosPage = () => {
 
   const onSubmit = async (data) => {
     const { id_administrador, ...condoData } = data;
+
+    if (!condoData.nombre?.trim() || !condoData.pais?.trim() ||
+        !condoData.ciudad?.trim() || !condoData.direccion?.trim()) {
+      setError("Todos los campos del condominio son obligatorios.");
+      return;
+    }
+
     try {
       setActionLoading(true);
       let savedCondo;
@@ -164,7 +171,6 @@ const SACondominiosPage = () => {
         await updateCondominio(editingCondo.id, condoData);
         savedCondo = editingCondo;
       } else {
-        console.log("Creando condominio - payload:", JSON.stringify(condoData));
         savedCondo = await createCondominio(condoData);
       }
 
@@ -183,7 +189,6 @@ const SACondominiosPage = () => {
       setEditingCondo(null);
       await loadData();
     } catch (err) {
-      console.error("Error al crear/editar condominio:", err);
       setError(err?.message || "Error al guardar el condominio.");
     } finally {
       setActionLoading(false);
