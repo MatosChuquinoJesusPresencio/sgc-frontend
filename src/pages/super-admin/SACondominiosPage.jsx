@@ -11,7 +11,6 @@ import {
   Trash2,
   AlertTriangle,
   Loader2,
-  Info,
 } from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";

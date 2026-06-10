@@ -34,6 +34,7 @@ const CondoDetailModal = ({ show, onHide, condo, admin, stats, loading, error })
               </div>
             </div>
           ) : (
+            <>
           <div className="grid-2" style={{ marginBottom: 16 }}>
             <div className="card" style={{ padding: 20, background: "var(--bg)" }}>
               <h6 className="text-xs fw-bold text-muted mb-3" style={{ textTransform: "uppercase", letterSpacing: 1 }}>
@@ -136,6 +137,7 @@ const CondoDetailModal = ({ show, onHide, condo, admin, stats, loading, error })
               </div>
             </div>
           )}
+            </>
         )}
         </div>
       </div>
