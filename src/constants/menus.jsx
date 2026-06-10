@@ -10,14 +10,14 @@ export const MENU_BY_ROLE = {
         { path: "/admin-condominio/estacionamientos", label: "Estacionamientos", icon: <Car size={18} /> },
         { path: "/admin-condominio/carritos", label: "Carritos", icon: <ShoppingCart size={18} /> },
         { path: "/admin-condominio/historial", label: "Historial", icon: <ClipboardList size={18} /> },
-        { path: "/perfil/cambiar-contraseña", label: "Contraseña", icon: <Lock size={18} /> },
+        { path: "/perfil/seguridad", label: "Seguridad", icon: <Lock size={18} /> },
     ],
 
     SUPER_ADMINISTRADOR: [
         { path: "/super-admin", label: "Inicio", icon: <ShieldCheck size={18} />, exact: true },
         { path: "/super-admin/condominios", label: "Condominios", icon: <Building2 size={18} /> },
         { path: "/super-admin/usuarios", label: "Usuarios", icon: <Users size={18} /> },
-        { path: "/perfil/cambiar-contraseña", label: "Contraseña", icon: <Lock size={18} /> },
+        { path: "/perfil/seguridad", label: "Seguridad", icon: <Lock size={18} /> },
     ],
 
     PROPIETARIO: [
@@ -26,6 +26,6 @@ export const MENU_BY_ROLE = {
         { path: "/propietario/vehiculos", label: "Vehículos", icon: <Car size={18} /> },
         { path: "/propietario/carritos", label: "Carritos", icon: <ShoppingCart size={18} /> },
         { path: "/propietario/historial", label: "Historial", icon: <History size={18} /> },
-        { path: "/perfil/cambiar-contraseña", label: "Contraseña", icon: <Lock size={18} /> },
+        { path: "/perfil/seguridad", label: "Seguridad", icon: <Lock size={18} /> },
     ],
 };

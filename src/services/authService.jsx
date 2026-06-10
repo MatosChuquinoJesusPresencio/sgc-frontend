@@ -29,3 +29,12 @@ export const changePassword = (currentPassword, newPassword) =>
         method: 'POST',
         body: JSON.stringify({ currentPassword, newPassword })
     });
+
+export const updateEmail = (nuevoCorreo) =>
+    fetchApi('/auth/email', {
+        method: 'PATCH',
+        body: JSON.stringify({ email: nuevoCorreo })
+    });
+
+export const verificarEmail = (token) =>
+    fetchApi(`/auth/verificar-email?token=${token}`);

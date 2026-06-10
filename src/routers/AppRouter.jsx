@@ -10,7 +10,8 @@ import RoleRoute from "./RoleRoute";
 import LoginPage from "../pages/auth/LoginPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
-import ChangePasswordPage from "../pages/auth/ChangePasswordPage";
+import SecurityPage from "../pages/auth/SecurityPage";
+import VerificarEmailPage from "../pages/auth/VerificarEmailPage";
 
 import UnauthorizedPage from "../pages/error/UnauthorizedPage";
 import NotFoundPage from "../pages/error/NotFoundPage";
@@ -67,6 +68,14 @@ const AppRouter = () => {
             </PublicRoute>
           }
         />
+        <Route
+          path="/verificar-email"
+          element={
+            <PublicRoute>
+              <VerificarEmailPage />
+            </PublicRoute>
+          }
+        />
 
         <Route
           element={
@@ -76,7 +85,7 @@ const AppRouter = () => {
           }
         >
           <Route path="/" element={<RedirectPage />} />
-          <Route path="/perfil/cambiar-contraseña" element={<ChangePasswordPage />} />
+          <Route path="/perfil/seguridad" element={<SecurityPage />} />
 
           <Route
             path="/super-admin"
