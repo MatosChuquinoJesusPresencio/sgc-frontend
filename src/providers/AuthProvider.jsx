@@ -30,6 +30,7 @@ export const AuthProvider = ({ children }) => {
               id: response.id,
               nombre: response.nombres + " " + response.apellidos,
               role: roleName,
+              condominioId: response.condominioId,
             };
             
             setAuthUser(sessionUser);
@@ -83,6 +84,7 @@ export const AuthProvider = ({ children }) => {
         id: foundUser.id,
         nombre: foundUser.nombres + " " + foundUser.apellidos,
         role: roleName,
+        condominioId: foundUser.condominioId,
       };
 
       setAuthUser(sessionUser);

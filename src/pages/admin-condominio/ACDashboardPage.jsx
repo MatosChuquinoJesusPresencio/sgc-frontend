@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Building2,
@@ -7,78 +7,75 @@ import {
   Car,
   ShoppingCart,
   GitBranch,
-  Layers,
   ArrowRight,
   Activity,
   Settings,
   AlertTriangle,
 } from "lucide-react";
-import { useData } from "../../hooks/useData";
 import { useAuth } from "../../hooks/useAuth";
+import { getAdminDashboard } from "../../services/dashboardService";
 import AnimatedPage from "../../components/animations/AnimatedPage";
 import NoCondoWarning from "../../components/ui/NoCondoWarning";
 
 const ACDashboardPage = () => {
   const navigate = useNavigate();
-  const { getTable } = useData();
   const { authUser } = useAuth();
+  const [dashboard, setDashboard] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const apartamentos = getTable("apartamentos");
-  const usuarios = getTable("usuarios");
-  const logs_acceso_vehicular = getTable("logs_acceso_vehicular");
-  const logs_prestamo_carrito = getTable("logs_prestamo_carrito");
-  const condominios = getTable("condominios");
-  const configuraciones = getTable("configuraciones");
+  useEffect(() => {
+    if (!authUser?.condominioId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    getAdminDashboard()
+      .then(setDashboard)
+      .catch((err) => setError(err?.message || "Error al cargar el dashboard"))
+      .finally(() => setLoading(false));
+  }, [authUser]);
 
-  const currentCondoId = authUser?.id_condominio;
-  const condominio = condominios.find((c) => c.id === currentCondoId);
+  if (loading) {
+    return (
+      <AnimatedPage>
+        <div className="page-container">
+          <div className="greeting-banner">
+            <h1>Cargando...</h1>
+            <p>Obteniendo datos del condominio.</p>
+          </div>
+        </div>
+      </AnimatedPage>
+    );
+  }
 
-  const config = useMemo(
-    () => configuraciones.find((c) => c.id_condominio === currentCondoId),
-    [configuraciones, currentCondoId],
-  );
+  if (error) {
+    return (
+      <AnimatedPage>
+        <div className="page-container">
+          <div className="status-banner danger">
+            <AlertTriangle size={16} />
+            {error}
+          </div>
+        </div>
+      </AnimatedPage>
+    );
+  }
 
-  if (!condominio) return <NoCondoWarning />;
+  if (!dashboard || !dashboard.condominio) return <NoCondoWarning />;
 
-  const torres = getTable("torres").filter((t) => t.id_condominio === currentCondoId);
-  const torresIds = torres.map((t) => t.id);
-  const allPisos = getTable("pisos").filter((p) => torresIds.includes(p.id_torre));
-  const pisosIds = allPisos.map((p) => p.id);
-  const aptosCondo = apartamentos.filter((a) => pisosIds.includes(a.id_piso));
-  const aptosIds = aptosCondo.map((a) => a.id);
-  const estacionamientos = getTable("estacionamientos").filter((e) => aptosIds.includes(e.id_apartamento));
-  const estIds = estacionamientos.map((e) => e.id);
+  const { condominio, totalTorres, totalPisos, totalApartamentos, totalPropietarios, totalSeguridad, totalEstacionamientos, estacionamientosOcupados, vehiculosEnRecinto, carritosEnUso, accesosRecientes, prestamosRecientes, config } = dashboard;
 
-  const condoUsers = usuarios.filter((u) => u.id_condominio === currentCondoId);
-  const totalPropietarios = condoUsers.filter((u) => u.id_rol === 3).length;
-  const totalSeguridad = condoUsers.filter((u) => u.id_rol === 4).length;
-
-  const filteredVehiculoLogs = logs_acceso_vehicular.filter((log) => estIds.includes(log.id_estacionamiento));
-  const filteredCarritoLogs = logs_prestamo_carrito.filter((log) => aptosIds.includes(log.id_apartamento));
-
-  const activeVehicles = filteredVehiculoLogs.filter((l) => !l.fecha_salida).length;
-  const activeCarLoans = filteredCarritoLogs.filter((l) => !l.fecha_salida).length;
-
-  const recentAccess = useMemo(
-    () => [...filteredVehiculoLogs].sort((a, b) => new Date(b.fecha_entrada) - new Date(a.fecha_entrada)).slice(0, 5),
-    [filteredVehiculoLogs]
-  );
-
-  const recentLoans = useMemo(
-    () => [...filteredCarritoLogs].sort((a, b) => new Date(b.fecha_entrada) - new Date(a.fecha_entrada)).slice(0, 5),
-    [filteredCarritoLogs]
-  );
-
-  const totalEstacionamientos = estacionamientos.length;
-  const ocupados = estacionamientos.filter((e) => e.cantidad_vehiculos > 0).length;
-  const pctOcupacion = totalEstacionamientos > 0 ? Math.round((ocupados / totalEstacionamientos) * 100) : 0;
+  const totalUsuarios = totalPropietarios + totalSeguridad;
+  const pctOcupacion = totalEstacionamientos > 0 ? Math.round((estacionamientosOcupados / totalEstacionamientos) * 100) : 0;
 
   const quickLinks = [
-    { label: "Infraestructura", sub: `${torres.length} torres, ${allPisos.length} pisos`, icon: GitBranch, color: "accent", path: "/admin-condominio/infraestructura" },
-    { label: "Usuarios", sub: `${condoUsers.length} registrados`, icon: Users, color: "success", path: "/admin-condominio/usuarios" },
-    { label: "Apartamentos", sub: `${aptosCondo.length} unidades`, icon: Home, color: "info", path: "/admin-condominio/apartamentos" },
-    { label: "Estacionamientos", sub: `${ocupados}/${totalEstacionamientos} ocupados`, icon: Car, color: "warning", path: "/admin-condominio/estacionamientos" },
-    { label: "Carritos", sub: `${activeCarLoans} en uso`, icon: ShoppingCart, color: "danger", path: "/admin-condominio/carritos" },
+    { label: "Infraestructura", sub: `${totalTorres} torres, ${totalPisos} pisos`, icon: GitBranch, color: "accent", path: "/admin-condominio/infraestructura" },
+    { label: "Usuarios", sub: `${totalUsuarios} registrados`, icon: Users, color: "success", path: "/admin-condominio/usuarios" },
+    { label: "Apartamentos", sub: `${totalApartamentos} unidades`, icon: Home, color: "info", path: "/admin-condominio/apartamentos" },
+    { label: "Estacionamientos", sub: `${estacionamientosOcupados}/${totalEstacionamientos} ocupados`, icon: Car, color: "warning", path: "/admin-condominio/estacionamientos" },
+    { label: "Carritos", sub: `${carritosEnUso} en uso`, icon: ShoppingCart, color: "danger", path: "/admin-condominio/carritos" },
     { label: "Mi Condominio", sub: "Configuración", icon: Building2, color: "info", path: "/admin-condominio/mi-condominio" },
   ];
 
@@ -95,7 +92,7 @@ const ACDashboardPage = () => {
             <div className="stat-icon accent"><Home size={20} /></div>
             <div className="stat-content">
               <div className="stat-label">Apartamentos</div>
-              <div className="stat-value">{aptosCondo.length}</div>
+              <div className="stat-value">{totalApartamentos}</div>
             </div>
           </div>
           <div className="stat-card">
@@ -109,14 +106,14 @@ const ACDashboardPage = () => {
             <div className="stat-icon warning"><Car size={20} /></div>
             <div className="stat-content">
               <div className="stat-label">Vehículos en Recinto</div>
-              <div className="stat-value">{activeVehicles}</div>
+              <div className="stat-value">{vehiculosEnRecinto}</div>
             </div>
           </div>
           <div className="stat-card">
             <div className="stat-icon info"><ShoppingCart size={20} /></div>
             <div className="stat-content">
               <div className="stat-label">Carritos en Uso</div>
-              <div className="stat-value">{activeCarLoans}</div>
+              <div className="stat-value">{carritosEnUso}</div>
             </div>
           </div>
         </div>
@@ -132,15 +129,15 @@ const ACDashboardPage = () => {
             <div className="widget-body">
               <div className="summary-grid">
                 <div className="summary-item">
-                  <div className="summary-value">{torres.length}</div>
+                  <div className="summary-value">{totalTorres}</div>
                   <div className="summary-label">Torres</div>
                 </div>
                 <div className="summary-item">
-                  <div className="summary-value">{allPisos.length}</div>
+                  <div className="summary-value">{totalPisos}</div>
                   <div className="summary-label">Pisos</div>
                 </div>
                 <div className="summary-item">
-                  <div className="summary-value">{aptosCondo.length}</div>
+                  <div className="summary-value">{totalApartamentos}</div>
                   <div className="summary-label">Apartamentos</div>
                 </div>
                 <div className="summary-item">
@@ -172,16 +169,16 @@ const ACDashboardPage = () => {
               </button>
             </div>
             <div className="widget-body">
-              {recentAccess.length > 0 ? (
-                recentAccess.map((log) => (
+              {accesosRecientes && accesosRecientes.length > 0 ? (
+                accesosRecientes.map((log) => (
                   <div key={log.id} className="feed-item">
-                    <div className={`feed-dot ${log.fecha_salida ? "inactive" : "active"}`} />
+                    <div className={`feed-dot ${log.fechaSalida ? "inactive" : "active"}`} />
                     <div className="feed-content">
                       <div className="feed-title">{log.placa}</div>
-                      <div className="feed-sub">{log.tipo_ocupante} {log.datos_inquilino ? `• ${log.datos_inquilino}` : ""}</div>
+                      <div className="feed-sub">{log.ocupante} {log.datosInquilino ? `• ${log.datosInquilino}` : ""}</div>
                     </div>
                     <div className="feed-meta">
-                      {new Date(log.fecha_entrada).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      {new Date(log.fechaEntrada).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </div>
                   </div>
                 ))
@@ -199,16 +196,16 @@ const ACDashboardPage = () => {
               </button>
             </div>
             <div className="widget-body">
-              {recentLoans.length > 0 ? (
-                recentLoans.map((loan) => (
+              {prestamosRecientes && prestamosRecientes.length > 0 ? (
+                prestamosRecientes.map((loan) => (
                   <div key={loan.id} className="feed-item">
-                    <div className={`feed-dot ${loan.fecha_salida ? "inactive" : "warning"}`} />
+                    <div className={`feed-dot ${loan.fechaDevolucion ? "inactive" : "warning"}`} />
                     <div className="feed-content">
-                      <div className="feed-title">Carrito #{loan.id_carrito}</div>
-                      <div className="feed-sub">Por: {loan.solicitante}</div>
+                      <div className="feed-title">Carrito #{loan.carritoId}</div>
+                      <div className="feed-sub">Por: {loan.nombreSolicitante}</div>
                     </div>
                     <div className="feed-meta">
-                      {new Date(loan.fecha_entrada).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      {new Date(loan.fechaPrestamo).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </div>
                   </div>
                 ))
@@ -230,19 +227,19 @@ const ACDashboardPage = () => {
                 <>
                   <div className="summary-grid">
                     <div className="summary-item">
-                      <div className="summary-value">{config.max_autos}</div>
+                      <div className="summary-value">{config.maxAutos}</div>
                       <div className="summary-label">Máx. Autos</div>
                     </div>
                     <div className="summary-item">
-                      <div className="summary-value">{config.max_motos}</div>
+                      <div className="summary-value">{config.maxMotos}</div>
                       <div className="summary-label">Máx. Motos</div>
                     </div>
                     <div className="summary-item">
-                      <div className="summary-value">{config.tiempo_max_prestamo_min}</div>
+                      <div className="summary-value">{config.tiempoMaxPrestamoMin}</div>
                       <div className="summary-label">Tiempo Préstamo</div>
                     </div>
                     <div className="summary-item">
-                      <div className="summary-value">S/ {config.penalizacion_por_minuto.toFixed(2)}</div>
+                      <div className="summary-value">S/ {Number(config.penalizacionPorMinuto).toFixed(2)}</div>
                       <div className="summary-label">Penalización/min</div>
                     </div>
                   </div>
