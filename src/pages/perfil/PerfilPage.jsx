@@ -151,7 +151,7 @@ const PerfilPage = () => {
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted mb-1">Tel\u00e9fono</div>
+                  <div className="text-xs text-muted mb-1">Teléfono</div>
                   <div className="fw-bold">{profile?.telefono || "-"}</div>
                 </div>
                 <div>
@@ -195,13 +195,13 @@ const PerfilPage = () => {
             <div className="card-body">
               <h5 className="fw-bold flex items-center gap-2 mb-4">
                 <div className="cell-icon primary"><Mail size={16} /></div>
-                Cambiar Correo Electr\u00f3nico
+                Cambiar Correo Electrónico
               </h5>
               <div className="security-tip mb-4">
                 <div className="security-tip-icon"><Info size={16} /></div>
                 <div className="security-tip-text">
                   <h6>Importante</h6>
-                  <p>Se enviar\u00e1 un enlace de verificaci\u00f3n al nuevo correo para confirmar el cambio.</p>
+                  <p>Se enviará un enlace de verificación al nuevo correo para confirmar el cambio.</p>
                 </div>
               </div>
               <form onSubmit={emailForm.handleSubmit(handleChangeEmail)}>
@@ -221,13 +221,13 @@ const PerfilPage = () => {
             <div className="card-body">
               <h5 className="fw-bold flex items-center gap-2 mb-4">
                 <div className="cell-icon primary"><Shield size={16} /></div>
-                Cambiar Contrase\u00f1a
+                Cambiar Contraseña
               </h5>
               <div className="security-tip mb-4">
                 <div className="security-tip-icon"><Info size={16} /></div>
                 <div className="security-tip-text">
-                  <h6>Recomendaci\u00f3n</h6>
-                  <p>Usa al menos 6 caracteres y combina letras con n\u00fameros para una mayor seguridad.</p>
+                  <h6>Recomendación</h6>
+                  <p>Usa al menos 6 caracteres y combina letras con números para una mayor seguridad.</p>
                 </div>
               </div>
               <form onSubmit={passwordForm.handleSubmit(handleChangePassword)}>
@@ -235,7 +235,7 @@ const PerfilPage = () => {
                 <FormInput label="Nueva Contrase\u00f1a" type="password" name="newPassword" register={passwordForm.register} validation={{ required: "Requerido", minLength: { value: 6, message: "M\u00ednimo 6 caracteres" } }} error={passwordForm.formState.errors.newPassword} placeholder="M\u00ednimo 6 caracteres" />
                 <FormInput label="Confirmar Contrase\u00f1a" type="password" name="confirmPassword" register={passwordForm.register} validation={{ required: "Requerido", validate: (v) => v === newPassword || "No coinciden" }} error={passwordForm.formState.errors.confirmPassword} placeholder="Repite la contrase\u00f1a" />
                 <button type="submit" className="btn btn-primary mt-3" disabled={submitting}>
-                  {submitting ? <><Loader2 size={16} className="spinner" /> Actualizando...</> : <><Save size={16} /> Actualizar Contrase\u00f1a</>}
+                  {submitting ? <><Loader2 size={16} className="spinner" /> Actualizando...</> : <><Save size={16} /> Actualizar Contraseña</>}
                 </button>
               </form>
             </div>

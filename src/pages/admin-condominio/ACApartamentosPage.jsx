@@ -238,7 +238,7 @@ const ACApartamentosPage = () => {
                 <td className="py-3">
                   <div className="flex items-center gap-3">
                     <div className="fw-bold">Apto {apto.numero}</div>
-                    <div><div className="text-xs text-muted">{apto.metraje} m\u00b2</div></div>
+                    <div><div className="text-xs text-muted">{apto.metraje} m²</div></div>
                   </div>
                 </td>
                 <td className="py-3">
@@ -295,7 +295,7 @@ const ACApartamentosPage = () => {
                         <tr className="text-sm text-muted">
                           <th className="text-start">Nombre</th>
                           <th className="text-start">DNI</th>
-                          <th className="text-right">Acci\u00f3n</th>
+                          <th className="text-right">Acción</th>
                         </tr>
                       </thead>
                       <tbody>

@@ -92,7 +92,7 @@ const PRMiApartamentoPage = () => {
           <div className="card card-custom p-5 text-center">
             <Home size={60} className="text-muted mb-3" />
             <h3 className="fw-bold">Sin Unidad Asignada</h3>
-            <p className="text-muted">No se encontr\u00f3 una unidad vinculada a tu cuenta. Contacta con administraci\u00f3n.</p>
+            <p className="text-muted">No se encontró una unidad vinculada a tu cuenta. Contacta con administración.</p>
           </div>
         </div>
       </AnimatedPage>
@@ -158,7 +158,7 @@ const PRMiApartamentoPage = () => {
         <div className="grid grid-4 gap-4 mb-5">
           <div className="card card-custom" style={{ gridColumn: "span 2" }}>
             <div className="card-body">
-              <h5 className="fw-bold mb-3">Informaci\u00f3n de la Propiedad</h5>
+              <h5 className="fw-bold mb-3">Información de la Propiedad</h5>
               <div className="grid grid-2 gap-3">
                 <div className="flex items-center gap-3 p-3">
                   <div className="cell-icon primary"><Building2 size={18} /></div>
@@ -177,7 +177,7 @@ const PRMiApartamentoPage = () => {
                 <div className="flex items-center gap-3 p-3">
                   <div className="cell-icon primary"><Home size={18} /></div>
                   <div>
-                    <div className="text-xs text-muted fw-bold">N\u00famero de Unidad</div>
+                    <div className="text-xs text-muted fw-bold">Número de Unidad</div>
                     <div className="fw-bold">{miApto.numero}</div>
                   </div>
                 </div>
@@ -185,7 +185,7 @@ const PRMiApartamentoPage = () => {
                   <div className="cell-icon primary"><Info size={18} /></div>
                   <div>
                     <div className="text-xs text-muted fw-bold">Superficie</div>
-                    <div className="fw-bold">{miApto.metraje} m\u00b2</div>
+                    <div className="fw-bold">{miApto.metraje} m²</div>
                   </div>
                 </div>
               </div>
@@ -263,7 +263,7 @@ const PRMiApartamentoPage = () => {
                     <label className="form-label">Tipo Doc.</label>
                     <select className="form-select" {...register("tipoDocumento")}>
                       <option value="DNI">DNI</option>
-                      <option value="CE">Carn\u00e9 Extranjer\u00eda</option>
+                      <option value="CE">Carné Extranjería</option>
                       <option value="Pasaporte">Pasaporte</option>
                     </select>
                   </div>

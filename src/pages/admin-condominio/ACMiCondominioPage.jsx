@@ -136,7 +136,7 @@ const ACMiCondominioPage = () => {
               </div>
               <div className="grid grid-2 gap-4 mt-3">
                 <div className="p-4">
-                  <div className="text-muted text-sm fw-bold mb-3">L\u00edmites de Veh\u00edculos</div>
+                  <div className="text-muted text-sm fw-bold mb-3">Límites de Vehículos</div>
                   <div className="flex text-center">
                     <div style={{ flex: 1 }}>
                       <div className="fw-bold">{condominioInfo?.maxAutos ?? "-"}</div>
@@ -153,7 +153,7 @@ const ACMiCondominioPage = () => {
                   <div className="text-muted text-sm fw-bold mb-3">Servicio de Carritos</div>
                   <div className="flex items-baseline gap-2">
                     <span className="fw-bold">{condominioInfo?.maxTiempoPrestamoMin ?? "-"}</span>
-                    <span className="text-sm text-muted fw-bold">minutos m\u00e1x.</span>
+                    <span className="text-sm text-muted fw-bold">minutos máx.</span>
                   </div>
                   <div className="mt-2 pt-2 text-sm text-secondary">
                     Penalizaci\u00f3n: <strong>S/ {condominioInfo?.penalizacionPorMin?.toFixed(2) ?? "-"}</strong> / min.

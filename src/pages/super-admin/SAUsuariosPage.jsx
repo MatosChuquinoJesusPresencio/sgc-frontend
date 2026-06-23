@@ -170,16 +170,16 @@ const SAUsuariosPage = () => {
         <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420 }}>
             <div className="modal-header">
-              <div className="modal-title">Forzar Cambio de Contrase\u00f1a</div>
+              <div className="modal-title">Forzar Cambio de Contraseña</div>
               <button className="modal-close" onClick={() => setShowPasswordModal(false)}><X size={16} /></button>
             </div>
             <form onSubmit={handleSubmit(onSubmitForcePassword)}>
               <div className="modal-body">
                 <p className="text-secondary text-sm mb-3">
-                  Nueva contrase\u00f1a para <strong>{passwordTarget?.nombres} {passwordTarget?.apellidos}</strong>
+                  Nueva contraseña para <strong>{passwordTarget?.nombres} {passwordTarget?.apellidos}</strong>
                 </p>
                 <div className="form-group">
-                  <label className="form-label">Nueva Contrase\u00f1a</label>
+                  <label className="form-label">Nueva Contraseña</label>
                   <input
                     className={`form-input ${errors.nuevaContrasena ? "error" : ""}`}
                     type="password"
@@ -191,7 +191,7 @@ const SAUsuariosPage = () => {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-outline" onClick={() => setShowPasswordModal(false)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary">Actualizar Contrase\u00f1a</button>
+                <button type="submit" className="btn btn-primary">Actualizar Contraseña</button>
               </div>
             </form>
           </div>

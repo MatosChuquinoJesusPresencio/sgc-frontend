@@ -369,7 +369,7 @@ const ACEstacionamientosPage = () => {
                 ) : (
                   <div className="text-center py-4">
                     <AlertTriangle className="text-warning mb-2" size={24} />
-                    <div className="text-muted text-sm">No hay veh\u00edculos registrados para este propietario.</div>
+                    <div className="text-muted text-sm">No hay vehículos registrados para este propietario.</div>
                   </div>
                 )}
               </div>

@@ -85,7 +85,7 @@ const SECarritosPage = () => {
           welcomeText="Gestiona los pr\u00e9stamos activos de carritos de carga."
         >
           <button className="btn btn-primary" onClick={handleOpenCreate}>
-            <PlusCircle size={16} /><span>Nuevo Pr\u00e9stamo</span>
+            <PlusCircle size={16} /><span>Nuevo Préstamo</span>
           </button>
         </DashboardHeader>
 
@@ -134,7 +134,7 @@ const SECarritosPage = () => {
         <div className="modal-overlay" onClick={() => setShowFormModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <div className="modal-title">Nuevo Pr\u00e9stamo de Carrito</div>
+              <div className="modal-title">Nuevo Préstamo de Carrito</div>
               <button className="modal-close" onClick={() => setShowFormModal(false)}><X size={16} /></button>
             </div>
             <form onSubmit={handleSubmit(onSubmit)}>

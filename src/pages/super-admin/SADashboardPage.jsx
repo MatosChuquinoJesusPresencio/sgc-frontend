@@ -6,13 +6,12 @@ import {
   ShoppingCart,
   Car,
   ArrowRight,
-  TrendingUp,
-  Activity,
   Loader2,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { superAdminService } from "../../services/superAdminService";
 import AnimatedPage from "../../components/animations/AnimatedPage";
+import RoleBadge from "../../components/ui/RoleBadge";
 
 const SADashboardPage = () => {
   const navigate = useNavigate();
@@ -66,16 +65,9 @@ const SADashboardPage = () => {
   }
 
   const totalCondominios = metrics?.totalCondominios ?? 0;
-  const condominiosActivos = metrics?.condominiosActivos ?? 0;
   const totalAdmins = metrics?.totalAdministradores ?? 0;
   const totalPropietarios = metrics?.totalPropietarios ?? 0;
   const totalAgentes = metrics?.totalAgentes ?? 0;
-  const totalUsuarios = metrics?.totalUsuarios ?? 0;
-
-  const quickLinks = [
-    { label: "Condominios", sub: `${condominiosActivos} activos de ${totalCondominios}`, icon: Building2, color: "accent", path: "/super-admin/condominios" },
-    { label: "Usuarios", sub: `${totalUsuarios} registrados`, icon: Users, color: "success", path: "/super-admin/usuarios" },
-  ];
 
   return (
     <AnimatedPage>
@@ -131,6 +123,8 @@ const SADashboardPage = () => {
                     <div className="feed-dot accent" />
                     <div className="feed-content">
                       <div className="feed-title">{c.nombre}</div>
+                      <div className="feed-sub">{c.direccion || "-"} · {c.nombrePais || ""}{c.nombreCiudad ? ", " + c.nombreCiudad : ""}</div>
+                      <div className="feed-sub text-xs text-muted">Admin: {c.nombreAdministrador || "Sin asignar"} · {c.fechaCreacion ? new Date(c.fechaCreacion).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" }) : "-"}</div>
                     </div>
                   </div>
                 ))
@@ -154,7 +148,11 @@ const SADashboardPage = () => {
                     <div className="feed-dot success" />
                     <div className="feed-content">
                       <div className="feed-title">{a.nombres} {a.apellidos}</div>
-                      <div className="feed-sub">{a.correo}</div>
+                      <div className="feed-sub">{a.correo} · {a.nombreCondominio || "Global"}</div>
+                      <div className="feed-sub flex items-center gap-2 mt-1">
+                        <RoleBadge role={a.rol} />
+                        <span className={`badge ${a.activo ? "badge-success" : "badge-danger"}`}>{a.activo ? "Activo" : "Inactivo"}</span>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -164,54 +162,6 @@ const SADashboardPage = () => {
             </div>
           </div>
 
-          <div className="widget-card">
-            <div className="widget-header">
-              <span className="widget-title"><TrendingUp size={16} /> Resumen del Sistema</span>
-            </div>
-            <div className="widget-body">
-                <div className="summary-grid">
-                  <div className="summary-item">
-                    <div className="summary-value">{totalCondominios}</div>
-                    <div className="summary-label">Condominios</div>
-                  </div>
-                  <div className="summary-item">
-                    <div className="summary-value">{condominiosActivos}</div>
-                    <div className="summary-label">Activos</div>
-                  </div>
-                  <div className="summary-item">
-                    <div className="summary-value">{totalUsuarios}</div>
-                    <div className="summary-label">Usuarios</div>
-                  </div>
-                  <div className="summary-item">
-                    <div className="summary-value">{totalPropietarios}</div>
-                    <div className="summary-label">Propietarios</div>
-                  </div>
-                </div>
-            </div>
-            <div style={{ padding: "12px 20px", borderTop: "1px solid var(--border)" }}>
-              <button className="btn btn-primary w-full" onClick={() => navigate("/super-admin/condominios")}>
-                Ir a Gestión de Condominios <ArrowRight size={14} />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div style={{ marginTop: 20 }}>
-          <h3 className="widget-title mb-4">Acceso Rápido</h3>
-          <div className="dashboard-grid-3">
-            {quickLinks.map((link) => (
-              <div key={link.label} className="quick-link-card" onClick={() => navigate(link.path)}>
-                <div className={`quick-link-icon ${link.color}`}>
-                  <link.icon size={20} />
-                </div>
-                <div>
-                  <div className="quick-link-title">{link.label}</div>
-                  <div className="quick-link-sub">{link.sub}</div>
-                </div>
-                <ArrowRight size={16} className="quick-link-arrow" />
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     </AnimatedPage>

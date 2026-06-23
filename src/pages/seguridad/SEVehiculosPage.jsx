@@ -96,7 +96,7 @@ const SEVehiculosPage = () => {
             <div className="widget-body">
               <div className="flex gap-3 items-end">
                 <div style={{ flex: 1 }}>
-                  <label className="form-label fw-semibold text-sm text-secondary">Placa del Veh\u00edculo</label>
+                  <label className="form-label fw-semibold text-sm text-secondary">Placa del Vehículo</label>
                   <input
                     className="form-input"
                     placeholder="Ingrese la placa..."
@@ -117,7 +117,7 @@ const SEVehiculosPage = () => {
           <div className="grid-2 gap-4">
             <div className="widget-card">
               <div className="widget-header">
-                <span className="widget-title"><ShieldCheck size={16} /> Datos del Veh\u00edculo</span>
+                <span className="widget-title"><ShieldCheck size={16} /> Datos del Vehículo</span>
               </div>
               <div className="widget-body">
                 <div className="p-3" style={{ background: "var(--bg-secondary)", borderRadius: 8 }}>
@@ -167,7 +167,7 @@ const SEVehiculosPage = () => {
                         placeholder="Seleccionar..."
                       >
                         <option value="MANUAL">Manual</option>
-                        <option value="AUTOMATICO">Autom\u00e1tico</option>
+                        <option value="AUTOMATICO">Automático</option>
                       </FormInput>
                       <FormInput
                         label="Ocupante"

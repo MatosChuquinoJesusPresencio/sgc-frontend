@@ -241,7 +241,7 @@ const PRCarritosPage = () => {
             <div className="modal-body">
               <div className="alert alert-info flex items-center gap-2">
                 <Info size={16} />
-                <span>Ac\u00e9rrate al m\u00f3dulo de seguridad para solicitar el carrito f\u00edsicamente.</span>
+                <span>Acércate al módulo de seguridad para solicitar el carrito físicamente.</span>
               </div>
               <div className="text-center p-3 mb-4">
                 <div className="text-muted text-sm mb-1">Carrito seleccionado</div>
@@ -267,8 +267,8 @@ const PRCarritosPage = () => {
               <div className="cell-icon primary" style={{ width: 80, height: 80, margin: "0 auto 1rem" }}>
                 <ShoppingCart size={40} />
               </div>
-              <h5 className="fw-bold">\u00bfHas terminado de usar el carrito {selectedCarrito?.codigo}?</h5>
-              <p className="text-muted text-sm">Devu\u00e9lvelo en el m\u00f3dulo de seguridad para dejarlo disponible.</p>
+              <h5 className="fw-bold">¿Has terminado de usar el carrito {selectedCarrito?.codigo}?</h5>
+              <p className="text-muted text-sm">Devuélvelo en el módulo de seguridad para dejarlo disponible.</p>
               {selectedCarrito?.fine > 0 && (
                 <div className="alert alert-danger flex items-center gap-3">
                   <AlertTriangle size={24} />

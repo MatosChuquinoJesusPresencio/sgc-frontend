@@ -361,7 +361,7 @@ const ACCarritosPage = () => {
               {selectedCarrito?.currentUser ? (
                 <div className="flex flex-col gap-4">
                   <section>
-                    <h6 className="fw-bold text-secondary mb-3 text-sm">Usuario en Posesi\u00f3n</h6>
+                    <h6 className="fw-bold text-secondary mb-3 text-sm">Usuario en Posesión</h6>
                     <div className="flex items-center gap-3 p-3">
                       <div className="cell-icon primary"><User size={14} /></div>
                       <div style={{ flex: 1 }}>
@@ -373,7 +373,7 @@ const ACCarritosPage = () => {
                     </div>
                   </section>
                   <section>
-                    <h6 className="fw-bold text-secondary mb-3 text-sm">Detalles del Pr\u00e9stamo</h6>
+                    <h6 className="fw-bold text-secondary mb-3 text-sm">Detalles del Préstamo</h6>
                     <div className="p-3">
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-sm text-muted flex items-center gap-2">
@@ -392,7 +392,7 @@ const ACCarritosPage = () => {
                         </div>
                       )}
                       <div className="flex items-center justify-between pt-2">
-                        <div className="text-sm text-muted">Estado del Pr\u00e9stamo</div>
+                        <div className="text-sm text-muted">Estado del Préstamo</div>
                         <span className="badge badge-info">Activo</span>
                       </div>
                     </div>

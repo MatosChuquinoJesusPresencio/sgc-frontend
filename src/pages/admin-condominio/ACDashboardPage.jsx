@@ -78,7 +78,7 @@ const ACDashboardPage = () => {
     { label: "Usuarios", sub: `${totalPropietarios + totalAgentes} registrados`, icon: Users, color: "success", path: "/admin-condominio/usuarios" },
     { label: "Apartamentos", sub: `${totalApartamentos} unidades`, icon: Home, color: "info", path: "/admin-condominio/apartamentos" },
     { label: "Carritos", sub: `${totalCarritos} registrados`, icon: ShoppingCart, color: "warning", path: "/admin-condominio/carritos" },
-    { label: "Mi Condominio", sub: "Configuraci\u00f3n", icon: Building2, color: "info", path: "/admin-condominio/mi-condominio" },
+    { label: "Mi Condominio", sub: "Configuración", icon: Building2, color: "info", path: "/admin-condominio/mi-condominio" },
   ];
 
   return (
@@ -86,7 +86,7 @@ const ACDashboardPage = () => {
       <div className="page-container">
         <div className="greeting-banner">
           <h1>{nombreCondo}</h1>
-          <p>Bienvenido, {authUser?.nombre || "Admin"}. Gesti\u00f3n operativa de tu condominio.</p>
+          <p>Bienvenido, {authUser?.nombre || "Admin"}. Gestión operativa de tu condominio.</p>
         </div>
 
         <div className="grid grid-4 gap-4 mb-5">
@@ -107,7 +107,7 @@ const ACDashboardPage = () => {
           <div className="stat-card">
             <div className="stat-icon warning"><Car size={20} /></div>
             <div className="stat-content">
-              <div className="stat-label">Veh\u00edculos</div>
+              <div className="stat-label">Vehículos</div>
               <div className="stat-value">{totalVehiculos}</div>
             </div>
           </div>
@@ -161,19 +161,19 @@ const ACDashboardPage = () => {
               <div className="summary-grid">
                 <div className="summary-item">
                   <div className="summary-value">{condominioInfo?.maxAutos ?? "-"}</div>
-                  <div className="summary-label">M\u00e1x. Autos</div>
+                  <div className="summary-label">Máx. Autos</div>
                 </div>
                 <div className="summary-item">
                   <div className="summary-value">{condominioInfo?.maxMotos ?? "-"}</div>
-                  <div className="summary-label">M\u00e1x. Motos</div>
+                  <div className="summary-label">Máx. Motos</div>
                 </div>
                 <div className="summary-item">
                   <div className="summary-value">{condominioInfo?.maxTiempoPrestamoMin ?? "-"}</div>
-                  <div className="summary-label">Tiempo Pr\u00e9stamo</div>
+                  <div className="summary-label">Tiempo Préstamo</div>
                 </div>
                 <div className="summary-item">
                   <div className="summary-value">S/ {condominioInfo?.penalizacionPorMin?.toFixed(2) ?? "-"}</div>
-                  <div className="summary-label">Penalizaci\u00f3n/min</div>
+                  <div className="summary-label">Penalización/min</div>
                 </div>
               </div>
             </div>
@@ -181,7 +181,7 @@ const ACDashboardPage = () => {
         </div>
 
         <div style={{ marginTop: 20 }}>
-          <h3 className="widget-title mb-4">Acceso R\u00e1pido</h3>
+          <h3 className="widget-title mb-4">Acceso Rápido</h3>
           <div className="dashboard-grid-3">
             {quickLinks.map((link) => (
               <div key={link.label} className="quick-link-card" onClick={() => navigate(link.path)}>

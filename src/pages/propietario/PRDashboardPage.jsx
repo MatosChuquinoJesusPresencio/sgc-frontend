@@ -70,7 +70,7 @@ const PRDashboardPage = () => {
     <AnimatedPage>
       <div className="page-container">
         <div className="greeting-banner">
-          <h1>\u00a1Hola, {userName.split(" ")[0]}!</h1>
+          <h1>¡Hola, {userName.split(" ")[0]}!</h1>
           <p>Bienvenido a tu portal personal de residente.</p>
         </div>
 
@@ -85,7 +85,7 @@ const PRDashboardPage = () => {
           <div className="stat-card">
             <div className="stat-icon success"><Car size={20} /></div>
             <div className="stat-content">
-              <div className="stat-label">Mis Veh\u00edculos</div>
+              <div className="stat-label">Mis Vehículos</div>
               <div className="stat-value">{myVehicles.length}</div>
             </div>
           </div>
@@ -101,7 +101,7 @@ const PRDashboardPage = () => {
               <ShoppingCart size={20} />
             </div>
             <div className="stat-content">
-              <div className="stat-label">Pr\u00e9stamo Activo</div>
+              <div className="stat-label">Préstamo Activo</div>
               <div className="stat-value">{activeLoan ? 1 : 0}</div>
             </div>
           </div>
@@ -122,7 +122,7 @@ const PRDashboardPage = () => {
                     <div className="feed-dot accent" />
                     <div className="feed-content">
                       <div className="feed-title">Apartamento {apt.numero}</div>
-                      <div className="feed-sub">{apt.metraje} m\u00b2 \u2022 {apt.vehicles} veh\u00edculo(s) \u2022 {apt.tenants} inquilino(s)</div>
+                      <div className="feed-sub">{apt.metraje} m² • {apt.vehicles} vehículo(s) • {apt.tenants} inquilino(s)</div>
                     </div>
                   </div>
                 ))
@@ -161,7 +161,7 @@ const PRDashboardPage = () => {
 
           <div className="widget-card">
             <div className="widget-header">
-              <span className="widget-title"><ShoppingCart size={16} /> Pr\u00e9stamos de Carritos</span>
+              <span className="widget-title"><ShoppingCart size={16} /> Préstamos de Carritos</span>
               <button className="btn btn-ghost btn-sm" onClick={() => navigate("/propietario/historial?tab=carritos")}>
                 Ver historial <ArrowRight size={14} />
               </button>
@@ -180,7 +180,7 @@ const PRDashboardPage = () => {
                     <div className="feed-content">
                       <div className="feed-title">Carrito #{loan.idCarrito || loan.id_carrito}</div>
                       <div className="feed-sub">
-                        {loan.fechaSalida || loan.fecha_salida ? "Devuelto" : "En uso"} \u2022 {new Date(loan.fechaEntrada || loan.fecha_entrada).toLocaleDateString()}
+                        {loan.fechaSalida || loan.fecha_salida ? "Devuelto" : "En uso"} • {new Date(loan.fechaEntrada || loan.fecha_entrada).toLocaleDateString()}
                       </div>
                     </div>
                     <div className="feed-meta">
@@ -191,7 +191,7 @@ const PRDashboardPage = () => {
                   </div>
                 ))
               ) : (
-                <div className="empty-feed">Sin pr\u00e9stamos de carritos.</div>
+                <div className="empty-feed">Sin préstamos de carritos.</div>
               )}
               <div style={{ marginTop: 12 }}>
                 <button className="btn btn-primary w-full" onClick={() => navigate("/propietario/carritos")}>
@@ -230,7 +230,7 @@ const PRDashboardPage = () => {
         </div>
 
         <div style={{ marginTop: 20 }}>
-          <h3 className="widget-title mb-4">Acceso R\u00e1pido</h3>
+          <h3 className="widget-title mb-4">Acceso Rápido</h3>
           <div className="dashboard-grid-3">
             {quickLinks.map((link) => (
               <div key={link.label} className="quick-link-card" onClick={() => navigate(link.path)}>

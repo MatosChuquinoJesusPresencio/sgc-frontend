@@ -82,7 +82,7 @@ const PRVehiculosPage = () => {
           <div className="card card-custom p-5 text-center">
             <Car size={60} className="text-muted mb-3" />
             <h3 className="fw-bold">Sin Unidad Asignada</h3>
-            <p className="text-muted">No puedes gestionar veh\u00edculos sin una unidad vinculada.</p>
+            <p className="text-muted">No puedes gestionar vehículos sin una unidad vinculada.</p>
           </div>
         </div>
       </AnimatedPage>
@@ -163,8 +163,8 @@ const PRVehiculosPage = () => {
           searchBar={
             <div className="flex items-center justify-between">
               <div>
-                <h5 className="fw-bold mb-1">Lista de Veh\u00edculos</h5>
-                <p className="text-muted text-sm mb-0">Veh\u00edculos que tienen permitido el ingreso al condominio.</p>
+                <h5 className="fw-bold mb-1">Lista de Vehículos</h5>
+                <p className="text-muted text-sm mb-0">Vehículos que tienen permitido el ingreso al condominio.</p>
               </div>
               <button className="btn btn-primary btn-sm" onClick={() => handleOpenModal()}>
                 <Plus size={14} /> Registrar Veh\u00edculo
