@@ -10,7 +10,7 @@ import RoleRoute from "./RoleRoute";
 import LoginPage from "../pages/auth/LoginPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
-import ChangePasswordPage from "../pages/auth/ChangePasswordPage";
+import PerfilPage from "../pages/perfil/PerfilPage";
 
 import UnauthorizedPage from "../pages/error/UnauthorizedPage";
 import NotFoundPage from "../pages/error/NotFoundPage";
@@ -18,6 +18,7 @@ import NotFoundPage from "../pages/error/NotFoundPage";
 import RedirectPage from "../pages/utility/RedirectPage";
 
 import SADashboardPage from "../pages/super-admin/SADashboardPage";
+import SAAdministradoresPage from "../pages/super-admin/SAAdministradoresPage";
 import SACondominiosPage from "../pages/super-admin/SACondominiosPage";
 import SAUsuariosPage from "../pages/super-admin/SAUsuariosPage";
 
@@ -81,13 +82,14 @@ const AppRouter = () => {
           }
         >
           <Route path="/" element={<RedirectPage />} />
-          <Route path="/perfil/cambiar-contraseña" element={<ChangePasswordPage />} />
+          <Route path="/perfil" element={<PerfilPage />} />
 
           <Route
             path="/super-admin"
             element={<RoleRoute allowedRoles={["SUPER_ADMIN"]} />}
           >
             <Route index element={<SADashboardPage />} />
+            <Route path="administradores" element={<SAAdministradoresPage />} />
             <Route path="condominios" element={<SACondominiosPage />} />
             <Route path="usuarios" element={<SAUsuariosPage />} />
           </Route>

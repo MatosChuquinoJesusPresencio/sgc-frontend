@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Users,
-  UserPlus,
-  Edit3,
-  Trash2,
+  ShieldBan,
+  KeyRound,
   Loader2,
+  X,
 } from "lucide-react";
-
 import { useAuth } from "../../hooks/useAuth";
 import { superAdminService } from "../../services/superAdminService";
 
@@ -14,9 +13,8 @@ import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import AnimatedPage from "../../components/animations/AnimatedPage";
 import SearchBar from "../../components/ui/SearchBar";
 import DataTable from "../../components/ui/DataTable";
-import UserFormModal from "../../components/modals/UserFormModal";
-import ConfirmDialog from "../../components/modals/ConfirmDialog";
 import RoleBadge from "../../components/ui/RoleBadge";
+import { useForm } from "react-hook-form";
 
 const ROLE_LABELS = {
   SUPER_ADMINISTRADOR: "Super Admin",
@@ -25,14 +23,6 @@ const ROLE_LABELS = {
   AGENTE_SEGURIDAD: "Seguridad",
 };
 
-const ROLE_OPTIONS = [
-  { value: "", label: "Todos los Roles" },
-  { value: "SUPER_ADMINISTRADOR", label: "Super Admin" },
-  { value: "ADMINISTRADOR_CONDOMINIO", label: "Admin Condominio" },
-  { value: "PROPIETARIO", label: "Propietario" },
-  { value: "AGENTE_SEGURIDAD", label: "Seguridad" },
-];
-
 const PAGE_SIZE = 10;
 
 const SAUsuariosPage = () => {
@@ -40,6 +30,7 @@ const SAUsuariosPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
 
   const [users, setUsers] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
@@ -47,10 +38,10 @@ const SAUsuariosPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
 
-  const [showModal, setShowModal] = useState(false);
-  const [editingUser, setEditingUser] = useState(null);
-  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
-  const [userToDelete, setUserToDelete] = useState(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordTarget, setPasswordTarget] = useState(null);
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -74,52 +65,29 @@ const SAUsuariosPage = () => {
     fetchUsers();
   }, [fetchUsers]);
 
-  const handleEdit = (user) => {
-    setEditingUser(user);
-    setShowModal(true);
-  };
-
-  const handleDeleteClick = (user) => {
-    setUserToDelete(user);
-    setShowConfirmDelete(true);
-  };
-
-  const confirmDelete = async () => {
+  const handleInvalidateSession = async (user) => {
     try {
-      await superAdminService.deleteAdministrator(userToDelete.id);
-      setShowConfirmDelete(false);
-      setUserToDelete(null);
-      fetchUsers();
+      await superAdminService.invalidateSession(user.id);
+      setSuccess(`Sesi\u00f3n invalidada para ${user.nombres} ${user.apellidos}.`);
     } catch (err) {
-      setError(err.message || "Error al eliminar usuario.");
+      setError(err.message || "Error al invalidar sesi\u00f3n.");
     }
   };
 
-  const onSubmit = async (data) => {
+  const handleForcePassword = (user) => {
+    setPasswordTarget(user);
+    reset({ nuevaContrasena: "" });
+    setShowPasswordModal(true);
+  };
+
+  const onSubmitForcePassword = async (data) => {
     try {
-      if (editingUser) {
-        await superAdminService.updateAdministrator(editingUser.id, {
-          nombres: data.nombres,
-          apellidos: data.apellidos,
-          telefono: data.telefono || "",
-        });
-        if (data.activo !== editingUser.activo) {
-          await superAdminService.toggleAdministratorStatus(editingUser.id, { activo: data.activo });
-        }
-      } else {
-        await superAdminService.createAdministrator({
-          nombres: data.nombres,
-          apellidos: data.apellidos,
-          correo: data.correo,
-          telefono: data.telefono || "",
-          contrasena: data.contrasena,
-        });
-      }
-      setShowModal(false);
-      setEditingUser(null);
-      fetchUsers();
+      await superAdminService.forcePasswordChange(passwordTarget.id, { nuevaContrasena: data.nuevaContrasena });
+      setShowPasswordModal(false);
+      setPasswordTarget(null);
+      setSuccess(`Contrase\u00f1a actualizada forzosamente para ${passwordTarget.nombres} ${passwordTarget.apellidos}.`);
     } catch (err) {
-      setError(err.message || "Error al guardar usuario.");
+      setError(err.message || "Error al forzar cambio de contrase\u00f1a.");
     }
   };
 
@@ -128,18 +96,15 @@ const SAUsuariosPage = () => {
   return (
     <AnimatedPage>
       <div className="page-container">
-        <DashboardHeader icon={Users} title="Gesti\u00f3n de Usuarios" badgeText="Administraci\u00f3n" welcomeText="Gestiona todos los usuarios del sistema, sus roles y condominios asignados.">
-          <button className="btn btn-primary" onClick={() => { setEditingUser(null); setShowModal(true); }}>
-            <UserPlus size={16} /> <span>Nuevo Usuario</span>
-          </button>
-        </DashboardHeader>
+        <DashboardHeader icon={Users} title="Usuarios Globales" badgeText="Super Admin" welcomeText="Visualiza todos los usuarios del sistema. Puedes invalidar sesiones o forzar cambios de contrase\u00f1a." />
 
         {error && <div className="alert alert-danger mb-3">{error}</div>}
+        {success && <div className="alert alert-success mb-3">{success}</div>}
 
         <DataTable
           headers={["#", "Usuario", "Rol", "Condominio", "Estado", "Acciones"]}
           isEmpty={!loading && users.length === 0}
-          emptyMessage="No se encontraron usuarios con los criterios de b\u00fasqueda."
+          emptyMessage="No se encontraron usuarios."
           emptyIcon={Users}
           searchBar={
             <div className="flex items-center gap-3">
@@ -148,9 +113,11 @@ const SAUsuariosPage = () => {
               </div>
               <div style={{ flex: 3 }}>
                 <select className="form-select" value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}>
-                  {ROLE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
+                  <option value="">Todos los Roles</option>
+                  <option value="SUPER_ADMINISTRADOR">Super Admin</option>
+                  <option value="ADMINISTRADOR_CONDOMINIO">Admin Condominio</option>
+                  <option value="PROPIETARIO">Propietario</option>
+                  <option value="AGENTE_SEGURIDAD">Seguridad</option>
                 </select>
               </div>
             </div>
@@ -184,11 +151,11 @@ const SAUsuariosPage = () => {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-2">
-                      <button className="btn btn-outline btn-sm" onClick={() => handleEdit(user)}>
-                        <Edit3 size={14} /> <span>Editar</span>
+                      <button className="btn btn-outline btn-sm" onClick={() => handleInvalidateSession(user)} title="Invalidar sesi\u00f3n">
+                        <ShieldBan size={14} /> <span>Invalidar</span>
                       </button>
-                      <button className="btn btn-outline btn-sm" onClick={() => handleDeleteClick(user)}>
-                        <Trash2 size={14} /> <span>Eliminar</span>
+                      <button className="btn btn-outline btn-sm" onClick={() => handleForcePassword(user)} title="Forzar cambio de contrase\u00f1a">
+                        <KeyRound size={14} /> <span>Forzar Pass</span>
                       </button>
                     </div>
                   </td>
@@ -199,14 +166,37 @@ const SAUsuariosPage = () => {
         </DataTable>
       </div>
 
-      <UserFormModal show={showModal} onHide={() => { setShowModal(false); setEditingUser(null); }} onSubmit={onSubmit} editingUser={editingUser} condominios={[]} authUser={authUser} />
-      <ConfirmDialog
-        show={showConfirmDelete}
-        onHide={() => { setShowConfirmDelete(false); setUserToDelete(null); }}
-        onConfirm={confirmDelete}
-        title="\u00bfEliminar usuario?"
-        message={`Esta acci\u00f3n borrar\u00e1 al usuario ${userToDelete?.nombres} ${userToDelete?.apellidos} permanentemente.`}
-      />
+      {showPasswordModal && (
+        <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420 }}>
+            <div className="modal-header">
+              <div className="modal-title">Forzar Cambio de Contrase\u00f1a</div>
+              <button className="modal-close" onClick={() => setShowPasswordModal(false)}><X size={16} /></button>
+            </div>
+            <form onSubmit={handleSubmit(onSubmitForcePassword)}>
+              <div className="modal-body">
+                <p className="text-secondary text-sm mb-3">
+                  Nueva contrase\u00f1a para <strong>{passwordTarget?.nombres} {passwordTarget?.apellidos}</strong>
+                </p>
+                <div className="form-group">
+                  <label className="form-label">Nueva Contrase\u00f1a</label>
+                  <input
+                    className={`form-input ${errors.nuevaContrasena ? "error" : ""}`}
+                    type="password"
+                    placeholder="M\u00ednimo 8 caracteres"
+                    {...register("nuevaContrasena", { required: "Requerido", minLength: { value: 8, message: "M\u00ednimo 8 caracteres" } })}
+                  />
+                  {errors.nuevaContrasena && <div className="form-error">{errors.nuevaContrasena.message}</div>}
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-outline" onClick={() => setShowPasswordModal(false)}>Cancelar</button>
+                <button type="submit" className="btn btn-primary">Actualizar Contrase\u00f1a</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </AnimatedPage>
   );
 };
