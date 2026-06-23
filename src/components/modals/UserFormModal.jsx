@@ -21,11 +21,14 @@ const UserFormModal = ({
     formState: { errors },
   } = useForm({
     defaultValues: {
-      nombre: "",
-      email: "",
+      nombres: "",
+      apellidos: "",
+      correo: "",
+      telefono: "",
+      contrasena: "",
       activo: true,
-      id_rol: 2,
-      id_condominio: "",
+      rol: "ADMINISTRADOR_CONDOMINIO",
+      idCondominio: "",
     },
   });
 
@@ -34,19 +37,25 @@ const UserFormModal = ({
       clearErrors();
       if (editingUser) {
         reset({
-          nombre: editingUser.nombre,
-          email: editingUser.email,
-          id_rol: editingUser.id_rol,
-          id_condominio: editingUser.id_condominio || "",
-          activo: editingUser.activo,
+          nombres: editingUser.nombres || "",
+          apellidos: editingUser.apellidos || "",
+          correo: editingUser.correo || "",
+          telefono: editingUser.telefono || "",
+          contrasena: "",
+          activo: editingUser.activo ?? true,
+          rol: editingUser.rol || "ADMINISTRADOR_CONDOMINIO",
+          idCondominio: editingUser.idCondominio || "",
         });
       } else {
         reset({
-          nombre: "",
-          email: "",
+          nombres: "",
+          apellidos: "",
+          correo: "",
+          telefono: "",
+          contrasena: "",
           activo: true,
-          id_rol: 2,
-          id_condominio: "",
+          rol: "ADMINISTRADOR_CONDOMINIO",
+          idCondominio: "",
         });
       }
     }
@@ -76,16 +85,26 @@ const UserFormModal = ({
           <form onSubmit={handleSubmit(handleFormSubmit)}>
             <div className="grid-2">
               <FormInput
-                label="Nombre Completo"
-                name="nombre"
+                label="Nombres"
+                name="nombres"
                 register={register}
-                validation={{ required: "El nombre es requerido" }}
-                error={errors.nombre}
-                placeholder="Nombre y Apellidos"
+                validation={{ required: "Los nombres son requeridos" }}
+                error={errors.nombres}
+                placeholder="Ej: Juan Carlos"
               />
               <FormInput
+                label="Apellidos"
+                name="apellidos"
+                register={register}
+                validation={{ required: "Los apellidos son requeridos" }}
+                error={errors.apellidos}
+                placeholder="Ej: Pérez García"
+              />
+            </div>
+            <div className="grid-2">
+              <FormInput
                 label="Correo Electrónico"
-                name="email"
+                name="correo"
                 type="email"
                 register={register}
                 validation={{
@@ -95,10 +114,31 @@ const UserFormModal = ({
                     message: "Correo inválido",
                   },
                 }}
-                error={errors.email}
+                error={errors.correo}
                 placeholder="ejemplo@correo.com"
               />
+              <FormInput
+                label="Teléfono"
+                name="telefono"
+                register={register}
+                placeholder="Ej: 999888777"
+              />
             </div>
+
+            {!editingUser && (
+              <FormInput
+                label="Contraseña"
+                name="contrasena"
+                type="password"
+                register={register}
+                validation={{
+                  required: "La contraseña es requerida",
+                  minLength: { value: 8, message: "Mínimo 8 caracteres" },
+                }}
+                error={errors.contrasena}
+                placeholder="Mínimo 8 caracteres"
+              />
+            )}
 
             <div className="grid-2">
               <div className="form-group">
@@ -106,25 +146,29 @@ const UserFormModal = ({
                   {scope === "condo-admin" ? "Tipo de Usuario" : "Rol en el Sistema"}
                 </label>
                 <select
-                  className={`form-select ${errors.id_rol ? "error" : ""}`}
-                  {...register("id_rol", { required: "Selecciona un rol" })}
+                  className={`form-select ${errors.rol ? "error" : ""}`}
+                  {...register("rol", { required: "Selecciona un rol" })}
                 >
                   {scope === "condo-admin" ? (
                     <>
-                      <option value="3">Propietario / Residente</option>
-                      <option value="4">Agente de Seguridad</option>
-                      <option value="2">Administrador</option>
+                      <option value="PROPIETARIO">Propietario / Residente</option>
+                      <option value="AGENTE_SEGURIDAD">Agente de Seguridad</option>
+                      <option value="ADMINISTRADOR_CONDOMINIO">Administrador</option>
+                    </>
+                  ) : scope === "super-admin" ? (
+                    <>
+                      <option value="ADMINISTRADOR_CONDOMINIO">Admin Condominio</option>
+                      <option value="SUPER_ADMINISTRADOR">Super Admin</option>
                     </>
                   ) : (
                     <>
-                      <option value="1">Super Admin</option>
-                      <option value="2">Admin Condominio</option>
-                      <option value="3">Propietario</option>
-                      <option value="4">Seguridad</option>
+                      <option value="PROPIETARIO">Propietario</option>
+                      <option value="AGENTE_SEGURIDAD">Agente Seguridad</option>
+                      <option value="ADMINISTRADOR_CONDOMINIO">Admin Condominio</option>
                     </>
                   )}
                 </select>
-                {errors.id_rol && <div className="form-error">{errors.id_rol.message}</div>}
+                {errors.rol && <div className="form-error">{errors.rol.message}</div>}
               </div>
 
               {scope === "condo-admin" ? (
@@ -145,10 +189,10 @@ const UserFormModal = ({
                   <label className="form-label">Condominio Asignado</label>
                   <select
                     className="form-select"
-                    {...register("id_condominio")}
+                    {...register("idCondominio")}
                   >
                     <option value="">Ninguno (Acceso Global)</option>
-                    {condominios.map((c) => (
+                    {(condominios || []).map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.nombre}
                       </option>

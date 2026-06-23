@@ -4,6 +4,38 @@ import { fetchApi } from "../services/api";
 
 import { VALID_ROLES, ROLES } from "../constants/roles";
 
+const mapBackendRole = (backendRole) => {
+  if (backendRole === "SUPER_ADMINISTRADOR") return ROLES.SUPER_ADMIN;
+  if (backendRole === "ADMINISTRADOR_CONDOMINIO") return ROLES.ADMIN_CONDOMINIO;
+  if (backendRole === "PROPIETARIO") return ROLES.PROPIETARIO;
+  if (backendRole === "AGENTE_SEGURIDAD") return ROLES.AGENTE_SEGURIDAD;
+  return null;
+};
+
+const buildSessionUser = (userData) => ({
+  id: userData.id,
+  nombre: `${userData.nombres} ${userData.apellidos}`,
+  nombres: userData.nombres,
+  apellidos: userData.apellidos,
+  correo: userData.correo,
+  role: mapBackendRole(userData.rol),
+  idCondominio: userData.idCondominio ?? null,
+});
+
+const persistUser = (sessionUser, rememberMe) => {
+  const raw = JSON.stringify(sessionUser);
+  if (rememberMe) {
+    localStorage.setItem("authUser", raw);
+  } else {
+    sessionStorage.setItem("authUser", raw);
+  }
+};
+
+const clearPersistedUser = () => {
+  localStorage.removeItem("authUser");
+  sessionStorage.removeItem("authUser");
+};
+
 export const AuthProvider = ({ children }) => {
   const [authLoading, setAuthLoading] = useState(false);
   const [authUser, setAuthUser] = useState(() => {
@@ -12,48 +44,37 @@ export const AuthProvider = ({ children }) => {
   });
   const [authError, setAuthError] = useState(null);
 
-  // Verificar la sesión real con el backend cuando carga la aplicación
   useEffect(() => {
     let mounted = true;
     const verifySession = async () => {
-      if (authUser) {
-        try {
-          const response = await fetchApi('/auth/me');
-          if (mounted && response) {
-            const backendRole = response.rol;
-            let roleName = ROLES.SUPER_ADMIN; 
-            if (backendRole === "SUPER_ADMINISTRADOR") roleName = ROLES.SUPER_ADMIN;
-            else if (backendRole === "ADMINISTRADOR_CONDOMINIO") roleName = ROLES.ADMIN_CONDOMINIO;
-            else if (backendRole === "PROPIETARIO") roleName = ROLES.PROPIETARIO;
-            else if (backendRole === "AGENTE_SEGURIDAD") roleName = ROLES.AGENTE_SEGURIDAD;
+      if (!authUser) return;
+      try {
+        const response = await fetchApi('/auth/me');
+        if (!mounted || !response) return;
 
-            const sessionUser = {
-              id: response.id,
-              nombre: response.nombres + " " + response.apellidos,
-              role: roleName,
-            };
-            
-            setAuthUser(sessionUser);
-            if (localStorage.getItem("authUser")) {
-              localStorage.setItem("authUser", JSON.stringify(sessionUser));
-            } else if (sessionStorage.getItem("authUser")) {
-              sessionStorage.setItem("authUser", JSON.stringify(sessionUser));
-            }
-          }
-        } catch (error) {
-          // Si el token expira y falla el refresh, el backend devolverá 401
-          if (mounted && error?.response?.status === 401) {
-            setAuthUser(null);
-            localStorage.removeItem("authUser");
-            sessionStorage.removeItem("authUser");
-          }
+        const roleName = mapBackendRole(response.rol);
+        if (!roleName || !VALID_ROLES.includes(roleName)) {
+          throw new Error("Rol no v\u00e1lido");
+        }
+
+        const sessionUser = buildSessionUser(response);
+        setAuthUser(sessionUser);
+
+        const hasLocal = localStorage.getItem("authUser");
+        const hasSession = sessionStorage.getItem("authUser");
+        if (hasLocal) localStorage.setItem("authUser", JSON.stringify(sessionUser));
+        else if (hasSession) sessionStorage.setItem("authUser", JSON.stringify(sessionUser));
+      } catch (error) {
+        if (mounted && error?.status === 401) {
+          setAuthUser(null);
+          clearPersistedUser();
         }
       }
     };
-    
+
     verifySession();
     return () => { mounted = false; };
-  }, []); // Solo al montar
+  }, []);
 
   const isAuthenticated = !!authUser;
 
@@ -64,49 +85,30 @@ export const AuthProvider = ({ children }) => {
 
       const response = await fetchApi('/auth/login', {
         method: 'POST',
-        body: JSON.stringify({
-          email: userData.email,
-          password: userData.password,
-          rememberMe: userData.rememberMe || false
-        })
+        body: {
+          correo: userData.email,
+          contrasena: userData.password,
+          recuerdame: userData.rememberMe || false,
+        },
       });
 
-      // El backend retorna la información del usuario en la respuesta exitosa
-      const foundUser = response;
-      
-      // Mapeamos el rol del backend al rol del frontend
-      const backendRole = foundUser.rol;
-      let roleName = ROLES.SUPER_ADMIN; // Valor por defecto
-      if (backendRole === "SUPER_ADMINISTRADOR") roleName = ROLES.SUPER_ADMIN;
-      else if (backendRole === "ADMINISTRADOR_CONDOMINIO") roleName = ROLES.ADMIN_CONDOMINIO;
-      else if (backendRole === "PROPIETARIO") roleName = ROLES.PROPIETARIO;
-      else if (backendRole === "AGENTE_SEGURIDAD") roleName = ROLES.AGENTE_SEGURIDAD;
+      const foundUser = response.usuario;
+      const roleName = mapBackendRole(foundUser.rol);
 
-      if (!VALID_ROLES.includes(roleName)) {
+      if (!roleName || !VALID_ROLES.includes(roleName)) {
         setAuthError("Rol no permitido en el sistema");
         return { success: false };
       }
 
-      // Creamos la sesión para guardar en el estado global
-      const sessionUser = {
-        id: foundUser.id,
-        nombre: foundUser.nombres + " " + foundUser.apellidos,
-        role: roleName,
-      };
-
+      const sessionUser = buildSessionUser(foundUser);
       setAuthUser(sessionUser);
-
-      if (userData.rememberMe) {
-        localStorage.setItem("authUser", JSON.stringify(sessionUser));
-      } else {
-        sessionStorage.setItem("authUser", JSON.stringify(sessionUser));
-      }
+      persistUser(sessionUser, userData.rememberMe);
 
       return { success: true };
     } catch (e) {
       let errorMessage = e.message || "Error al conectar con el servidor.";
       if (e.status === 401 || e.status === 403) {
-          errorMessage = "Credenciales incorrectas.";
+        errorMessage = "Credenciales incorrectas.";
       }
       setAuthError(errorMessage);
       return { success: false, error: errorMessage };
@@ -119,19 +121,18 @@ export const AuthProvider = ({ children }) => {
     try {
       setAuthLoading(true);
       setAuthError(null);
-      
+
       try {
         await fetchApi('/auth/logout', { method: 'POST' });
       } catch (e) {
-        console.warn("Logout request failed, but we will clear local session anyway.", e);
+        console.warn("Logout request failed, clearing local session.", e);
       }
 
       setAuthUser(null);
-      localStorage.removeItem("authUser");
-      sessionStorage.removeItem("authUser");
+      clearPersistedUser();
       return { success: true };
     } catch (e) {
-      setAuthError(`Error inesperado al cerrar sesión: ${e.message}`);
+      setAuthError(`Error inesperado al cerrar sesi\u00f3n: ${e.message}`);
       return { success: false, error: e.message };
     } finally {
       setAuthLoading(false);
@@ -142,15 +143,15 @@ export const AuthProvider = ({ children }) => {
     try {
       setAuthLoading(true);
       setAuthError(null);
-      
+
       await fetchApi('/auth/forgot-password', {
         method: 'POST',
-        body: JSON.stringify({ email })
+        body: { correo: email },
       });
 
       return { success: true };
     } catch (e) {
-      setAuthError(e.message || "Error al solicitar la recuperación.");
+      setAuthError(e.message || "Error al solicitar la recuperaci\u00f3n.");
       return { success: false };
     } finally {
       setAuthLoading(false);
@@ -158,8 +159,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const validateResetToken = (token) => {
-    if (!token) return { valid: false, reason: "No se proporcionó un token." };
-    // La validación real se hará en el backend al momento de enviar la nueva contraseña.
+    if (!token) return { valid: false, reason: "No se proporcion\u00f3 un token." };
     return { valid: true };
   };
 
@@ -170,12 +170,12 @@ export const AuthProvider = ({ children }) => {
 
       await fetchApi('/auth/reset-password', {
         method: 'POST',
-        body: JSON.stringify({ token, password: newPassword })
+        body: { token, nuevaContrasena: newPassword },
       });
 
       return { success: true };
     } catch (e) {
-      setAuthError(e.message || "Error al restablecer la contraseña.");
+      setAuthError(e.message || "Error al restablecer la contrase\u00f1a.");
       return { success: false };
     } finally {
       setAuthLoading(false);

@@ -20,6 +20,14 @@ export const MENU_BY_ROLE = {
         { path: "/perfil/cambiar-contraseña", label: "Contraseña", icon: <Lock size={18} /> },
     ],
 
+    AGENTE_SEGURIDAD: [
+        { path: "/seguridad", label: "Inicio", icon: <ShieldCheck size={18} />, exact: true },
+        { path: "/seguridad/estacionamientos", label: "Estacionamientos", icon: <Car size={18} /> },
+        { path: "/seguridad/vehiculos", label: "Veh\u00edculos", icon: <Car size={18} /> },
+        { path: "/seguridad/carritos", label: "Carritos", icon: <ShoppingCart size={18} /> },
+        { path: "/perfil/cambiar-contraseña", label: "Contraseña", icon: <Lock size={18} /> },
+    ],
+
     PROPIETARIO: [
         { path: "/propietario", label: "Inicio", icon: <LayoutDashboard size={18} />, exact: true },
         { path: "/propietario/mi-apartamento", label: "Apartamento", icon: <Home size={18} /> },

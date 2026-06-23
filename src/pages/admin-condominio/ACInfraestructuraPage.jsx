@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 
 import {
@@ -8,10 +8,11 @@ import {
   Plus,
   Save,
   X,
+  Loader2,
 } from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
-import { useData } from "../../hooks/useData";
+import { adminCondominioService } from "../../services/adminCondominioService";
 
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
@@ -21,11 +22,12 @@ import TowerTable from "../../components/tables/TowerTable";
 import FloorTable from "../../components/tables/FloorTable";
 import AptoTable from "../../components/tables/AptoTable";
 import ConfirmDialog from "../../components/modals/ConfirmDialog";
-import NoCondoWarning from "../../components/ui/NoCondoWarning";
 
 const ACInfraestructuraPage = () => {
   const { authUser } = useAuth();
-  const { getTable, updateTable } = useData();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [structure, setStructure] = useState(null);
 
   const [activeTab, setActiveTab] = useState("torres");
   const [showModal, setShowModal] = useState(false);
@@ -42,42 +44,79 @@ const ACInfraestructuraPage = () => {
     formState: { errors },
   } = useForm();
 
-  const torres = getTable("torres");
-  const pisos = getTable("pisos");
-  const apartamentos = getTable("apartamentos");
-  const usuarios = getTable("usuarios");
-  const condominio = getTable("condominios").find(
-    (c) => c.id === authUser?.id_condominio,
-  );
+  const fetchStructure = async () => {
+    try {
+      setLoading(true);
+      const data = await adminCondominioService.getStructure();
+      setStructure(data);
+    } catch (err) {
+      setError(err.message || "Error al cargar estructura.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStructure();
+  }, []);
 
   const torresCondo = useMemo(() => {
-    if (!authUser?.id_condominio) return [];
-    return torres.filter((t) => t.id_condominio === authUser.id_condominio);
-  }, [torres, authUser]);
+    if (!structure?.torres) return [];
+    return structure.torres.map((t) => ({
+      id: t.id,
+      nombre: t.nombre,
+      idCondominio: structure.condominioId,
+    }));
+  }, [structure]);
 
-  const pisosCondo = useMemo(
-    () =>
-      pisos.filter((p) => torresCondo.map((t) => t.id).includes(p.id_torre)),
-    [pisos, torresCondo],
-  );
-  const aptosCondo = useMemo(
-    () =>
-      apartamentos.filter((a) =>
-        pisosCondo.map((p) => p.id).includes(a.id_piso),
-      ),
-    [apartamentos, pisosCondo],
-  );
+  const pisosCondo = useMemo(() => {
+    if (!structure?.torres) return [];
+    const result = [];
+    structure.torres.forEach((t) => {
+      (t.pisos || []).forEach((p) => {
+        result.push({
+          id: p.id,
+          numeroPiso: p.numero,
+          numero_piso: p.numero,
+          idTorre: t.id,
+          id_torre: t.id,
+        });
+      });
+    });
+    return result;
+  }, [structure]);
 
-  const propietarios = useMemo(() => {
-    if (!authUser?.id_condominio) return [];
-    return usuarios.filter(
-      (u) =>
-        u.id_rol === 3 &&
-        (u.id_condominio === authUser.id_condominio || !u.id_condominio),
+  const aptosCondo = useMemo(() => {
+    if (!structure?.torres) return [];
+    const result = [];
+    structure.torres.forEach((t) => {
+      (t.pisos || []).forEach((p) => {
+        (p.apartamentos || []).forEach((a) => {
+          result.push({
+            id: a.id,
+            numero: a.numero,
+            metraje: a.metraje,
+            idPiso: p.id,
+            id_piso: p.id,
+            idUsuario: a.idPropietario,
+            id_usuario: a.idPropietario,
+            derechoEstacionamiento: a.derechoEstacionamiento,
+          });
+        });
+      });
+    });
+    return result;
+  }, [structure]);
+
+  if (loading) {
+    return (
+      <AnimatedPage>
+        <div className="page-container flex items-center justify-center" style={{ minHeight: 300 }}>
+          <Loader2 size={32} className="spinner" />
+        </div>
+      </AnimatedPage>
     );
-  }, [usuarios, authUser]);
-
-  if (!condominio) return <NoCondoWarning />;
+  }
 
   const handleOpenModal = (type, item = null) => {
     setModalType(type);
@@ -85,14 +124,14 @@ const ACInfraestructuraPage = () => {
     if (item) {
       if (type === "torre") setValue("nombre", item.nombre);
       if (type === "piso") {
-        setValue("numero_piso", item.numero_piso);
-        setValue("id_torre", item.id_torre);
+        setValue("numeroPiso", item.numeroPiso || item.numero_piso);
+        setValue("idTorre", item.idTorre || item.id_torre);
       }
       if (type === "apto") {
         setValue("numero", item.numero);
         setValue("metraje", item.metraje);
-        setValue("id_piso", item.id_piso);
-        setValue("id_usuario", item.id_usuario || "");
+        setValue("idPiso", item.idPiso || item.id_piso);
+        setValue("idUsuario", item.idUsuario || item.id_usuario || "");
       }
     } else {
       reset();
@@ -100,65 +139,32 @@ const ACInfraestructuraPage = () => {
     setShowModal(true);
   };
 
-  const onSubmit = (data) => {
-    if (modalType === "torre") {
-      if (editingItem) {
-        updateTable(
-          "torres",
-          torres.map((t) => (t.id === editingItem.id ? { ...t, ...data } : t)),
-        );
-      } else {
-        const newId =
-          torres.length > 0 ? Math.max(...torres.map((t) => t.id)) + 1 : 1;
-        updateTable("torres", [
-          ...torres,
-          { id: newId, id_condominio: authUser.id_condominio, ...data },
-        ]);
+  const onSubmit = async (data) => {
+    try {
+      if (modalType === "torre") {
+        await adminCondominioService.createNode({
+          tipo: "TORRE",
+          nombre: data.nombre,
+        });
+      } else if (modalType === "piso") {
+        await adminCondominioService.createNode({
+          tipo: "PISO",
+          numeroPiso: parseInt(data.numeroPiso),
+          nombreTorre: torresCondo.find((t) => t.id === parseInt(data.idTorre))?.nombre,
+        });
+      } else if (modalType === "apto") {
+        await adminCondominioService.createNode({
+          tipo: "APARTAMENTO",
+          numeroApartamento: parseInt(data.numero),
+          metraje: parseFloat(data.metraje),
+          numeroPiso: parseInt(data.idPiso),
+        });
       }
-    } else if (modalType === "piso") {
-      const floorData = {
-        ...data,
-        numero_piso: parseInt(data.numero_piso),
-        id_torre: parseInt(data.id_torre),
-      };
-      if (editingItem) {
-        updateTable(
-          "pisos",
-          pisos.map((p) =>
-            p.id === editingItem.id ? { ...p, ...floorData } : p,
-          ),
-        );
-      } else {
-        const newId =
-          pisos.length > 0 ? Math.max(...pisos.map((p) => p.id)) + 1 : 1;
-        updateTable("pisos", [...pisos, { id: newId, ...floorData }]);
-      }
-    } else if (modalType === "apto") {
-      const aptoData = {
-        ...data,
-        metraje: parseFloat(data.metraje),
-        id_piso: parseInt(data.id_piso),
-        id_usuario: data.id_usuario ? parseInt(data.id_usuario) : null,
-      };
-      if (editingItem) {
-        updateTable(
-          "apartamentos",
-          apartamentos.map((a) =>
-            a.id === editingItem.id ? { ...a, ...aptoData } : a,
-          ),
-        );
-      } else {
-        const newId =
-          apartamentos.length > 0
-            ? Math.max(...apartamentos.map((a) => a.id)) + 1
-            : 1;
-        updateTable("apartamentos", [
-          ...apartamentos,
-          { id: newId, ...aptoData },
-        ]);
-      }
+      setShowModal(false);
+      fetchStructure();
+    } catch (err) {
+      setError(err.message || "Error al guardar.");
     }
-    setShowModal(false);
   };
 
   const handleDeleteClick = (type, item) => {
@@ -167,23 +173,15 @@ const ACInfraestructuraPage = () => {
     setShowConfirmDelete(true);
   };
 
-  const confirmDelete = () => {
-    if (modalType === "torre")
-      updateTable(
-        "torres",
-        torres.filter((t) => t.id !== itemToDelete.id),
-      );
-    if (modalType === "piso")
-      updateTable(
-        "pisos",
-        pisos.filter((p) => p.id !== itemToDelete.id),
-      );
-    if (modalType === "apto")
-      updateTable(
-        "apartamentos",
-        apartamentos.filter((a) => a.id !== itemToDelete.id),
-      );
-    setShowConfirmDelete(false);
+  const confirmDelete = async () => {
+    try {
+      const typeMap = { torre: "TORRE", piso: "PISO", apto: "APARTAMENTO" };
+      await adminCondominioService.deleteNode(itemToDelete.id, typeMap[modalType]);
+      setShowConfirmDelete(false);
+      fetchStructure();
+    } catch (err) {
+      setError(err.message || "Error al eliminar.");
+    }
   };
 
   return (
@@ -192,100 +190,40 @@ const ACInfraestructuraPage = () => {
         <DashboardHeader
           icon={Building2}
           title="Infraestructura y Unidades"
-          badgeText={condominio?.nombre || "Admin"}
+          badgeText={structure?.condominioNombre || "Admin"}
           welcomeText="Define la estructura de torres, pisos y apartamentos de tu condominio."
         />
 
+        {error && <div className="alert alert-danger mb-3">{error}</div>}
+
         <div className="grid grid-3 gap-4 mb-5">
-          <StatCard
-            icon={Building2}
-            label="Torres"
-            value={torresCondo.length}
-            colorClass="primary-theme"
-          />
-          <StatCard
-            icon={Layers}
-            label="Pisos Totales"
-            value={pisosCondo.length}
-            colorClass="primary-theme"
-          />
-          <StatCard
-            icon={Home}
-            label="Apartamentos"
-            value={aptosCondo.length}
-            colorClass="primary-theme"
-          />
+          <StatCard icon={Building2} label="Torres" value={torresCondo.length} colorClass="primary-theme" />
+          <StatCard icon={Layers} label="Pisos Totales" value={pisosCondo.length} colorClass="primary-theme" />
+          <StatCard icon={Home} label="Apartamentos" value={aptosCondo.length} colorClass="primary-theme" />
         </div>
 
         <div className="card">
           <div className="card-body">
             <div className="flex items-center justify-between gap-3 mb-3">
               <div className="tabs">
-                <button
-                  className={`tab ${activeTab === "torres" ? "active" : ""}`}
-                  onClick={() => setActiveTab("torres")}
-                >
+                <button className={`tab ${activeTab === "torres" ? "active" : ""}`} onClick={() => setActiveTab("torres")}>
                   <Building2 size={14} /> Torres
                 </button>
-                <button
-                  className={`tab ${activeTab === "pisos" ? "active" : ""}`}
-                  onClick={() => setActiveTab("pisos")}
-                >
+                <button className={`tab ${activeTab === "pisos" ? "active" : ""}`} onClick={() => setActiveTab("pisos")}>
                   <Layers size={14} /> Pisos
                 </button>
-                <button
-                  className={`tab ${activeTab === "apartamentos" ? "active" : ""}`}
-                  onClick={() => setActiveTab("apartamentos")}
-                >
+                <button className={`tab ${activeTab === "apartamentos" ? "active" : ""}`} onClick={() => setActiveTab("apartamentos")}>
                   <Home size={14} /> Apartamentos
                 </button>
               </div>
-              <button
-                className="btn btn-primary"
-                onClick={() =>
-                  handleOpenModal(
-                    activeTab === "torres"
-                      ? "torre"
-                      : activeTab === "pisos"
-                        ? "piso"
-                        : "apto",
-                  )
-                }
-              >
-                <Plus size={14} />{" "}
-                {activeTab === "torres"
-                  ? "Nueva Torre"
-                  : activeTab === "pisos"
-                    ? "Nuevo Piso"
-                    : "Nuevo Apartamento"}
+              <button className="btn btn-primary" onClick={() => handleOpenModal(activeTab === "torres" ? "torre" : activeTab === "pisos" ? "piso" : "apto")}>
+                <Plus size={14} /> {activeTab === "torres" ? "Nueva Torre" : activeTab === "pisos" ? "Nuevo Piso" : "Nuevo Apartamento"}
               </button>
             </div>
 
-            {activeTab === "torres" && (
-              <TowerTable
-                data={torresCondo}
-                onEdit={(item) => handleOpenModal("torre", item)}
-                onDelete={(item) => handleDeleteClick("torre", item)}
-              />
-            )}
-            {activeTab === "pisos" && (
-              <FloorTable
-                data={pisosCondo}
-                torres={torresCondo}
-                onEdit={(item) => handleOpenModal("piso", item)}
-                onDelete={(item) => handleDeleteClick("piso", item)}
-              />
-            )}
-            {activeTab === "apartamentos" && (
-              <AptoTable
-                data={aptosCondo}
-                pisos={pisosCondo}
-                torres={torresCondo}
-                usuarios={propietarios}
-                onEdit={(item) => handleOpenModal("apto", item)}
-                onDelete={(item) => handleDeleteClick("apto", item)}
-              />
-            )}
+            {activeTab === "torres" && <TowerTable data={torresCondo} onEdit={(item) => handleOpenModal("torre", item)} onDelete={(item) => handleDeleteClick("torre", item)} />}
+            {activeTab === "pisos" && <FloorTable data={pisosCondo} torres={torresCondo} onEdit={(item) => handleOpenModal("piso", item)} onDelete={(item) => handleDeleteClick("piso", item)} />}
+            {activeTab === "apartamentos" && <AptoTable data={aptosCondo} pisos={pisosCondo} torres={torresCondo} usuarios={[]} onEdit={(item) => handleOpenModal("apto", item)} onDelete={(item) => handleDeleteClick("apto", item)} />}
           </div>
         </div>
       </div>
@@ -294,139 +232,47 @@ const ACInfraestructuraPage = () => {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <div className="modal-title">
-                {editingItem ? "Editar" : "Crear"}{" "}
-                {modalType === "torre"
-                  ? "Torre"
-                  : modalType === "piso"
-                    ? "Piso"
-                    : "Apartamento"}
-              </div>
-              <button className="modal-close" onClick={() => setShowModal(false)}>
-                <X size={16} />
-              </button>
+              <div className="modal-title">{editingItem ? "Editar" : "Crear"} {modalType === "torre" ? "Torre" : modalType === "piso" ? "Piso" : "Apartamento"}</div>
+              <button className="modal-close" onClick={() => setShowModal(false)}><X size={16} /></button>
             </div>
             <div className="modal-body">
               <form onSubmit={handleSubmit(onSubmit)}>
                 {modalType === "torre" && (
-                  <FormInput
-                    label="Nombre de la Torre"
-                    name="nombre"
-                    register={register}
-                    validation={{ required: "Requerido" }}
-                    error={errors.nombre}
-                    placeholder="Ej: Torre A, Bloque 1..."
-                  />
+                  <FormInput label="Nombre de la Torre" name="nombre" register={register} validation={{ required: "Requerido" }} error={errors.nombre} placeholder="Ej: Torre A, Bloque 1..." />
                 )}
-
                 {modalType === "piso" && (
                   <>
-                    <FormInput
-                      label="Número de Piso"
-                      name="numero_piso"
-                      type="number"
-                      register={register}
-                      validation={{ required: "Requerido" }}
-                      error={errors.numero_piso}
-                    />
+                    <FormInput label="N\u00famero de Piso" name="numeroPiso" type="number" register={register} validation={{ required: "Requerido" }} error={errors.numeroPiso} />
                     <div className="form-group">
-                      <label className="form-label text-secondary fw-semibold text-sm mb-1">
-                        Torre
-                      </label>
-                      <select
-                        className="form-select"
-                        {...register("id_torre", { required: "Requerido" })}
-                      >
+                      <label className="form-label text-secondary fw-semibold text-sm mb-1">Torre</label>
+                      <select className="form-select" {...register("idTorre", { required: "Requerido" })}>
                         <option value="">Selecciona torre...</option>
-                        {torresCondo.map((t) => (
-                          <option key={t.id} value={t.id}>
-                            {t.nombre}
-                          </option>
-                        ))}
+                        {torresCondo.map((t) => (<option key={t.id} value={t.id}>{t.nombre}</option>))}
                       </select>
                     </div>
                   </>
                 )}
-
                 {modalType === "apto" && (
                   <>
-                    <FormInput
-                      label="Número de Apartamento"
-                      name="numero"
-                      register={register}
-                      validation={{ required: "Requerido" }}
-                      error={errors.numero}
-                      placeholder="Ej: 101, A-301..."
-                    />
+                    <FormInput label="N\u00famero de Apartamento" name="numero" register={register} validation={{ required: "Requerido" }} error={errors.numero} placeholder="Ej: 101, A-301..." />
                     <div className="grid-2 gap-3">
-                      <div>
-                        <FormInput
-                          label="Superficie (m²)"
-                          type="number"
-                          step="0.01"
-                          name="metraje"
-                          register={register}
-                          validation={{ required: "Requerido" }}
-                          error={errors.metraje}
-                        />
+                      <FormInput label="Superficie (m\u00b2)" type="number" step="0.01" name="metraje" register={register} validation={{ required: "Requerido" }} error={errors.metraje} />
+                      <div className="form-group">
+                        <label className="form-label text-secondary fw-semibold text-sm mb-1">Piso</label>
+                        <select className="form-select" {...register("idPiso", { required: "Requerido" })}>
+                          <option value="">Selecciona piso...</option>
+                          {pisosCondo.map((p) => {
+                            const t = torresCondo.find((torre) => torre.id === (p.idTorre || p.id_torre));
+                            return (<option key={p.id} value={p.id}>{t?.nombre} - Piso {p.numeroPiso || p.numero_piso}</option>);
+                          })}
+                        </select>
                       </div>
-                      <div>
-                        <div className="form-group">
-                          <label className="form-label text-secondary fw-semibold text-sm mb-1">
-                            Piso
-                          </label>
-                          <select
-                            className="form-select"
-                            {...register("id_piso", { required: "Requerido" })}
-                          >
-                            <option value="">Selecciona piso...</option>
-                            {pisosCondo.map((p) => {
-                              const t = torresCondo.find(
-                                (torre) => torre.id === p.id_torre,
-                              );
-                              return (
-                                <option key={p.id} value={p.id}>
-                                  {t?.nombre} - Piso {p.numero_piso}
-                                </option>
-                              );
-                            })}
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label text-secondary fw-semibold text-sm mb-1">
-                        Propietario
-                      </label>
-                      <select
-                        className="form-select"
-                        {...register("id_usuario")}
-                      >
-                        <option value="">Sin asignar</option>
-                        {propietarios.map((u) => (
-                          <option key={u.id} value={u.id}>
-                            {u.nombre}
-                          </option>
-                        ))}
-                      </select>
                     </div>
                   </>
                 )}
-
                 <div className="flex justify-end gap-2 mt-4">
-                  <button
-                    type="button"
-                    className="btn btn-outline"
-                    onClick={() => setShowModal(false)}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                  >
-                    <Save size={14} /> Guardar
-                  </button>
+                  <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>Cancelar</button>
+                  <button type="submit" className="btn btn-primary"><Save size={14} /> Guardar</button>
                 </div>
               </form>
             </div>
@@ -434,13 +280,7 @@ const ACInfraestructuraPage = () => {
         </div>
       )}
 
-      <ConfirmDialog
-        show={showConfirmDelete}
-        onHide={() => setShowConfirmDelete(false)}
-        onConfirm={confirmDelete}
-        title="¿Confirmar eliminación?"
-        message="Esta acción es irreversible y podría afectar a elementos vinculados."
-      />
+      <ConfirmDialog show={showConfirmDelete} onHide={() => setShowConfirmDelete(false)} onConfirm={confirmDelete} title="\u00bfConfirmar eliminaci\u00f3n?" message="Esta acci\u00f3n es irreversible y podr\u00eda afectar a elementos vinculados." />
     </AnimatedPage>
   );
 };

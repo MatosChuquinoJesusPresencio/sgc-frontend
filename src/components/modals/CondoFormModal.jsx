@@ -1,18 +1,21 @@
-import { X, Building2, Save, Info } from "lucide-react";
+import { X, Building2, Save, Info, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useEffect } from "react";
 import FormInput from "../form/FormInput";
 
-const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers }) => {
+const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, countries, cities, onCountryChange, loadingCities, availableAdmins }) => {
   const {
     register,
     handleSubmit,
     reset,
     clearErrors,
+    watch,
     formState: { errors },
   } = useForm({
-    defaultValues: { nombre: "", pais: "", ciudad: "", direccion: "", id_administrador: "" },
+    defaultValues: { nombre: "", idPais: "", idCiudad: "", direccion: "", idAdministrador: "" },
   });
+
+  const selectedCountry = watch("idPais");
 
   useEffect(() => {
     if (show) {
@@ -20,16 +23,22 @@ const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers }) =>
       if (editingCondo) {
         reset({
           nombre: editingCondo.nombre,
-          pais: editingCondo.pais,
-          ciudad: editingCondo.ciudad,
+          idPais: editingCondo.idPais || "",
+          idCiudad: editingCondo.idCiudad || "",
           direccion: editingCondo.direccion,
-          id_administrador: editingCondo.id_administrador || "",
+          idAdministrador: editingCondo.idAdministrador || "",
         });
       } else {
-        reset({ nombre: "", pais: "", ciudad: "", direccion: "", id_administrador: "" });
+        reset({ nombre: "", idPais: "", idCiudad: "", direccion: "", idAdministrador: "" });
       }
     }
   }, [show, editingCondo, reset, clearErrors]);
+
+  useEffect(() => {
+    if (show && selectedCountry) {
+      onCountryChange?.(selectedCountry);
+    }
+  }, [selectedCountry, show, onCountryChange]);
 
   if (!show) return null;
 
@@ -39,7 +48,7 @@ const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers }) =>
         <div className="modal-header">
           <div className="modal-title">
             <div className="cell-icon primary">
-              {editingCondo ? <Building2 size={16} /> : <Building2 size={16} />}
+              <Building2 size={16} />
             </div>
             {editingCondo ? "Editar Condominio" : "Nuevo Condominio"}
           </div>
@@ -59,22 +68,6 @@ const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers }) =>
                 placeholder="Ej: Condominio Las Palmas"
               />
               <FormInput
-                label="País"
-                name="pais"
-                register={register}
-                validation={{ required: "El país es requerido" }}
-                error={errors.pais}
-                placeholder="Ej: Perú"
-              />
-              <FormInput
-                label="Ciudad"
-                name="ciudad"
-                register={register}
-                validation={{ required: "La ciudad es requerida" }}
-                error={errors.ciudad}
-                placeholder="Ej: Lima"
-              />
-              <FormInput
                 label="Dirección"
                 name="direccion"
                 register={register}
@@ -85,19 +78,49 @@ const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, adminUsers }) =>
             </div>
 
             <div className="form-group">
+              <label className="form-label">País</label>
+              <select
+                className="form-select"
+                {...register("idPais", { required: "El país es requerido" })}
+              >
+                <option value="">Seleccionar país...</option>
+                {(countries || []).map((c) => (
+                  <option key={c.id} value={c.id}>{c.nombre}</option>
+                ))}
+              </select>
+              {errors.idPais && <span className="text-danger text-xs">{errors.idPais.message}</span>}
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Ciudad</label>
+              <select
+                className="form-select"
+                {...register("idCiudad", { required: "La ciudad es requerida" })}
+                disabled={!selectedCountry || loadingCities}
+              >
+                <option value="">
+                  {loadingCities ? "Cargando ciudades..." : (selectedCountry ? "Seleccionar ciudad..." : "Seleccione un país primero")}
+                </option>
+                {(cities || []).map((c) => (
+                  <option key={c.id} value={c.id}>{c.nombre}</option>
+                ))}
+              </select>
+              {loadingCities && <Loader2 size={12} className="spinner mt-1" />}
+              {errors.idCiudad && <span className="text-danger text-xs">{errors.idCiudad.message}</span>}
+            </div>
+
+            <div className="form-group">
               <label className="form-label">Administrador del Condominio</label>
               <select
                 className="form-select"
-                {...register("id_administrador")}
+                {...register("idAdministrador")}
               >
                 <option value="">Seleccionar administrador...</option>
-                {adminUsers
-                  .filter((u) => !u.id_condominio || (editingCondo && u.id_condominio === editingCondo.id))
-                  .map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.nombre} ({u.email})
-                    </option>
-                  ))}
+                {(availableAdmins || []).map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.nombres} {u.apellidos} ({u.correo})
+                  </option>
+                ))}
               </select>
               <div className="flex items-center gap-1 mt-1">
                 <Info size={11} className="text-muted" />

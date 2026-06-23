@@ -37,6 +37,11 @@ import PRVehiculosPage from "../pages/propietario/PRVehiculosPage";
 import PRHistorialPage from "../pages/propietario/PRHistorialPage";
 import PRCarritosPage from "../pages/propietario/PRCarritosPage";
 
+import SEDashboardPage from "../pages/seguridad/SEDashboardPage";
+import SEEstacionamientosPage from "../pages/seguridad/SEEstacionamientosPage";
+import SEVehiculosPage from "../pages/seguridad/SEVehiculosPage";
+import SECarritosPage from "../pages/seguridad/SECarritosPage";
+
 const AppRouter = () => {
   const location = useLocation();
 
@@ -113,6 +118,16 @@ const AppRouter = () => {
             <Route path="vehiculos" element={<PRVehiculosPage />} />
             <Route path="carritos" element={<PRCarritosPage />} />
             <Route path="historial" element={<PRHistorialPage />} />
+          </Route>
+
+          <Route
+            path="/seguridad"
+            element={<RoleRoute allowedRoles={["AGENTE_SEGURIDAD"]} />}
+          >
+            <Route index element={<SEDashboardPage />} />
+            <Route path="estacionamientos" element={<SEEstacionamientosPage />} />
+            <Route path="vehiculos" element={<SEVehiculosPage />} />
+            <Route path="carritos" element={<SECarritosPage />} />
           </Route>
         </Route>
 

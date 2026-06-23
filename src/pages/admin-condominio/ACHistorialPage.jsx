@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import {
@@ -10,10 +10,11 @@ import {
   Home,
   User,
   Calendar,
+  Loader2,
 } from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
-import { useData } from "../../hooks/useData";
+import { adminCondominioService } from "../../services/adminCondominioService";
 
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
@@ -22,30 +23,16 @@ import DataTable from "../../components/ui/DataTable";
 import SearchBar from "../../components/ui/SearchBar";
 import { usePagination } from "../../hooks/usePagination";
 import { formatDateTime } from "../../utils/formatters";
-import NoCondoWarning from "../../components/ui/NoCondoWarning";
-import { useHistoryMappings } from "../../hooks/useHistoryMappings";
+
+const PAGE_SIZE = 10;
 
 const ACHistorialPage = () => {
   const { authUser } = useAuth();
-  const { getTable } = useData();
   const [searchParams] = useSearchParams();
 
-  const logsCarritos = getTable("logs_prestamo_carrito");
-  const logsVehiculos = getTable("logs_acceso_vehicular");
-  const carritos = getTable("carritos_carga");
-  const apartamentos = getTable("apartamentos");
-  const usuarios = getTable("usuarios");
-  const estacionamientos = getTable("estacionamientos");
-  const condominios = getTable("condominios");
-  const pisos = getTable("pisos");
-  const torres = getTable("torres");
-  const inquilinos = getTable("inquilinos_temporales");
-
-  const condominio = condominios.find((c) => c.id === authUser?.id_condominio);
-
-  if (!condominio) return <NoCondoWarning />;
-
-  const config = getTable("configuraciones").find((c) => c.id_condominio === condominio?.id);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [logsData, setLogsData] = useState({ items: [], total: 0 });
 
   const initialTab = searchParams.get("tab") || "carritos";
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -59,65 +46,57 @@ const ACHistorialPage = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [now, setNow] = useState(new Date());
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const typeMap = { carritos: "PRESTAMO_CARRITO", estacionamiento: "ACCESO_VEHICULAR" };
+
+  const fetchLogs = async () => {
+    try {
+      setLoading(true);
+      const params = {
+        type: typeMap[activeTab],
+        page: currentPage - 1,
+        size: PAGE_SIZE,
+        fechaInicio: undefined,
+        fechaFin: undefined,
+      };
+      const res = await adminCondominioService.getLogs(params);
+      setLogsData({
+        items: res.items || res || [],
+        total: res.total || (Array.isArray(res) ? res.length : 0),
+      });
+    } catch (err) {
+      setError(err.message || "Error al cargar historial.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60000);
-    return () => clearInterval(timer);
-  }, []);
+    fetchLogs();
+  }, [activeTab, currentPage]);
 
-  const { mappedCarritos, mappedEstacionamiento } = useHistoryMappings({
-    logsCarrito: logsCarritos,
-    logsEstacionamiento: logsVehiculos,
-    apartamentos,
-    estacionamientos,
-    carritos,
-    usuarios,
-    inquilinosTemporales: inquilinos,
-    torres,
-    pisos,
-    condominios,
-    configuraciones: getTable("configuraciones"),
-    config: config,
-    now,
-    idCondominioFilter: authUser?.id_condominio,
-  });
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchTerm, statusFilter]);
 
-  const filteredData = useMemo(() => {
-    const source =
-      activeTab === "carritos" ? mappedCarritos : mappedEstacionamiento;
+  const logs = useMemo(() => logsData.items || [], [logsData]);
+  const totalPages = Math.ceil(logsData.total / PAGE_SIZE) || 1;
 
-    return source.filter((item) => {
-      const matchesSearch =
-        activeTab === "carritos"
-          ? item.carritoNombre
-              .toLowerCase()
-              .includes(searchTerm.toLowerCase()) ||
-            item.aptoNumero.toLowerCase().includes(searchTerm.toLowerCase())
-          : item.placa.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.vehiculoInfo.toLowerCase().includes(searchTerm.toLowerCase());
+  if (loading && logs.length === 0) {
+    return (
+      <AnimatedPage>
+        <div className="page-container flex items-center justify-center" style={{ minHeight: 300 }}>
+          <Loader2 size={32} className="spinner" />
+        </div>
+      </AnimatedPage>
+    );
+  }
 
-      const matchesStatus =
-        statusFilter === "all" ||
-        (statusFilter === "active" ? !item.fecha_salida : item.fecha_salida);
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [
-    activeTab,
-    mappedCarritos,
-    mappedEstacionamiento,
-    searchTerm,
-    statusFilter,
-  ]);
-
-  const {
-    currentPage,
-    setCurrentPage,
-    totalPages,
-    paginatedData,
-    itemsPerPage,
-  } = usePagination(filteredData);
+  const stats = useMemo(() => ({
+    activos: logs.filter((l) => !l.fechaSalida && !l.fecha_salida).length,
+    total: logsData.total,
+  }), [logs, logsData.total]);
 
   return (
     <AnimatedPage>
@@ -125,182 +104,107 @@ const ACHistorialPage = () => {
         <DashboardHeader
           icon={ClipboardList}
           title="Historial"
-          badgeText={condominio?.nombre || "Condominio"}
-          welcomeText="Monitorea el historial de préstamos de carritos y el flujo de estacionamiento."
+          badgeText="Condominio"
+          welcomeText="Monitorea el historial de pr\u00e9stamos de carritos y el flujo de estacionamiento."
         />
 
+        {error && <div className="alert alert-danger mb-3">{error}</div>}
+
         <div className="grid grid-3 gap-4 mb-5">
-          <StatCard
-            icon={ShoppingCart}
-            label="Carritos en Uso"
-            value={mappedCarritos.filter((l) => !l.fecha_salida).length}
-            colorClass="primary-theme"
-          />
-          <StatCard
-            icon={Car}
-            label="Vehículos en Recinto"
-            value={
-              mappedEstacionamiento.filter((l) => !l.fecha_salida).length
-            }
-            colorClass="primary-theme"
-          />
-          <StatCard
-            icon={CheckCircle}
-            label="Total Operaciones"
-            value={filteredData.length}
-            colorClass="primary-theme"
-          />
+          <StatCard icon={ShoppingCart} label="Carritos en Uso" value={activeTab === "carritos" ? stats.activos : "-"} colorClass="primary-theme" />
+          <StatCard icon={Car} label="Veh\u00edculos en Recinto" value={activeTab === "estacionamiento" ? stats.activos : "-"} colorClass="primary-theme" />
+          <StatCard icon={CheckCircle} label="Total Operaciones" value={stats.total} colorClass="primary-theme" />
         </div>
 
         <DataTable
           headers={
             activeTab === "carritos"
               ? ["#", "Unidad", "Carrito", "Solicitante", "Salida", "Retorno", "Multa", "Estado"]
-              : [
-                  "#",
-                  "Vehículo / Placa",
-                  "Espacio",
-                  "Entrada",
-                  "Salida",
-                  "Estado",
-                ]
+              : ["#", "Veh\u00edculo / Placa", "Espacio", "Entrada", "Salida", "Estado"]
           }
-          isEmpty={paginatedData.length === 0}
-          emptyMessage={
-            activeTab === "carritos"
-              ? "No hay registros de carritos."
-              : "No hay registros de acceso vehicular."
-          }
+          isEmpty={logs.length === 0}
+          emptyMessage={activeTab === "carritos" ? "No hay registros de carritos." : "No hay registros de acceso vehicular."}
           emptyIcon={activeTab === "carritos" ? ShoppingCart : Car}
           searchBar={
             <>
               <div className="mb-4">
                 <div className="tabs">
-                  <button
-                    className={`tab ${activeTab === "carritos" ? "active" : ""}`}
-                    onClick={() => {
-                      setActiveTab("carritos");
-                      setStatusFilter("all");
-                      setSearchTerm("");
-                      setCurrentPage(1);
-                    }}
-                  >
-                    <ShoppingCart size={14} /> Préstamo de Carritos
+                  <button className={`tab ${activeTab === "carritos" ? "active" : ""}`} onClick={() => { setActiveTab("carritos"); setStatusFilter("all"); setSearchTerm(""); setCurrentPage(1); }}>
+                    <ShoppingCart size={14} /> Pr\u00e9stamo de Carritos
                   </button>
-                  <button
-                    className={`tab ${activeTab === "estacionamiento" ? "active" : ""}`}
-                    onClick={() => {
-                      setActiveTab("estacionamiento");
-                      setStatusFilter("all");
-                      setSearchTerm("");
-                      setCurrentPage(1);
-                    }}
-                  >
+                  <button className={`tab ${activeTab === "estacionamiento" ? "active" : ""}`} onClick={() => { setActiveTab("estacionamiento"); setStatusFilter("all"); setSearchTerm(""); setCurrentPage(1); }}>
                     <Car size={14} /> Historial de Estacionamiento
                   </button>
                 </div>
               </div>
-
               <div className="flex items-center gap-3">
                 <div style={{ flex: 9 }}>
                   <SearchBar
                     searchTerm={searchTerm}
-                    onSearchChange={(val) => {
-                      setSearchTerm(val);
-                      setCurrentPage(1);
-                    }}
-                    placeholder={
-                      activeTab === "carritos"
-                        ? "Buscar por carrito o unidad..."
-                        : "Buscar por placa o vehículo..."
-                    }
+                    onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                    placeholder={activeTab === "carritos" ? "Buscar por carrito o unidad..." : "Buscar por placa o veh\u00edculo..."}
                   />
                 </div>
                 <div style={{ flex: 3 }}>
-                  <select
-                    className="form-select"
-                    value={statusFilter}
-                    onChange={(e) => {
-                      setStatusFilter(e.target.value);
-                      setCurrentPage(1);
-                    }}
-                  >
+                  <select className="form-select" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}>
                     <option value="all">Todos los registros</option>
-                    <option value="active">
-                      {activeTab === "carritos"
-                        ? "En uso actualmente"
-                        : "Dentro del recinto"}
-                    </option>
-                    <option value="finished">
-                      {activeTab === "carritos"
-                        ? "Completados/Devueltos"
-                        : "Salidas registradas"}
-                    </option>
+                    <option value="active">{activeTab === "carritos" ? "En uso actualmente" : "Dentro del recinto"}</option>
+                    <option value="finished">{activeTab === "carritos" ? "Completados/Devueltos" : "Salidas registradas"}</option>
                   </select>
                 </div>
               </div>
             </>
           }
           paginationProps={{
-            currentPage,
-            totalPages,
-            onPageChange: setCurrentPage,
-            totalItems: filteredData.length,
-            itemsShowing: paginatedData.length,
+            currentPage, totalPages, onPageChange: setCurrentPage,
+            totalItems: logsData.total, itemsShowing: logs.length,
           }}
         >
-          {paginatedData.map((log, index) => {
-            const actualIndex = (currentPage - 1) * itemsPerPage + index + 1;
+          {logs.map((log, index) => {
+            const actualIndex = (currentPage - 1) * PAGE_SIZE + index + 1;
+            const fechaEntrada = log.fechaEntrada || log.fecha_entrada;
+            const fechaSalida = log.fechaSalida || log.fecha_salida;
+            const multa = log.multa || log.penalizacionCalculada || 0;
 
             if (activeTab === "carritos") {
               return (
                 <tr key={log.id}>
                   <td className="px-4 py-3 text-center">
-                    <span className="text-secondary fw-bold">
-                      {actualIndex.toString().padStart(2, "0")}
-                    </span>
+                    <span className="text-secondary fw-bold">{actualIndex.toString().padStart(2, "0")}</span>
                   </td>
                   <td className="py-3">
                     <div className="text-sm flex items-center gap-1">
-                      <Home size={12} className="text-muted" />{" "}
-                      {log.aptoNumero || log.id_apartamento}
+                      <Home size={12} className="text-muted" /> {log.numeroApartamento || log.aptoNumero || log.idApartamento || "-"}
                     </div>
                   </td>
                   <td className="py-3">
-                    <div className="text-sm fw-medium">
-                      {log.carritoNombre || `Carrito ${log.id_carrito}`}
-                    </div>
+                    <div className="text-sm fw-medium">{log.carritoNombre || log.carritoCodigo || `Carrito ${log.idCarrito || log.id_carrito}`}</div>
                   </td>
                   <td className="py-3">
                     <div className="text-sm text-muted flex items-center gap-1">
-                      <User size={12} />{" "}
-                      {log.usuarioNombre || log.solicitante}
+                      <User size={12} /> {log.solicitante || log.usuarioNombre || "N/A"}
                     </div>
                   </td>
                   <td className="py-3">
                     <div className="text-xs flex items-center gap-1">
-                      <Clock size={10} className="text-muted" />{" "}
-                      {formatDateTime(log.fecha_entrada)}
+                      <Clock size={10} className="text-muted" /> {fechaEntrada ? formatDateTime(fechaEntrada) : "-"}
                     </div>
                   </td>
                   <td className="py-3">
                     <div className="text-xs flex items-center gap-1">
-                      <Clock size={10} className="text-muted" />{" "}
-                      {log.fecha_salida ? formatDateTime(log.fecha_salida) : "---"}
+                      <Clock size={10} className="text-muted" /> {fechaSalida ? formatDateTime(fechaSalida) : "---"}
                     </div>
                   </td>
                   <td className="py-3">
-                    {log.penalizacionCalculada > 0 ? (
-                      <span className="text-danger fw-bold text-sm">
-                        S/. {log.penalizacionCalculada.toFixed(2)}
-                      </span>
+                    {multa > 0 ? (
+                      <span className="text-danger fw-bold text-sm">S/. {multa.toFixed(2)}</span>
                     ) : (
                       <span className="text-muted text-sm">S/. 0.00</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`badge ${log.fecha_salida ? "badge-success" : "badge-warning"}`}>
-                      {log.fecha_salida ? "Devuelto" : "En uso"}
+                    <span className={`badge ${fechaSalida ? "badge-success" : "badge-warning"}`}>
+                      {fechaSalida ? "Devuelto" : "En uso"}
                     </span>
                   </td>
                 </tr>
@@ -309,34 +213,28 @@ const ACHistorialPage = () => {
               return (
                 <tr key={log.id}>
                   <td className="px-4 py-3 text-center">
-                    <span className="text-secondary fw-bold">
-                      {actualIndex.toString().padStart(2, "0")}
-                    </span>
+                    <span className="text-secondary fw-bold">{actualIndex.toString().padStart(2, "0")}</span>
                   </td>
                   <td className="py-3">
-                    <div className="fw-bold text-sm">{log.placa}</div>
-                    <div className="text-xs text-muted">{log.vehiculoInfo}</div>
+                    <div className="fw-bold text-sm">{log.placa || "---"}</div>
+                    <div className="text-xs text-muted">{log.vehiculoInfo || log.metodo || ""}</div>
                   </td>
                   <td className="py-3 text-center">
-                    <span className="badge badge-neutral">
-                      {log.estacionamientoNumero || log.id_estacionamiento}
-                    </span>
+                    <span className="badge badge-neutral">{log.estacionamientoNumero || log.codigoEstacionamiento || log.idEstacionamiento || "-"}</span>
                   </td>
                   <td className="py-3">
                     <div className="text-xs flex items-center gap-1">
-                      <Calendar size={10} className="text-muted" />{" "}
-                      {formatDateTime(log.fecha_entrada)}
+                      <Calendar size={10} className="text-muted" /> {fechaEntrada ? formatDateTime(fechaEntrada) : "-"}
                     </div>
                   </td>
                   <td className="py-3">
                     <div className="text-xs flex items-center gap-1">
-                      <Calendar size={10} className="text-muted" />{" "}
-                      {formatDateTime(log.fecha_salida)}
+                      <Calendar size={10} className="text-muted" /> {fechaSalida ? formatDateTime(fechaSalida) : "-"}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`badge ${log.fecha_salida ? "badge-neutral" : "badge-info"}`}>
-                      {log.fecha_salida ? "Fuera" : "En recinto"}
+                    <span className={`badge ${fechaSalida ? "badge-neutral" : "badge-info"}`}>
+                      {fechaSalida ? "Fuera" : "En recinto"}
                     </span>
                   </td>
                 </tr>

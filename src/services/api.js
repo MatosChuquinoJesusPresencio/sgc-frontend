@@ -82,28 +82,25 @@ api.interceptors.response.use(
 
 export const fetchApi = async (endpoint, options = {}) => {
     try {
+        const { body, ...restOptions } = options;
         const response = await api({
             url: endpoint,
-            method: options.method || 'GET',
-            data: options.body ? JSON.parse(options.body) : undefined,
-            ...options
+            method: restOptions.method || 'GET',
+            ...restOptions,
+            data: body,
         });
         return response.data;
     } catch (error) {
         if (error.response) {
-            // The request was made and the server responded with a status code
-            // that falls out of the range of 2xx
             throw {
                 status: error.response.status,
                 message: error.response.data?.message || 'Error en la petición',
                 data: error.response.data
             };
         } else if (error.request) {
-            // The request was made but no response was received
             console.error('Network Error:', error.request);
             throw { message: 'No se pudo conectar con el servidor. Verifica tu conexión o intenta más tarde.' };
         } else {
-            // Something happened in setting up the request that triggered an Error
             throw { message: error.message };
         }
     }

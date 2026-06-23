@@ -1,89 +1,76 @@
-import { useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Home,
   Car,
   ShoppingCart,
   Users,
-  Clock,
   ArrowRight,
   Activity,
-  Key,
-  AlertTriangle,
+  Loader2,
 } from "lucide-react";
-import { useData } from "../../hooks/useData";
+import { propietarioService } from "../../services/propietarioService";
 import { useAuth } from "../../hooks/useAuth";
 import AnimatedPage from "../../components/animations/AnimatedPage";
 
 const PRDashboardPage = () => {
   const navigate = useNavigate();
-
-  const { getTable } = useData();
   const { authUser } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(null);
 
-  const apartamentos = getTable("apartamentos");
-  const vehiculos = getTable("vehiculos");
-  const logs_acceso_vehicular = getTable("logs_acceso_vehicular");
-  const logs_prestamo_carrito = getTable("logs_prestamo_carrito");
-  const inquilinos_temporales = getTable("inquilinos_temporales");
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const summary = await propietarioService.getDashboardSummary();
+        setData(summary);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
-  const currentUserId = authUser?.id;
-  const currentUser = authUser || { nombre: "Usuario", id: 0 };
+  const currentUser = authUser || { nombres: "Usuario", id: 0 };
+  const userName = currentUser.nombres || currentUser.nombre || "Usuario";
 
-  const myApartments = useMemo(
-    () => apartamentos.filter((a) => a.id_usuario === currentUserId),
-    [apartamentos, currentUserId]
-  );
-  const myApartmentIds = myApartments.map((a) => a.id);
+  if (loading) {
+    return (
+      <AnimatedPage>
+        <div className="page-container flex items-center justify-center" style={{ minHeight: 300 }}>
+          <Loader2 size={32} className="spinner" />
+        </div>
+      </AnimatedPage>
+    );
+  }
 
-  const myVehicles = useMemo(
-    () => vehiculos.filter((v) => v.id_usuario === currentUserId),
-    [vehiculos, currentUserId]
-  );
-  const myVehiclePlates = myVehicles.map((v) => v.placa);
+  const myApartments = data?.apartamentos || [];
+  const myVehicles = data?.vehiculos || [];
+  const myTenants = data?.inquilinos || [];
+  const activeLoan = data?.prestamoActivo;
+  const myRecentAccess = data?.accesosRecientes || [];
+  const myLoans = data?.prestamos || [];
 
-  const myTenants = useMemo(
-    () => inquilinos_temporales.filter((it) => myApartmentIds.includes(it.id_apartamento)),
-    [inquilinos_temporales, myApartmentIds]
-  );
-
-  const myRecentAccess = useMemo(
-    () => logs_acceso_vehicular
-      .filter((log) => myVehiclePlates.includes(log.placa))
-      .sort((a, b) => new Date(b.fecha_entrada) - new Date(a.fecha_entrada))
-      .slice(0, 5),
-    [logs_acceso_vehicular, myVehiclePlates]
-  );
-
-  const myLoans = useMemo(
-    () => logs_prestamo_carrito.filter((log) => log.id_usuario === currentUserId),
-    [logs_prestamo_carrito, currentUserId]
-  );
-
-  const activeLoan = myLoans.find((log) => !log.fecha_salida);
-  const recentLoans = useMemo(
-    () => [...myLoans].reverse().slice(0, 5),
-    [myLoans]
-  );
-
-  const myApartmentsWithDetails = myApartments.map((apt) => {
-    const aptVehicles = vehiculos.filter((v) => v.id_usuario === apt.id_usuario);
-    const aptTenants = inquilinos_temporales.filter((it) => it.id_apartamento === apt.id);
-    return { ...apt, vehicles: aptVehicles.length, tenants: aptTenants.length };
-  });
+  const myApartmentsWithDetails = myApartments.map((apt) => ({
+    ...apt,
+    vehicles: apt.cantidadVehiculos || 0,
+    tenants: apt.cantidadInquilinos || 0,
+  }));
 
   const quickLinks = [
     { label: "Mi Apartamento", sub: myApartments.length > 0 ? `${myApartments.length} unidad(es)` : "Ver detalles", icon: Home, color: "accent", path: "/propietario/mi-apartamento" },
-    { label: "Vehículos", sub: `${myVehicles.length} registrado(s)`, icon: Car, color: "success", path: "/propietario/vehiculos" },
-    { label: "Carritos", sub: activeLoan ? "1 préstamo activo" : "Solicitar carrito", icon: ShoppingCart, color: activeLoan ? "warning" : "info", path: "/propietario/carritos" },
-    { label: "Historial", sub: "Accesos y préstamos", icon: Activity, color: "info", path: "/propietario/historial" },
+    { label: "Veh\u00edculos", sub: `${myVehicles.length} registrado(s)`, icon: Car, color: "success", path: "/propietario/vehiculos" },
+    { label: "Carritos", sub: activeLoan ? "1 pr\u00e9stamo activo" : "Solicitar carrito", icon: ShoppingCart, color: activeLoan ? "warning" : "info", path: "/propietario/carritos" },
+    { label: "Historial", sub: "Accesos y pr\u00e9stamos", icon: Activity, color: "info", path: "/propietario/historial" },
   ];
 
   return (
     <AnimatedPage>
       <div className="page-container">
         <div className="greeting-banner">
-          <h1>¡Hola, {currentUser.nombre.split(" ")[0]}!</h1>
+          <h1>\u00a1Hola, {userName.split(" ")[0]}!</h1>
           <p>Bienvenido a tu portal personal de residente.</p>
         </div>
 
@@ -98,7 +85,7 @@ const PRDashboardPage = () => {
           <div className="stat-card">
             <div className="stat-icon success"><Car size={20} /></div>
             <div className="stat-content">
-              <div className="stat-label">Mis Vehículos</div>
+              <div className="stat-label">Mis Veh\u00edculos</div>
               <div className="stat-value">{myVehicles.length}</div>
             </div>
           </div>
@@ -114,7 +101,7 @@ const PRDashboardPage = () => {
               <ShoppingCart size={20} />
             </div>
             <div className="stat-content">
-              <div className="stat-label">Préstamo Activo</div>
+              <div className="stat-label">Pr\u00e9stamo Activo</div>
               <div className="stat-value">{activeLoan ? 1 : 0}</div>
             </div>
           </div>
@@ -135,7 +122,7 @@ const PRDashboardPage = () => {
                     <div className="feed-dot accent" />
                     <div className="feed-content">
                       <div className="feed-title">Apartamento {apt.numero}</div>
-                      <div className="feed-sub">{apt.metraje} m² • {apt.vehicles} vehículo(s) • {apt.tenants} inquilino(s)</div>
+                      <div className="feed-sub">{apt.metraje} m\u00b2 \u2022 {apt.vehicles} veh\u00edculo(s) \u2022 {apt.tenants} inquilino(s)</div>
                     </div>
                   </div>
                 ))
@@ -156,13 +143,13 @@ const PRDashboardPage = () => {
               {myRecentAccess.length > 0 ? (
                 myRecentAccess.map((log) => (
                   <div key={log.id} className="feed-item">
-                    <div className={`feed-dot ${log.fecha_salida ? "inactive" : "active"}`} />
+                    <div className={`feed-dot ${log.fechaSalida || log.fecha_salida ? "inactive" : "active"}`} />
                     <div className="feed-content">
                       <div className="feed-title">{log.placa}</div>
-                      <div className="feed-sub">{log.metodo}</div>
+                      <div className="feed-sub">{log.metodo || ""}</div>
                     </div>
                     <div className="feed-meta">
-                      {new Date(log.fecha_entrada).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      {new Date(log.fechaEntrada || log.fecha_entrada).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </div>
                   </div>
                 ))
@@ -174,7 +161,7 @@ const PRDashboardPage = () => {
 
           <div className="widget-card">
             <div className="widget-header">
-              <span className="widget-title"><ShoppingCart size={16} /> Préstamos de Carritos</span>
+              <span className="widget-title"><ShoppingCart size={16} /> Pr\u00e9stamos de Carritos</span>
               <button className="btn btn-ghost btn-sm" onClick={() => navigate("/propietario/historial?tab=carritos")}>
                 Ver historial <ArrowRight size={14} />
               </button>
@@ -182,33 +169,33 @@ const PRDashboardPage = () => {
             <div className="widget-body">
               {activeLoan ? (
                 <div className="status-banner warning mb-3">
-                  <Clock size={16} />
+                  <ShoppingCart size={16} />
                   Tienes un carrito prestado actualmente
                 </div>
               ) : null}
-              {recentLoans.length > 0 ? (
-                recentLoans.map((loan) => (
+              {myLoans.length > 0 ? (
+                myLoans.slice(0, 5).map((loan) => (
                   <div key={loan.id} className="feed-item">
-                    <div className={`feed-dot ${loan.fecha_salida ? "inactive" : "warning"}`} />
+                    <div className={`feed-dot ${loan.fechaSalida || loan.fecha_salida ? "inactive" : "warning"}`} />
                     <div className="feed-content">
-                      <div className="feed-title">Carrito #{loan.id_carrito}</div>
+                      <div className="feed-title">Carrito #{loan.idCarrito || loan.id_carrito}</div>
                       <div className="feed-sub">
-                        {loan.fecha_salida ? "Devuelto" : "En uso"} • {new Date(loan.fecha_entrada).toLocaleDateString()}
+                        {loan.fechaSalida || loan.fecha_salida ? "Devuelto" : "En uso"} \u2022 {new Date(loan.fechaEntrada || loan.fecha_entrada).toLocaleDateString()}
                       </div>
                     </div>
                     <div className="feed-meta">
-                      {loan.fecha_salida
-                        ? new Date(loan.fecha_salida).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                      {loan.fechaSalida || loan.fecha_salida
+                        ? new Date(loan.fechaSalida || loan.fecha_salida).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
                         : "En curso"}
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="empty-feed">Sin préstamos de carritos.</div>
+                <div className="empty-feed">Sin pr\u00e9stamos de carritos.</div>
               )}
               <div style={{ marginTop: 12 }}>
                 <button className="btn btn-primary w-full" onClick={() => navigate("/propietario/carritos")}>
-                  {activeLoan ? "Gestionar Préstamo" : "Solicitar Carrito"} <ArrowRight size={14} />
+                  {activeLoan ? "Gestionar Pr\u00e9stamo" : "Solicitar Carrito"} <ArrowRight size={14} />
                 </button>
               </div>
             </div>
@@ -231,7 +218,7 @@ const PRDashboardPage = () => {
                       <div className="feed-sub">DNI: {t.dni}</div>
                     </div>
                     <div className="feed-meta">
-                      Apto {apartamentos.find((a) => a.id === t.id_apartamento)?.numero || "N/A"}
+                      Apto {t.numeroApartamento || "-"}
                     </div>
                   </div>
                 ))
@@ -243,7 +230,7 @@ const PRDashboardPage = () => {
         </div>
 
         <div style={{ marginTop: 20 }}>
-          <h3 className="widget-title mb-4">Acceso Rápido</h3>
+          <h3 className="widget-title mb-4">Acceso R\u00e1pido</h3>
           <div className="dashboard-grid-3">
             {quickLinks.map((link) => (
               <div key={link.label} className="quick-link-card" onClick={() => navigate(link.path)}>

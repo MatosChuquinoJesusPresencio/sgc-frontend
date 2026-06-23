@@ -34,11 +34,11 @@ const ChangePasswordPage = () => {
 
     try {
       await fetchApi("/auth/change-password", {
-        method: "POST",
-        body: JSON.stringify({
-          currentPassword: data.currentPassword,
-          newPassword: data.newPassword,
-        }),
+        method: "PUT",
+        body: {
+          contrasenaActual: data.currentPassword,
+          nuevaContrasena: data.newPassword,
+        },
       });
 
       setSuccess(true);

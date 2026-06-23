@@ -14,11 +14,11 @@ import {
   User,
   Clock,
   X,
-  Save,
+  Loader2,
 } from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
-import { useData } from "../../hooks/useData";
+import { adminCondominioService } from "../../services/adminCondominioService";
 
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
@@ -26,33 +26,15 @@ import AnimatedPage from "../../components/animations/AnimatedPage";
 import FormInput from "../../components/form/FormInput";
 import SearchBar from "../../components/ui/SearchBar";
 import DataTable from "../../components/ui/DataTable";
-import NoCondoWarning from "../../components/ui/NoCondoWarning";
 import { usePagination } from "../../hooks/usePagination";
 import ConfirmDialog from "../../components/modals/ConfirmDialog";
 import { formatDateTime } from "../../utils/formatters";
 
 const ACCarritosPage = () => {
   const { authUser } = useAuth();
-  const { getTable, updateTable } = useData();
-
-  const carritos = getTable("carritos_carga");
-  const logsPrestamos = getTable("logs_prestamo_carrito");
-  const usuarios = getTable("usuarios");
-  const apartamentos = getTable("apartamentos");
-  const inquilinos = getTable("inquilinos_temporales");
-  const configuraciones = getTable("configuraciones");
-
-  const condominio = getTable("condominios").find(
-    (c) => c.id === authUser?.id_condominio,
-  );
-
-  const config = useMemo(
-    () =>
-      configuraciones.find((c) => c.id_condominio === authUser?.id_condominio),
-    [configuraciones, authUser],
-  );
-
-  if (!condominio) return <NoCondoWarning />;
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [assets, setAssets] = useState([]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -78,114 +60,88 @@ const ACCarritosPage = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const carritosCondo = useMemo(() => {
-    return carritos
-      .filter((c) => c.id_condominio === condominio.id)
-      .map((c) => {
-        const activeLoan = logsPrestamos.find(
-          (log) => log.id_carrito === c.id && log.fecha_salida === null,
-        );
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const res = await adminCondominioService.getAssets();
+      setAssets(Array.isArray(res) ? res : []);
+    } catch (err) {
+      setError(err.message || "Error al cargar datos.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const carritosCondo = useMemo(() => {
+    return (assets || [])
+      .filter((a) => (a.tipo || "").toUpperCase() === "CARRITO" || !a.tipo)
+      .map((c) => {
+        const activeLoan = c.prestamoActivo || c.activeLoan || null;
         let currentUser = null;
         let fine = 0;
-
         if (activeLoan) {
-          if (activeLoan.id_usuario) {
-            currentUser = usuarios.find((u) => u.id === activeLoan.id_usuario);
-          } else if (activeLoan.id_inquilino_temporal) {
-            currentUser = inquilinos.find(
-              (i) => i.id === activeLoan.id_inquilino_temporal,
-            );
-          }
-          const apto = apartamentos.find(
-            (a) => a.id === activeLoan.id_apartamento,
-          );
-
-          if (config) {
-            const startDate = new Date(activeLoan.fecha_entrada);
-            const diffMs = now - startDate;
-            const diffMins = Math.floor(diffMs / 60000);
-
-            if (diffMins > config.tiempo_max_prestamo_min) {
-              fine =
-                (diffMins - config.tiempo_max_prestamo_min) *
-                config.penalizacion_por_minuto;
-            }
-          }
-
           currentUser = {
-            ...currentUser,
-            aptoNumero: apto?.numero,
-            fechaEntrada: activeLoan.fecha_entrada,
-            solicitante: activeLoan.solicitante,
-            fine,
+            nombre: activeLoan.usuario?.nombres
+              ? `${activeLoan.usuario.nombres} ${activeLoan.usuario.apellidos || ""}`.trim()
+              : activeLoan.solicitante || activeLoan.usuario?.nombre || "Desconocido",
+            aptoNumero: activeLoan.apartamento?.numero || activeLoan.numeroApartamento || "-",
+            fechaEntrada: activeLoan.fechaSalida || activeLoan.fecha_entrada || activeLoan.fechaEntrada,
+            solicitante: activeLoan.solicitante || "Propietario",
+            fine: activeLoan.multa || 0,
           };
+          fine = activeLoan.multa || 0;
         }
-
         return {
-          ...c,
+          id: c.id,
+          codigo: c.codigo || c.numero || c.nombre,
+          estado: c.estado || "Disponible",
           currentUser,
           activeLoan,
           fine,
         };
       });
-  }, [
-    carritos,
-    condominio,
-    logsPrestamos,
-    usuarios,
-    apartamentos,
-    inquilinos,
-    config,
-    now,
-  ]);
+  }, [assets]);
 
-  const stats = useMemo(
-    () => ({
-      total: carritosCondo.length,
-      disponibles: carritosCondo.filter((c) => c.estado === "Disponible")
-        .length,
-      enUso: carritosCondo.filter((c) => c.estado === "En uso").length,
-      mantenimiento: carritosCondo.filter((c) => c.estado === "Mantenimiento")
-        .length,
-    }),
-    [carritosCondo],
-  );
+  const stats = useMemo(() => ({
+    total: carritosCondo.length,
+    disponibles: carritosCondo.filter((c) => c.estado === "Disponible").length,
+    enUso: carritosCondo.filter((c) => c.estado === "En uso").length,
+    mantenimiento: carritosCondo.filter((c) => c.estado === "Mantenimiento").length,
+  }), [carritosCondo]);
 
   const filteredCarritos = useMemo(() => {
     return carritosCondo.filter((c) => {
-      const matchesSearch = c.codigo
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
+      const matchesSearch = c.codigo?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === "all" || c.estado === statusFilter;
-
       return matchesSearch && matchesStatus;
     });
   }, [carritosCondo, searchTerm, statusFilter]);
 
-  const {
-    currentPage,
-    setCurrentPage,
-    totalPages,
-    paginatedData,
-    itemsPerPage,
-  } = usePagination(filteredCarritos);
+  const { currentPage, setCurrentPage, totalPages, paginatedData, itemsPerPage } = usePagination(filteredCarritos);
+
+  if (loading) {
+    return (
+      <AnimatedPage>
+        <div className="page-container flex items-center justify-center" style={{ minHeight: 300 }}>
+          <Loader2 size={32} className="spinner" />
+        </div>
+      </AnimatedPage>
+    );
+  }
 
   const handleOpenCreate = () => {
     setEditingCarrito(null);
-    reset({
-      codigo: "",
-      estado: "Disponible",
-    });
+    reset({ codigo: "", estado: "Disponible" });
     setShowFormModal(true);
   };
 
   const handleOpenEdit = (carrito) => {
     setEditingCarrito(carrito);
-    reset({
-      codigo: carrito.codigo,
-      estado: carrito.estado,
-    });
+    reset({ codigo: carrito.codigo, estado: carrito.estado });
     setShowFormModal(true);
   };
 
@@ -200,59 +156,48 @@ const ACCarritosPage = () => {
     setShowDeleteModal(true);
   };
 
-  const onSubmit = (data) => {
-    if (editingCarrito) {
-      const updated = carritos.map((c) =>
-        c.id === editingCarrito.id
-          ? {
-            ...c,
-            codigo: data.codigo,
-            estado: data.estado,
-          }
-          : c,
-      );
-      updateTable("carritos_carga", updated);
-    } else {
-      const newId =
-        carritos.length > 0 ? Math.max(...carritos.map((c) => c.id)) + 1 : 1;
-      const newCarrito = {
-        id: newId,
-        id_condominio: condominio.id,
-        codigo: data.codigo,
-        estado: data.estado,
-      };
-      updateTable("carritos_carga", [...carritos, newCarrito]);
+  const onSubmit = async (data) => {
+    try {
+      if (editingCarrito) {
+        await adminCondominioService.updateAssetStatus(editingCarrito.id, {
+          codigo: data.codigo,
+          estado: data.estado,
+        });
+      } else {
+        await adminCondominioService.createAsset({
+          tipo: "CARRITO",
+          codigo: data.codigo,
+          estado: data.estado,
+        });
+      }
+      setShowFormModal(false);
+      fetchData();
+    } catch (err) {
+      setError(err.message || "Error al guardar.");
     }
-    setShowFormModal(false);
   };
 
-  const confirmDelete = () => {
-    if (carritoToDelete) {
-      const updated = carritos.filter((c) => c.id !== carritoToDelete.id);
-      updateTable("carritos_carga", updated);
+  const confirmDelete = async () => {
+    try {
+      await adminCondominioService.deleteAsset(carritoToDelete.id);
       setShowDeleteModal(false);
       setCarritoToDelete(null);
+      fetchData();
+    } catch (err) {
+      setError(err.message || "Error al eliminar.");
     }
   };
 
   const getStatusBadge = (status) => {
     switch (status) {
       case "Disponible":
-        return (
-          <span className="badge badge-success">Disponible</span>
-        );
+        return <span className="badge badge-success">Disponible</span>;
       case "En uso":
-        return (
-          <span className="badge badge-info">En uso</span>
-        );
+        return <span className="badge badge-info">En uso</span>;
       case "Mantenimiento":
-        return (
-          <span className="badge badge-warning">Mantenimiento</span>
-        );
+        return <span className="badge badge-warning">Mantenimiento</span>;
       default:
-        return (
-          <span className="badge badge-neutral">{status}</span>
-        );
+        return <span className="badge badge-neutral">{status}</span>;
     }
   };
 
@@ -261,55 +206,26 @@ const ACCarritosPage = () => {
       <div className="page-container">
         <DashboardHeader
           icon={ShoppingCart}
-          title="Gestión de Carritos de Carga"
-          badgeText={condominio?.nombre || "Condominio"}
+          title="Gesti\u00f3n de Carritos de Carga"
+          badgeText="Condominio"
           welcomeText="Administra la flota de carritos disponibles para los residentes y monitorea su estado operativo."
         >
-          <button
-            className="btn btn-primary"
-            onClick={handleOpenCreate}
-          >
-            <PlusCircle size={16} />
-            <span>Nuevo Carrito</span>
+          <button className="btn btn-primary" onClick={handleOpenCreate}>
+            <PlusCircle size={16} /><span>Nuevo Carrito</span>
           </button>
         </DashboardHeader>
 
+        {error && <div className="alert alert-danger mb-3">{error}</div>}
+
         <div className="grid grid-4 gap-4 mb-5">
-          <StatCard
-            icon={ShoppingCart}
-            label="Total Carritos"
-            value={stats.total}
-            colorClass="primary-theme"
-          />
-          <StatCard
-            icon={CheckCircle}
-            label="Disponibles"
-            value={stats.disponibles}
-            colorClass="primary-theme"
-          />
-          <StatCard
-            icon={Info}
-            label="En Uso"
-            value={stats.enUso}
-            colorClass="primary-theme"
-          />
-          <StatCard
-            icon={Wrench}
-            label="En Mantenimiento"
-            value={stats.mantenimiento}
-            colorClass="primary-theme"
-          />
+          <StatCard icon={ShoppingCart} label="Total Carritos" value={stats.total} colorClass="primary-theme" />
+          <StatCard icon={CheckCircle} label="Disponibles" value={stats.disponibles} colorClass="primary-theme" />
+          <StatCard icon={Info} label="En Uso" value={stats.enUso} colorClass="primary-theme" />
+          <StatCard icon={Wrench} label="En Mantenimiento" value={stats.mantenimiento} colorClass="primary-theme" />
         </div>
 
         <DataTable
-          headers={[
-            "#",
-            "Código de Carrito",
-            "Estado Actual",
-            "Usuario Actual",
-            "Multa (S/)",
-            "Acciones",
-          ]}
+          headers={["#", "C\u00f3digo de Carrito", "Estado Actual", "Usuario Actual", "Multa (S/)", "Acciones"]}
           isEmpty={paginatedData.length === 0}
           emptyMessage="No se encontraron carritos registrados."
           emptyIcon={ShoppingCart}
@@ -317,7 +233,7 @@ const ACCarritosPage = () => {
             <SearchBar
               searchTerm={searchTerm}
               onSearchChange={setSearchTerm}
-              placeholder="Buscar por código (Ej: C001)..."
+              placeholder="Buscar por c\u00f3digo (Ej: C001)..."
               filterValue={statusFilter}
               onFilterChange={setStatusFilter}
               filterOptions={[
@@ -330,11 +246,8 @@ const ACCarritosPage = () => {
             />
           }
           paginationProps={{
-            currentPage: currentPage,
-            totalPages: totalPages,
-            onPageChange: setCurrentPage,
-            totalItems: filteredCarritos.length,
-            itemsShowing: paginatedData.length,
+            currentPage, totalPages, onPageChange: setCurrentPage,
+            totalItems: filteredCarritos.length, itemsShowing: paginatedData.length,
           }}
         >
           {paginatedData.map((carrito, index) => {
@@ -342,15 +255,11 @@ const ACCarritosPage = () => {
             return (
               <tr key={carrito.id}>
                 <td className="px-4 py-3 text-center">
-                  <span className="text-secondary fw-bold">
-                    {actualIndex.toString().padStart(2, "0")}
-                  </span>
+                  <span className="text-secondary fw-bold">{actualIndex.toString().padStart(2, "0")}</span>
                 </td>
                 <td className="py-3">
                   <div className="flex items-center gap-3">
-                    <div className="cell-icon primary">
-                      <ShoppingCart size={14} />
-                    </div>
+                    <div className="cell-icon primary"><ShoppingCart size={14} /></div>
                     <div>
                       <div className="fw-bold">{carrito.codigo}</div>
                       <div className="text-xs text-muted">ID: {carrito.id}</div>
@@ -361,48 +270,29 @@ const ACCarritosPage = () => {
                 <td className="py-3">
                   {carrito.currentUser ? (
                     <div>
-                      <div className="text-sm fw-bold">
-                        {carrito.currentUser.nombre}
-                      </div>
-                      <div className="text-xs text-muted">
-                        Apto {carrito.currentUser.aptoNumero}
-                      </div>
+                      <div className="text-sm fw-bold">{carrito.currentUser.nombre}</div>
+                      <div className="text-xs text-muted">Apto {carrito.currentUser.aptoNumero}</div>
                     </div>
                   ) : (
-                    <span className="text-muted text-sm">—</span>
+                    <span className="text-muted text-sm">\u2014</span>
                   )}
                 </td>
                 <td className="py-3">
                   {carrito.fine > 0 ? (
-                    <span className="badge badge-danger">
-                      S/. {carrito.fine.toFixed(2)}
-                    </span>
+                    <span className="badge badge-danger">S/. {carrito.fine.toFixed(2)}</span>
                   ) : (
                     <span className="text-muted text-sm">S/ 0.00</span>
                   )}
                 </td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex justify-end gap-2">
-                    <button
-                      className="btn btn-outline btn-sm"
-                      onClick={() => handleOpenDetails(carrito)}
-                      disabled={!carrito.currentUser}
-                    >
+                    <button className="btn btn-outline btn-sm" onClick={() => handleOpenDetails(carrito)} disabled={!carrito.currentUser}>
                       <Eye size={14} /> <span>Detalles</span>
                     </button>
-
-                    <button
-                      className="btn btn-outline btn-sm"
-                      onClick={() => handleOpenEdit(carrito)}
-                    >
+                    <button className="btn btn-outline btn-sm" onClick={() => handleOpenEdit(carrito)}>
                       <Edit3 size={14} /> <span>Editar</span>
                     </button>
-
-                    <button
-                      className="btn btn-outline btn-sm"
-                      onClick={() => handleOpenDelete(carrito)}
-                      disabled={carrito.estado === "En uso"}
-                    >
+                    <button className="btn btn-outline btn-sm" onClick={() => handleOpenDelete(carrito)} disabled={carrito.estado === "En uso"}>
                       <Trash2 size={14} /> <span>Eliminar</span>
                     </button>
                   </div>
@@ -417,59 +307,26 @@ const ACCarritosPage = () => {
         <div className="modal-overlay" onClick={() => setShowFormModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <div className="modal-title">
-                {editingCarrito ? "Editar Carrito" : "Nuevo Carrito"}
-              </div>
-              <button className="modal-close" onClick={() => setShowFormModal(false)}>
-                <X size={16} />
-              </button>
+              <div className="modal-title">{editingCarrito ? "Editar Carrito" : "Nuevo Carrito"}</div>
+              <button className="modal-close" onClick={() => setShowFormModal(false)}><X size={16} /></button>
             </div>
             <form onSubmit={handleSubmit(onSubmit)}>
               <div className="modal-body">
                 <div className="grid-2 gap-3">
-                  <div>
-                    <FormInput
-                      label="Código del Carrito"
-                      name="codigo"
-                      register={register}
-                      validation={{ required: "El código es requerido" }}
-                      error={errors.codigo}
-                      placeholder="Ej: C-101"
-                    />
-                  </div>
-                  <div>
-                    <div className="form-group">
-                      <label className="form-label fw-semibold text-sm text-secondary">
-                        Estado Inicial
-                      </label>
-                      <select
-                        className="form-select"
-                        {...register("estado", {
-                          required: "El estado es requerido",
-                        })}
-                      >
-                        <option value="Disponible">Disponible</option>
-                        <option value="En uso">En uso</option>
-                        <option value="Mantenimiento">Mantenimiento</option>
-                      </select>
-                    </div>
+                  <FormInput label="C\u00f3digo del Carrito" name="codigo" register={register} validation={{ required: "Requerido" }} error={errors.codigo} placeholder="Ej: C-101" />
+                  <div className="form-group">
+                    <label className="form-label fw-semibold text-sm text-secondary">Estado Inicial</label>
+                    <select className="form-select" {...register("estado", { required: "Requerido" })}>
+                      <option value="Disponible">Disponible</option>
+                      <option value="En uso">En uso</option>
+                      <option value="Mantenimiento">Mantenimiento</option>
+                    </select>
                   </div>
                 </div>
               </div>
               <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-outline"
-                  onClick={() => setShowFormModal(false)}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                >
-                  {editingCarrito ? "Guardar Cambios" : "Crear Carrito"}
-                </button>
+                <button type="button" className="btn btn-outline" onClick={() => setShowFormModal(false)}>Cancelar</button>
+                <button type="submit" className="btn btn-primary">{editingCarrito ? "Guardar Cambios" : "Crear Carrito"}</button>
               </div>
             </form>
           </div>
@@ -480,8 +337,8 @@ const ACCarritosPage = () => {
         show={showDeleteModal}
         onHide={() => setShowDeleteModal(false)}
         onConfirm={confirmDelete}
-        title="Confirmar Eliminación"
-        message={`¿Estás seguro de que deseas eliminar el carrito ${carritoToDelete?.codigo}?`}
+        title="Confirmar Eliminaci\u00f3n"
+        message={"\u00bfEst\u00e1s seguro de que deseas eliminar el carrito " + (carritoToDelete?.codigo || "") + "?"}
       />
 
       {showDetailsModal && (
@@ -491,58 +348,39 @@ const ACCarritosPage = () => {
               <div className="modal-title flex items-center gap-2">
                 <Info size={16} /> Detalle de Uso
               </div>
-              <button className="modal-close" onClick={() => setShowDetailsModal(false)}>
-                <X size={16} />
-              </button>
+              <button className="modal-close" onClick={() => setShowDetailsModal(false)}><X size={16} /></button>
             </div>
             <div className="modal-body">
               <div className="flex items-center gap-3 p-3 mb-4">
-                <div className="cell-icon primary">
-                  <ShoppingCart size={24} />
-                </div>
+                <div className="cell-icon primary"><ShoppingCart size={24} /></div>
                 <div>
-                  <div className="fw-bold">
-                    Carrito {selectedCarrito?.codigo}
-                  </div>
-                  <div className="text-sm text-muted">
-                    ID Sistema: {selectedCarrito?.id}
-                  </div>
+                  <div className="fw-bold">Carrito {selectedCarrito?.codigo}</div>
+                  <div className="text-sm text-muted">ID Sistema: {selectedCarrito?.id}</div>
                 </div>
               </div>
-
               {selectedCarrito?.currentUser ? (
                 <div className="flex flex-col gap-4">
                   <section>
-                    <h6 className="fw-bold text-secondary mb-3 text-sm">
-                      Usuario en Posesión
-                    </h6>
+                    <h6 className="fw-bold text-secondary mb-3 text-sm">Usuario en Posesi\u00f3n</h6>
                     <div className="flex items-center gap-3 p-3">
-                      <div className="cell-icon primary">
-                        <User size={14} />
-                      </div>
+                      <div className="cell-icon primary"><User size={14} /></div>
                       <div style={{ flex: 1 }}>
-                        <div className="fw-bold">
-                          {selectedCarrito.currentUser.nombre}
-                        </div>
+                        <div className="fw-bold">{selectedCarrito.currentUser.nombre}</div>
                         <div className="text-sm text-muted">
-                          {selectedCarrito.currentUser.solicitante} • Apto{" "}
-                          {selectedCarrito.currentUser.aptoNumero}
+                          {selectedCarrito.currentUser.solicitante} \u2022 Apto {selectedCarrito.currentUser.aptoNumero}
                         </div>
                       </div>
                     </div>
                   </section>
-
                   <section>
-                    <h6 className="fw-bold text-secondary mb-3 text-sm">
-                      Detalles del Préstamo
-                    </h6>
+                    <h6 className="fw-bold text-secondary mb-3 text-sm">Detalles del Pr\u00e9stamo</h6>
                     <div className="p-3">
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-sm text-muted flex items-center gap-2">
                           <Clock size={12} className="text-accent" /> Fecha de Salida
                         </div>
                         <div className="text-sm fw-bold">
-                          {formatDateTime(selectedCarrito.currentUser.fechaEntrada)}
+                          {selectedCarrito.currentUser.fechaEntrada ? formatDateTime(selectedCarrito.currentUser.fechaEntrada) : "-"}
                         </div>
                       </div>
                       {selectedCarrito.fine > 0 && (
@@ -550,13 +388,11 @@ const ACCarritosPage = () => {
                           <div className="text-sm flex items-center gap-2">
                             <AlertTriangle size={12} /> Multa Acumulada
                           </div>
-                          <div className="text-sm fw-bold">
-                            S/ {selectedCarrito.fine.toFixed(2)}
-                          </div>
+                          <div className="text-sm fw-bold">S/ {selectedCarrito.fine.toFixed(2)}</div>
                         </div>
                       )}
                       <div className="flex items-center justify-between pt-2">
-                        <div className="text-sm text-muted">Estado del Préstamo</div>
+                        <div className="text-sm text-muted">Estado del Pr\u00e9stamo</div>
                         <span className="badge badge-info">Activo</span>
                       </div>
                     </div>
@@ -566,19 +402,12 @@ const ACCarritosPage = () => {
                 <div className="text-center py-4">
                   <CheckCircle className="text-success mb-2" size={32} />
                   <div className="fw-bold">Carrito Disponible</div>
-                  <p className="text-muted text-sm">
-                    Este carrito no se encuentra en uso actualmente.
-                  </p>
+                  <p className="text-muted text-sm">Este carrito no se encuentra en uso actualmente.</p>
                 </div>
               )}
             </div>
             <div className="modal-footer">
-              <button
-                className="btn btn-primary w-full"
-                onClick={() => setShowDetailsModal(false)}
-              >
-                Entendido
-              </button>
+              <button className="btn btn-primary w-full" onClick={() => setShowDetailsModal(false)}>Entendido</button>
             </div>
           </div>
         </div>

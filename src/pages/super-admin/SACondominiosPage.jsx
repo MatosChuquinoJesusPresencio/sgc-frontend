@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Building2,
-  Eye,
   Edit3,
   PlusCircle,
   Globe,
@@ -10,124 +9,185 @@ import {
   Calendar,
   Trash2,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
-import { useData } from "../../hooks/useData";
-import { usePagination } from "../../hooks/usePagination";
+import { superAdminService } from "../../services/superAdminService";
+import { catalogService } from "../../services/catalogService";
 
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import AnimatedPage from "../../components/animations/AnimatedPage";
-import CondoDetailModal from "../../components/modals/CondoDetailModal";
 import CondoFormModal from "../../components/modals/CondoFormModal";
 import CondoRelationsModal from "../../components/modals/CondoRelationsModal";
 import ConfirmDialog from "../../components/modals/ConfirmDialog";
 import SearchBar from "../../components/ui/SearchBar";
 import DataTable from "../../components/ui/DataTable";
 
+const PAGE_SIZE = 10;
+
 const SACondominiosPage = () => {
   const { authUser } = useAuth();
-  const { getTable, updateTable } = useData();
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const [condominios, setCondominios] = useState([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const [countries, setCountries] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [loadingCities, setLoadingCities] = useState(false);
+  const [availableAdmins, setAvailableAdmins] = useState([]);
 
   const [showModal, setShowModal] = useState(false);
   const [editingCondo, setEditingCondo] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedCondo, setSelectedCondo] = useState(null);
   const [showRelationsModal, setShowRelationsModal] = useState(false);
   const [condoToDelete, setCondoToDelete] = useState(null);
   const [relations, setRelations] = useState([]);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
-  const condominios = getTable("condominios");
-  const usuarios = getTable("usuarios");
-  const adminUsers = usuarios.filter((u) => u.id_rol === 2);
-
-  const filteredCondominios = condominios.filter(
-    (condo) =>
-      condo.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      condo.pais.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      condo.ciudad.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
-
-  const { currentPage, setCurrentPage, totalPages, paginatedData: currentItems, itemsPerPage } = usePagination(filteredCondominios);
-
-  const handleDetailClick = (condo) => {
-    setSelectedCondo(condo);
-    setShowDetailModal(true);
-  };
-
-  const handleDeleteClick = (condo) => {
-    const foundRelations = [];
-    const users = getTable("usuarios").filter((u) => u.id_condominio === condo.id);
-    if (users.length > 0) foundRelations.push(`${users.length} Usuario(s) registrados`);
-    const towers = getTable("torres").filter((t) => t.id_condominio === condo.id);
-    if (towers.length > 0) foundRelations.push(`${towers.length} Torre(s) / Bloque(s)`);
-    const configs = getTable("configuraciones").filter((c) => c.id_condominio === condo.id);
-    if (configs.length > 0) foundRelations.push("Configuración del sistema activa");
-    const carts = getTable("carritos_carga").filter((c) => c.id_condominio === condo.id);
-    if (carts.length > 0) foundRelations.push(`${carts.length} Carrito(s) de carga`);
-
-    setCondoToDelete(condo);
-    setRelations(foundRelations);
-    if (foundRelations.length > 0) {
-      setShowRelationsModal(true);
-    } else {
-      setShowConfirmDelete(true);
+  const fetchCondominiums = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await superAdminService.getCondominiums({
+        search: searchTerm || undefined,
+        page: currentPage - 1,
+        size: PAGE_SIZE,
+      });
+      setCondominios(res.items || []);
+      setTotalItems(res.total || 0);
+    } catch (err) {
+      setError(err.message || "Error al cargar condominios.");
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [searchTerm, currentPage]);
 
-  const confirmDelete = () => {
-    updateTable("condominios", condominios.filter((c) => c.id !== condoToDelete.id));
-    setShowConfirmDelete(false);
-    setCondoToDelete(null);
-  };
+  useEffect(() => {
+    fetchCondominiums();
+  }, [fetchCondominiums]);
 
-  const onSubmit = (data) => {
-    const { id_administrador, ...condoData } = data;
-    let condoId;
-
-    if (editingCondo) {
-      condoId = editingCondo.id;
-      updateTable("condominios", condominios.map((c) =>
-        c.id === editingCondo.id ? { ...c, ...condoData } : c,
-      ));
-    } else {
-      condoId = condominios.length > 0 ? Math.max(...condominios.map((c) => c.id)) + 1 : 1;
-      updateTable("condominios", [...condominios, { ...condoData, id: condoId, fecha_creacion: new Date().toISOString().split("T")[0] }]);
-    }
-
-    if (id_administrador) {
-      updateTable("usuarios", usuarios.map((u) => {
-        if (u.id_condominio === condoId && u.id_rol === 2 && u.id.toString() !== id_administrador) {
-          return { ...u, id_condominio: null };
-        }
-        if (u.id.toString() === id_administrador) return { ...u, id_condominio: condoId };
-        return u;
-      }));
-    }
-    setShowModal(false);
+  const openCreateModal = async () => {
     setEditingCondo(null);
+    setCities([]);
+    try {
+      const [countriesData, adminsData] = await Promise.all([
+        catalogService.getCountries(),
+        superAdminService.getUnassignedAdministrators(),
+      ]);
+      setCountries(countriesData || []);
+      setAvailableAdmins(adminsData || []);
+    } catch (e) {
+      console.warn("Error loading form data", e);
+    }
+    setShowModal(true);
   };
+
+  const openEditModal = async (condo) => {
+    setEditingCondo(condo);
+    setCities([]);
+    try {
+      const [countriesData, adminsData] = await Promise.all([
+        catalogService.getCountries(),
+        superAdminService.getUnassignedAdministrators(),
+      ]);
+      setCountries(countriesData || []);
+      setAvailableAdmins(adminsData || []);
+      if (condo.idPais) {
+        const citiesData = await catalogService.getCities(condo.idPais);
+        setCities(citiesData || []);
+      }
+    } catch (e) {
+      console.warn("Error loading form data", e);
+    }
+    setShowModal(true);
+  };
+
+  const handleCountryChange = async (countryId) => {
+    if (!countryId) { setCities([]); return; }
+    setLoadingCities(true);
+    try {
+      const data = await catalogService.getCities(Number(countryId));
+      setCities(data || []);
+    } catch (e) {
+      setCities([]);
+    } finally {
+      setLoadingCities(false);
+    }
+  };
+
+  const handleDeleteClick = async (condo) => {
+    setCondoToDelete(condo);
+    setRelations([]);
+    setShowConfirmDelete(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await superAdminService.deleteCondominium(condoToDelete.id);
+      setShowConfirmDelete(false);
+      setCondoToDelete(null);
+      fetchCondominiums();
+    } catch (err) {
+      setError(err.message || "Error al eliminar condominio.");
+    }
+  };
+
+  const onSubmit = async (data) => {
+    try {
+      const body = {
+        nombre: data.nombre,
+        idPais: Number(data.idPais),
+        idCiudad: Number(data.idCiudad),
+        direccion: data.direccion,
+      };
+
+      if (editingCondo) {
+        await superAdminService.updateCondominium(editingCondo.id, body);
+        if (data.idAdministrador) {
+          await superAdminService.assignCondominium(Number(data.idAdministrador), { idCondominio: editingCondo.id });
+        }
+      } else {
+        const created = await superAdminService.createCondominium(body);
+        if (data.idAdministrador) {
+          await superAdminService.assignCondominium(Number(data.idAdministrador), { idCondominio: created.id });
+        }
+      }
+
+      setShowModal(false);
+      setEditingCondo(null);
+      fetchCondominiums();
+    } catch (err) {
+      setError(err.message || "Error al guardar condominio.");
+    }
+  };
+
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const currentItems = condominios;
 
   return (
     <AnimatedPage>
       <div className="page-container">
         <DashboardHeader
           icon={Building2}
-          title="Gestión de Condominios"
+          title="Gesti\u00f3n de Condominios"
           badgeText="Super Admin"
-          welcomeText={`Bienvenido, ${authUser?.nombre || "Administrador"}. Aquí puedes gestionar todos los condominios del sistema.`}
+          welcomeText={`Bienvenido, ${authUser?.nombre || "Administrador"}. Aqu\u00ed puedes gestionar todos los condominios del sistema.`}
         >
-          <button className="btn btn-primary" onClick={() => { setEditingCondo(null); setShowModal(true); }}>
+          <button className="btn btn-primary" onClick={openCreateModal}>
             <PlusCircle size={16} />
             <span>Nuevo Condominio</span>
           </button>
         </DashboardHeader>
 
+        {error && <div className="alert alert-danger mb-3">{error}</div>}
+
         <DataTable
-          headers={["#", "Condominio", "Ubicación", "Administrador", "Registro", "Acciones"]}
-          isEmpty={currentItems.length === 0}
+          headers={["#", "Condominio", "Ubicaci\u00f3n", "Administrador", "Registro", "Acciones"]}
+          isEmpty={!loading && currentItems.length === 0}
           emptyMessage={searchTerm ? `No se encontraron condominios que coincidan con "${searchTerm}"` : "No hay condominios registrados."}
           emptyIcon={Building2}
           searchBar={
@@ -136,76 +196,81 @@ const SACondominiosPage = () => {
                 <SearchBar
                   searchTerm={searchTerm}
                   onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
-                  placeholder="Buscar por nombre, país o dirección..."
+                  placeholder="Buscar por nombre, pa\u00eds o direcci\u00f3n..."
                 />
               </div>
             </div>
           }
-          paginationProps={{ currentPage, totalPages, onPageChange: setCurrentPage, totalItems: filteredCondominios.length, itemsShowing: currentItems.length }}
+          paginationProps={{ currentPage, totalPages, onPageChange: setCurrentPage, totalItems, itemsShowing: currentItems.length }}
         >
-          {currentItems.map((condo, index) => {
-            const actualIndex = (currentPage - 1) * itemsPerPage + index + 1;
-            const admin = adminUsers.find((u) => u.id_condominio === condo.id);
-            return (
-              <tr key={condo.id}>
-                <td className="px-4 py-3 text-center">
-                  <span className="text-secondary fw-bold">{actualIndex.toString().padStart(2, "0")}</span>
-                </td>
-                <td className="py-3">
-                  <div className="fw-bold mb-0">{condo.nombre}</div>
-                  <div className="text-xs text-muted flex items-center gap-1"><Globe size={10} /> {condo.pais}</div>
-                </td>
-                <td className="py-3">
-                  <div className="text-sm fw-medium">{condo.direccion}</div>
-                  <div className="text-xs text-muted flex items-center gap-1"><MapPin size={10} /> {condo.ciudad}</div>
-                </td>
-                <td className="py-3">
-                  {admin ? (
-                    <div className="flex items-center gap-2">
-                      <div>
-                        <div className="text-sm fw-bold">{admin.nombre}</div>
-                        <div className="text-xs text-muted">{admin.email}</div>
-                      </div>
+          {loading ? (
+            <tr><td colSpan={6} className="text-center py-4"><Loader2 size={24} className="spinner" /></td></tr>
+          ) : (
+            currentItems.map((condo, index) => {
+              const actualIndex = (currentPage - 1) * PAGE_SIZE + index + 1;
+              return (
+                <tr key={condo.id}>
+                  <td className="px-4 py-3 text-center">
+                    <span className="text-secondary fw-bold">{actualIndex.toString().padStart(2, "0")}</span>
+                  </td>
+                  <td className="py-3">
+                    <div className="fw-bold mb-0">{condo.nombre}</div>
+                    <div className="text-xs text-muted flex items-center gap-1"><Globe size={10} /> {condo.nombrePais}</div>
+                  </td>
+                  <td className="py-3">
+                    <div className="text-sm fw-medium">{condo.direccion}</div>
+                    <div className="text-xs text-muted flex items-center gap-1"><MapPin size={10} /> {condo.nombreCiudad}</div>
+                  </td>
+                  <td className="py-3">
+                    {condo.nombreAdministrador ? (
+                      <div className="text-sm fw-bold">{condo.nombreAdministrador}</div>
+                    ) : (
+                      <span className="badge badge-warning">Sin asignar</span>
+                    )}
+                  </td>
+                  <td className="py-3">
+                    <div className="text-sm flex items-center gap-2">
+                      <Calendar size={12} />
+                      {condo.fechaCreacion ? new Date(condo.fechaCreacion).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" }) : "-"}
                     </div>
-                  ) : (
-                    <span className="badge badge-warning">Sin asignar</span>
-                  )}
-                </td>
-                <td className="py-3">
-                  <div className="text-sm flex items-center gap-2">
-                    <Calendar size={12} />
-                    {new Date(condo.fecha_creacion).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <div className="flex justify-end gap-2">
-                    <button className="btn btn-outline btn-sm" onClick={() => handleDetailClick(condo)}>
-                      <Eye size={14} /> <span>Detalles</span>
-                    </button>
-                    <button className="btn btn-outline btn-sm" onClick={() => { setEditingCondo(condo); setShowModal(true); }}>
-                      <Edit3 size={14} /> <span>Editar</span>
-                    </button>
-                    <button className="btn btn-outline btn-sm" onClick={() => handleDeleteClick(condo)}>
-                      <Trash2 size={14} /> <span>Borrar</span>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button className="btn btn-outline btn-sm" onClick={() => openEditModal(condo)}>
+                        <Edit3 size={14} /> <span>Editar</span>
+                      </button>
+                      <button className="btn btn-outline btn-sm" onClick={() => handleDeleteClick(condo)}>
+                        <Trash2 size={14} /> <span>Borrar</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })
+          )}
         </DataTable>
       </div>
 
-      <CondoDetailModal show={showDetailModal} onHide={() => { setShowDetailModal(false); setSelectedCondo(null); }} condo={selectedCondo} />
-      <CondoFormModal show={showModal} onHide={() => { setShowModal(false); setEditingCondo(null); }} onSubmit={onSubmit} editingCondo={editingCondo} adminUsers={adminUsers} />
+
+      <CondoFormModal
+        show={showModal}
+        onHide={() => { setShowModal(false); setEditingCondo(null); }}
+        onSubmit={onSubmit}
+        editingCondo={editingCondo}
+        countries={countries}
+        cities={cities}
+        onCountryChange={handleCountryChange}
+        loadingCities={loadingCities}
+        availableAdmins={availableAdmins}
+      />
       <CondoRelationsModal show={showRelationsModal} onHide={() => { setShowRelationsModal(false); setCondoToDelete(null); setRelations([]); }} condoName={condoToDelete?.nombre} relations={relations} />
       <ConfirmDialog
         show={showConfirmDelete}
         onHide={() => { setShowConfirmDelete(false); setCondoToDelete(null); }}
         onConfirm={confirmDelete}
-        title="¿Estás seguro?"
-        message={`Estás a punto de eliminar el condominio ${condoToDelete?.nombre}. Esta acción no se puede deshacer.`}
-        confirmText="Sí, Eliminar"
+        title="\u00bfEst\u00e1s seguro?"
+        message={`Est\u00e1s a punto de eliminar el condominio ${condoToDelete?.nombre}. Esta acci\u00f3n no se puede deshacer.`}
+        confirmText="S\u00ed, Eliminar"
         Icon={AlertTriangle}
       />
     </AnimatedPage>
