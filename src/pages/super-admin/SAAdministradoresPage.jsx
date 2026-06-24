@@ -6,7 +6,7 @@ import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import AnimatedPage from "../../components/animations/AnimatedPage";
 import SearchBar from "../../components/ui/SearchBar";
 import DataTable from "../../components/ui/DataTable";
-import UserFormModal from "../../components/modals/UserFormModal";
+import AdminFormModal from "../../components/modals/AdminFormModal";
 import ConfirmDialog from "../../components/modals/ConfirmDialog";
 import RoleBadge from "../../components/ui/RoleBadge";
 
@@ -82,10 +82,14 @@ const SAAdministradoresPage = () => {
 
   const handleAssignCondo = async (admin) => {
     setAssignTarget(admin);
-    setSelectedCondoId("");
+    setSelectedCondoId(admin.idCondominio?.toString() || "");
     try {
       const condos = await superAdminService.getUnassignedCondominiums();
-      setUnassignedCondos(Array.isArray(condos) ? condos : []);
+      const list = Array.isArray(condos) ? [...condos] : [];
+      if (admin.idCondominio && !list.some(c => c.id === admin.idCondominio)) {
+        list.unshift({ id: admin.idCondominio, nombre: admin.nombreCondominio });
+      }
+      setUnassignedCondos(list);
     } catch (err) {
       setError(err.message || "Error al cargar condominios disponibles.");
     }
@@ -194,7 +198,7 @@ const SAAdministradoresPage = () => {
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-2">
                       <button className="btn btn-outline btn-sm" onClick={() => handleAssignCondo(admin)} disabled={admin.rol !== "ADMINISTRADOR_CONDOMINIO"}>
-                        <Building2 size={14} /> <span>Asignar</span>
+                        <Building2 size={14} /> <span>{admin.idCondominio ? "Condominio" : "Asignar"}</span>
                       </button>
                       <button className="btn btn-outline btn-sm" onClick={() => handleEdit(admin)}>
                         <Edit3 size={14} /> <span>Editar</span>
@@ -211,7 +215,7 @@ const SAAdministradoresPage = () => {
         </DataTable>
       </div>
 
-      <UserFormModal show={showModal} onHide={() => { setShowModal(false); setEditingAdmin(null); }} onSubmit={onSubmit} editingUser={editingAdmin} condominios={[]} authUser={authUser} scope="super-admin" />
+      <AdminFormModal show={showModal} onHide={() => { setShowModal(false); setEditingAdmin(null); }} onSubmit={onSubmit} editingAdmin={editingAdmin} authUser={authUser} />
 
       <ConfirmDialog show={showConfirmDelete} onHide={() => { setShowConfirmDelete(false); setAdminToDelete(null); }} onConfirm={confirmDelete} title="Eliminar administrador" message={`Esta acci\u00f3n eliminar\u00e1 a ${adminToDelete?.nombres} ${adminToDelete?.apellidos} permanentemente.`} />
 
@@ -219,12 +223,20 @@ const SAAdministradoresPage = () => {
         <div className="modal-overlay" onClick={() => setShowAssignModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420 }}>
             <div className="modal-header">
-              <div className="modal-title">Asignar Condominio</div>
+              <div className="modal-title">{assignTarget?.idCondominio ? "Reasignar Condominio" : "Asignar Condominio"}</div>
               <button className="modal-close" onClick={() => setShowAssignModal(false)}><X size={16} /></button>
             </div>
             <div className="modal-body">
               <p className="text-secondary text-sm mb-3">
-                Asignar condominio a <strong>{assignTarget?.nombres} {assignTarget?.apellidos}</strong>
+                {assignTarget?.idCondominio
+                  ? `Reasignar condominio a`
+                  : `Asignar condominio a`}{" "}
+                <strong>{assignTarget?.nombres} {assignTarget?.apellidos}</strong>
+                {assignTarget?.nombreCondominio && (
+                  <span className="d-block text-xs text-muted mt-1">
+                    Actual: {assignTarget.nombreCondominio}
+                  </span>
+                )}
               </p>
               <div className="form-group">
                 <label className="form-label">Condominio Disponible</label>
@@ -238,7 +250,7 @@ const SAAdministradoresPage = () => {
             </div>
             <div className="modal-footer">
               <button type="button" className="btn btn-outline" onClick={() => setShowAssignModal(false)}>Cancelar</button>
-              <button type="button" className="btn btn-primary" onClick={confirmAssign} disabled={!selectedCondoId}>Asignar</button>
+              <button type="button" className="btn btn-primary" onClick={confirmAssign} disabled={!selectedCondoId}>{assignTarget?.idCondominio ? "Reasignar" : "Asignar"}</button>
             </div>
           </div>
         </div>
