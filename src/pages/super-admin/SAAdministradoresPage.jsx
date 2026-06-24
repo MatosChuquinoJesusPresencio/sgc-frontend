@@ -182,7 +182,7 @@ const SAAdministradoresPage = () => {
                     <div className="fw-bold">{admin.nombres} {admin.apellidos}</div>
                     <div className="text-xs text-muted">{admin.correo}</div>
                   </td>
-                  <td className="py-3"><RoleBadge role={admin.rol} labels={ROLE_LABELS} /></td>
+                  <td className="py-3"><RoleBadge role="ADMINISTRADOR_CONDOMINIO" labels={ROLE_LABELS} /></td>
                   <td className="py-3">
                     <div className="text-sm fw-medium text-secondary">
                       {admin.nombreCondominio || <span className="text-muted">No asignado</span>}
@@ -197,7 +197,7 @@ const SAAdministradoresPage = () => {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-2">
-                      <button className="btn btn-outline btn-sm" onClick={() => handleAssignCondo(admin)} disabled={admin.rol !== "ADMINISTRADOR_CONDOMINIO"}>
+                      <button className="btn btn-outline btn-sm" onClick={() => handleAssignCondo(admin)}>
                         <Building2 size={14} /> <span>{admin.idCondominio ? "Condominio" : "Asignar"}</span>
                       </button>
                       <button className="btn btn-outline btn-sm" onClick={() => handleEdit(admin)}>
