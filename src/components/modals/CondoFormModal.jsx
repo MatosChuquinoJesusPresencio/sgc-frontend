@@ -1,9 +1,9 @@
-import { X, Building2, Save, Info, Loader2 } from "lucide-react";
+import { X, Building2, Save, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useEffect } from "react";
 import FormInput from "../form/FormInput";
 
-const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, countries, cities, onCountryChange, loadingCities, availableAdmins }) => {
+const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, countries, cities, onCountryChange, loadingCities }) => {
   const {
     register,
     handleSubmit,
@@ -12,7 +12,7 @@ const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, countries, citie
     watch,
     formState: { errors },
   } = useForm({
-    defaultValues: { nombre: "", idPais: "", idCiudad: "", direccion: "", idAdministrador: "" },
+    defaultValues: { nombre: "", idPais: "", idCiudad: "", direccion: "" },
   });
 
   const selectedCountry = watch("idPais");
@@ -26,10 +26,9 @@ const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, countries, citie
           idPais: editingCondo.idPais || "",
           idCiudad: editingCondo.idCiudad || "",
           direccion: editingCondo.direccion,
-          idAdministrador: editingCondo.idAdministrador || "",
         });
       } else {
-        reset({ nombre: "", idPais: "", idCiudad: "", direccion: "", idAdministrador: "" });
+        reset({ nombre: "", idPais: "", idCiudad: "", direccion: "" });
       }
     }
   }, [show, editingCondo, reset, clearErrors]);
@@ -107,25 +106,6 @@ const CondoFormModal = ({ show, onHide, onSubmit, editingCondo, countries, citie
               </select>
               {loadingCities && <Loader2 size={12} className="spinner mt-1" />}
               {errors.idCiudad && <span className="text-danger text-xs">{errors.idCiudad.message}</span>}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Administrador del Condominio</label>
-              <select
-                className="form-select"
-                {...register("idAdministrador")}
-              >
-                <option value="">Seleccionar administrador...</option>
-                {(availableAdmins || []).map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.nombres} {u.apellidos} ({u.correo})
-                  </option>
-                ))}
-              </select>
-              <div className="flex items-center gap-1 mt-1">
-                <Info size={11} className="text-muted" />
-                <span className="text-xs text-muted">Solo se muestran los administradores disponibles.</span>
-              </div>
             </div>
 
             <div className="modal-footer" style={{ padding: "16px 0 0", border: "none" }}>

@@ -6,10 +6,12 @@ import {
   Globe,
   MapPin,
   Users,
+  UserPlus,
   Calendar,
   Trash2,
   AlertTriangle,
   Loader2,
+  X,
 } from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
@@ -40,7 +42,7 @@ const SACondominiosPage = () => {
   const [countries, setCountries] = useState([]);
   const [cities, setCities] = useState([]);
   const [loadingCities, setLoadingCities] = useState(false);
-  const [availableAdmins, setAvailableAdmins] = useState([]);
+  const [activeFilter, setActiveFilter] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [editingCondo, setEditingCondo] = useState(null);
@@ -49,14 +51,17 @@ const SACondominiosPage = () => {
   const [relations, setRelations] = useState([]);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assignTarget, setAssignTarget] = useState(null);
+  const [availableAdmins, setAvailableAdmins] = useState([]);
+  const [selectedAdminId, setSelectedAdminId] = useState("");
+
   const fetchCondominiums = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await superAdminService.getCondominiums({
-        search: searchTerm || undefined,
-        page: currentPage - 1,
-        size: PAGE_SIZE,
-      });
+      const params = { search: searchTerm || undefined, page: currentPage - 1, size: PAGE_SIZE };
+      if (activeFilter) params.active = activeFilter === "true";
+      const res = await superAdminService.getCondominiums(params);
       setCondominios(res.items || []);
       setTotalItems(res.total || 0);
     } catch (err) {
@@ -64,7 +69,7 @@ const SACondominiosPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, currentPage]);
+  }, [searchTerm, activeFilter, currentPage]);
 
   useEffect(() => {
     fetchCondominiums();
@@ -74,14 +79,10 @@ const SACondominiosPage = () => {
     setEditingCondo(null);
     setCities([]);
     try {
-      const [countriesData, adminsData] = await Promise.all([
-        catalogService.getCountries(),
-        superAdminService.getUnassignedAdministrators(),
-      ]);
+      const countriesData = await catalogService.getCountries();
       setCountries(countriesData || []);
-      setAvailableAdmins(adminsData || []);
     } catch (e) {
-      console.warn("Error loading form data", e);
+      console.warn("Error loading countries", e);
     }
     setShowModal(true);
   };
@@ -90,12 +91,8 @@ const SACondominiosPage = () => {
     setEditingCondo(condo);
     setCities([]);
     try {
-      const [countriesData, adminsData] = await Promise.all([
-        catalogService.getCountries(),
-        superAdminService.getUnassignedAdministrators(),
-      ]);
+      const countriesData = await catalogService.getCountries();
       setCountries(countriesData || []);
-      setAvailableAdmins(adminsData || []);
       if (condo.idPais) {
         const citiesData = await catalogService.getCities(condo.idPais);
         setCities(citiesData || []);
@@ -106,7 +103,7 @@ const SACondominiosPage = () => {
     setShowModal(true);
   };
 
-  const handleCountryChange = async (countryId) => {
+  const handleCountryChange = useCallback(async (countryId) => {
     if (!countryId) { setCities([]); return; }
     setLoadingCities(true);
     try {
@@ -116,6 +113,30 @@ const SACondominiosPage = () => {
       setCities([]);
     } finally {
       setLoadingCities(false);
+    }
+  }, []);
+
+  const handleAssignAdmin = async (condo) => {
+    setAssignTarget(condo);
+    setSelectedAdminId("");
+    try {
+      const admins = await superAdminService.getUnassignedAdministrators();
+      setAvailableAdmins(Array.isArray(admins) ? admins : []);
+    } catch (err) {
+      setError(err.message || "Error al cargar administradores disponibles.");
+    }
+    setShowAssignModal(true);
+  };
+
+  const confirmAssign = async () => {
+    if (!selectedAdminId || !assignTarget) return;
+    try {
+      await superAdminService.assignCondominium(Number(selectedAdminId), { idCondominio: assignTarget.id });
+      setShowAssignModal(false);
+      setAssignTarget(null);
+      fetchCondominiums();
+    } catch (err) {
+      setError(err.message || "Error al asignar administrador.");
     }
   };
 
@@ -147,14 +168,8 @@ const SACondominiosPage = () => {
 
       if (editingCondo) {
         await superAdminService.updateCondominium(editingCondo.id, body);
-        if (data.idAdministrador) {
-          await superAdminService.assignCondominium(Number(data.idAdministrador), { idCondominio: editingCondo.id });
-        }
       } else {
-        const created = await superAdminService.createCondominium(body);
-        if (data.idAdministrador) {
-          await superAdminService.assignCondominium(Number(data.idAdministrador), { idCondominio: created.id });
-        }
+        await superAdminService.createCondominium(body);
       }
 
       setShowModal(false);
@@ -173,9 +188,9 @@ const SACondominiosPage = () => {
       <div className="page-container">
         <DashboardHeader
           icon={Building2}
-          title="Gesti\u00f3n de Condominios"
+          title="Gestión de Condominios"
           badgeText="Super Admin"
-          welcomeText={`Bienvenido, ${authUser?.nombre || "Administrador"}. Aqu\u00ed puedes gestionar todos los condominios del sistema.`}
+          welcomeText={`Bienvenido, ${authUser?.nombre || "Administrador"}. Aquí puedes gestionar todos los condominios del sistema.`}
         >
           <button className="btn btn-primary" onClick={openCreateModal}>
             <PlusCircle size={16} />
@@ -186,25 +201,32 @@ const SACondominiosPage = () => {
         {error && <div className="alert alert-danger mb-3">{error}</div>}
 
         <DataTable
-          headers={["#", "Condominio", "Ubicaci\u00f3n", "Administrador", "Registro", "Acciones"]}
+          headers={["#", "Condominio", "Ubicación", "Administrador", "Registro", "Estado", "Acciones"]}
           isEmpty={!loading && currentItems.length === 0}
           emptyMessage={searchTerm ? `No se encontraron condominios que coincidan con "${searchTerm}"` : "No hay condominios registrados."}
           emptyIcon={Building2}
           searchBar={
             <div className="flex items-center gap-3">
-              <div style={{ flex: 8 }}>
+              <div style={{ flex: 6 }}>
                 <SearchBar
                   searchTerm={searchTerm}
                   onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
-                  placeholder="Buscar por nombre, pa\u00eds o direcci\u00f3n..."
+                  placeholder="Buscar por nombre, país o dirección..."
                 />
+              </div>
+              <div style={{ flex: 3 }}>
+                <select className="form-select" value={activeFilter} onChange={(e) => { setActiveFilter(e.target.value); setCurrentPage(1); }}>
+                  <option value="">Todos</option>
+                  <option value="true">Activos</option>
+                  <option value="false">Inactivos</option>
+                </select>
               </div>
             </div>
           }
           paginationProps={{ currentPage, totalPages, onPageChange: setCurrentPage, totalItems, itemsShowing: currentItems.length }}
         >
           {loading ? (
-            <tr><td colSpan={6} className="text-center py-4"><Loader2 size={24} className="spinner" /></td></tr>
+            <tr><td colSpan={7} className="text-center py-4"><Loader2 size={24} className="spinner" /></td></tr>
           ) : (
             currentItems.map((condo, index) => {
               const actualIndex = (currentPage - 1) * PAGE_SIZE + index + 1;
@@ -234,8 +256,18 @@ const SACondominiosPage = () => {
                       {condo.fechaCreacion ? new Date(condo.fechaCreacion).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" }) : "-"}
                     </div>
                   </td>
+                  <td className="py-3 text-center">
+                    {condo.activo ? (
+                      <span className="badge badge-success">Activo</span>
+                    ) : (
+                      <span className="badge badge-danger">Inactivo</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-2">
+                      <button className="btn btn-outline btn-sm" onClick={() => handleAssignAdmin(condo)}>
+                        <UserPlus size={14} /> <span>{condo.idAdministrador ? "Admin" : "Asignar"}</span>
+                      </button>
                       <button className="btn btn-outline btn-sm" onClick={() => openEditModal(condo)}>
                         <Edit3 size={14} /> <span>Editar</span>
                       </button>
@@ -261,16 +293,54 @@ const SACondominiosPage = () => {
         cities={cities}
         onCountryChange={handleCountryChange}
         loadingCities={loadingCities}
-        availableAdmins={availableAdmins}
       />
+      {showAssignModal && (
+        <div className="modal-overlay" onClick={() => setShowAssignModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420 }}>
+            <div className="modal-header">
+              <div className="modal-title">{assignTarget?.idAdministrador ? "Reasignar Administrador" : "Asignar Administrador"}</div>
+              <button className="modal-close" onClick={() => setShowAssignModal(false)}><X size={16} /></button>
+            </div>
+            <div className="modal-body">
+              <p className="text-secondary text-sm mb-3">
+                {assignTarget?.idAdministrador ? "Reasignar administrador a" : "Asignar administrador a"}{" "}
+                <strong>{assignTarget?.nombre}</strong>
+                {assignTarget?.nombreAdministrador && (
+                  <span className="d-block text-xs text-muted mt-1">
+                    Actual: {assignTarget.nombreAdministrador}
+                  </span>
+                )}
+              </p>
+              <div className="form-group">
+                <label className="form-label">Administrador Disponible</label>
+                <select className="form-select" value={selectedAdminId} onChange={(e) => setSelectedAdminId(e.target.value)}>
+                  <option value="">Seleccionar...</option>
+                  {availableAdmins.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.nombres} {a.apellidos} ({a.correo})
+                    </option>
+                  ))}
+                </select>
+                {availableAdmins.length === 0 && (
+                  <div className="text-xs text-muted mt-1">No hay administradores disponibles.</div>
+                )}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-outline" onClick={() => setShowAssignModal(false)}>Cancelar</button>
+              <button type="button" className="btn btn-primary" onClick={confirmAssign} disabled={!selectedAdminId}>{assignTarget?.idAdministrador ? "Reasignar" : "Asignar"}</button>
+            </div>
+          </div>
+        </div>
+      )}
       <CondoRelationsModal show={showRelationsModal} onHide={() => { setShowRelationsModal(false); setCondoToDelete(null); setRelations([]); }} condoName={condoToDelete?.nombre} relations={relations} />
       <ConfirmDialog
         show={showConfirmDelete}
         onHide={() => { setShowConfirmDelete(false); setCondoToDelete(null); }}
         onConfirm={confirmDelete}
-        title="\u00bfEst\u00e1s seguro?"
-        message={`Est\u00e1s a punto de eliminar el condominio ${condoToDelete?.nombre}. Esta acci\u00f3n no se puede deshacer.`}
-        confirmText="S\u00ed, Eliminar"
+        title="¿Estás seguro?"
+        message={`Estás a punto de eliminar el condominio ${condoToDelete?.nombre}. Esta acción no se puede deshacer.`}
+        confirmText="Sí, Eliminar"
         Icon={AlertTriangle}
       />
     </AnimatedPage>
